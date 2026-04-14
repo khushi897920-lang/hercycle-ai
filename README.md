@@ -143,7 +143,8 @@ Switch between **Hindi** and **English** with a single tap. The entire UI — in
 | **Supabase** | Database (PostgreSQL) | Real-time, open-source, built-in auth & RLS |
 | **XGBoost** | ML model for PCOD | Best-in-class gradient boosting for tabular medical data |
 | **Python** | ML training pipeline | Rich ML ecosystem (scikit-learn, pandas, XGBoost) |
-| **Google Gemini AI** | Health chatbot | Multilingual, context-aware, latest-gen LLM |
+| **Google Gemini AI** | Primary Health chatbot | Multilingual, context-aware, latest-gen LLM |
+| **Groq AI** | Fallback Health chatbot | Ultra-fast Llama 3 inference for failover |
 | **Tailwind CSS** | Styling | Utility-first CSS for rapid, responsive design |
 | **shadcn/ui** | UI components | Accessible, customizable component primitives |
 | **Vercel** | Deployment | Zero-config Next.js hosting with edge functions |
@@ -213,6 +214,7 @@ Ensure you have the following installed:
 You'll also need accounts for:
 - 🟢 [Supabase](https://supabase.com) (free tier works)
 - 🤖 [Google AI Studio](https://aistudio.google.com) (for Gemini API key)
+- ⚡ [GroqCloud](https://console.groq.com) (for fallback AI key)
 
 ---
 
@@ -255,8 +257,9 @@ Create a `.env` file in the project root:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
-# 🤖 Google Gemini AI
+# 🤖 AI Chatbot (Primary + Fallback)
 GEMINI_API_KEY=your-gemini-api-key-here
+GROQ_API_KEY=your-groq-api-key-here
 
 # 🌐 App
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
@@ -295,8 +298,9 @@ Create a `.env` file based on the template below:
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6...
 
-# Google Gemini AI
+# AI Chatbot Configuration
 GEMINI_API_KEY=AIzaSy...
+GROQ_API_KEY=gsk_...
 
 # Application
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
@@ -306,7 +310,8 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 |----------|----------|-------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Your Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase anonymous/public API key |
-| `GEMINI_API_KEY` | ✅ | Google Gemini API key from AI Studio |
+| `GEMINI_API_KEY` | ✅ | Primary AI API key (Google AI Studio) |
+| `GROQ_API_KEY` | ✅ | Fallback AI API key (GroqCloud) |
 | `NEXT_PUBLIC_BASE_URL` | ⚪ | App base URL (defaults to localhost) |
 
 > ⚠️ **Never commit your `.env` file.** It's already in `.gitignore`.
