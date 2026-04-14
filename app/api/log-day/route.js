@@ -24,18 +24,24 @@ export async function POST(request) {
         .update({ symptoms, mood, flow, updated_at: new Date().toISOString() })
         .eq('id', existing.id)
       
-      if (error) console.error('Supabase update error:', error)
+      if (error) {
+        console.error('Supabase update error:', error)
+        return NextResponse.json({ success: false, message: 'Failed to update day in database' }, { status: 500 })
+      }
     } else {
       const { error } = await supabase
         .from('daily_logs')
         .insert([{ user_id: userId, date, symptoms, mood, flow, created_at: new Date().toISOString() }])
       
-      if (error) console.error('Supabase insert error:', error)
+      if (error) {
+        console.error('Supabase insert error:', error)
+        return NextResponse.json({ success: false, message: 'Failed to log day in database' }, { status: 500 })
+      }
     }
     
     return NextResponse.json({ success: true, message: 'Day logged successfully!' })
   } catch (error) {
     console.error('Error logging day:', error)
-    return NextResponse.json({ success: true, message: 'Log saved locally' })
+    return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 })
   }
 }
