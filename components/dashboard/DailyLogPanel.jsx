@@ -1,3 +1,5 @@
+import { t } from '@/lib/i18n'
+
 export default function DailyLogPanel({
   selectedSymptoms,
   toggleSymptom,
@@ -6,13 +8,14 @@ export default function DailyLogPanel({
   selectedFlow,
   setSelectedFlow,
   handleSaveLog,
-  cycleData
+  cycleData,
+  activeLang
 }) {
   return (
     <>
       {/* Symptoms Panel */}
       <div className="panel glass-dim">
-        <h4>Symptoms</h4>
+        <h4>{t(activeLang, 'log', 'symptoms')}</h4>
         <div className="symp-grid">
           {['Cramps', 'Headache', 'Bloating', 'Fatigue', 'Acne', 'Nausea'].map(symptom => (
             <div
@@ -28,7 +31,7 @@ export default function DailyLogPanel({
 
       {/* Mood & Flow Panel */}
       <div className="panel glass-dim">
-        <h4>Mood</h4>
+        <h4>{t(activeLang, 'log', 'mood')}</h4>
         <div className="mood-row">
           {['😊', '😐', '😢', '😡'].map((emoji, i) => (
             <button
@@ -41,7 +44,7 @@ export default function DailyLogPanel({
           ))}
         </div>
 
-        <div className="flow-lbl">Flow Intensity</div>
+        <div className="flow-lbl">{t(activeLang, 'log', 'flow')}</div>
         <div className="flow-row">
           {[
             { id: 'f1', label: 'Light' },
@@ -58,26 +61,9 @@ export default function DailyLogPanel({
           ))}
         </div>
 
-        <button className="save-btn" onClick={handleSaveLog}>Save Today's Log</button>
-      </div>
-
-      {/* Prediction Panel */}
-      <div className="panel glass-dim">
-        <h4>Next Cycle Prediction</h4>
-        <div className="pred-content">
-          <div className="pred-date">
-            <label>Expected Start Date</label>
-            <div className="date">
-              {cycleData?.nextPeriodDate || 'Apr 27, 2026'}
-            </div>
-          </div>
-          <p className="pred-info">
-            Based on your 28-day average cycle. Ovulation window expected around Apr 13-15.
-          </p>
-          <div className="confidence">
-            Prediction Confidence: {cycleData?.confidence || '92%'}
-          </div>
-        </div>
+        <button className="save-btn" onClick={handleSaveLog}>
+          {t(activeLang, 'btn', 'saveLog')}
+        </button>
       </div>
     </>
   );

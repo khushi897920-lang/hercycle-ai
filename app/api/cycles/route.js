@@ -1,33 +1,39 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { predictNextPeriod } from '@/lib/api-helpers'
+import { getAuthUserId } from '@/lib/supabase-server'
 
-const supabase = createClient(
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-export async function GET(request) {
+export async function GET() {
   try {
-    const userId = 'demo-user-001'
-    
-    const { data: cycles, error } = await supabase
+    const userId = await getAuthUserId()
+    console.log("API called with userId:", userId)
+
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: cycles, error } = await supabaseAdmin
       .from('cycles')
       .select('*')
       .eq('user_id', userId)
       .order('start_date', { ascending: false })
       .limit(12)
-    
+
     if (error && error.code !== 'PGRST116') {
       console.error('Supabase error:', error)
       return NextResponse.json({
         success: true,
-        data: { cycles: [], nextPeriodDate: 'Apr 27, 2026', confidence: '92%', averageCycleLength: 28 }
+        data: { cycles: [], nextPeriodDate: null, confidence: null, averageCycleLength: 28 }
       })
     }
-    
+
     const prediction = predictNextPeriod(cycles || [])
-    
+
     return NextResponse.json({
       success: true,
       data: { cycles: cycles || [], nextPeriodDate: prediction.nextPeriodDate, confidence: prediction.confidence, averageCycleLength: prediction.averageCycleLength }
@@ -36,7 +42,7 @@ export async function GET(request) {
     console.error('Error fetching cycles:', error)
     return NextResponse.json({
       success: true,
-      data: { cycles: [], nextPeriodDate: 'Apr 27, 2026', confidence: '92%', averageCycleLength: 28 }
+      data: { cycles: [], nextPeriodDate: null, confidence: null, averageCycleLength: 28 }
     })
   }
 }

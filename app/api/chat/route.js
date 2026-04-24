@@ -105,6 +105,10 @@ export async function POST(request) {
       systemPrompt += `\n\nUser's next period is predicted on ${context.nextPeriodDate}. Average cycle length: ${context.averageCycleLength || 28} days.`;
     }
     
+    if (context?.currentPhase?.day && context?.currentPhase?.phase) {
+      systemPrompt += `\n\nCurrent Cycle Day: ${context.currentPhase.day}. Current Phase: ${context.currentPhase.phase}.`;
+    }
+    
     systemPrompt += `\n\nImportant: Keep responses under 100 words. Be supportive and conversational.`;
     
     // Fetch response with fallback mechanism
