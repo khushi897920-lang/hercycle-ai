@@ -11,7 +11,6 @@ const supabaseAdmin = createClient(
 export async function GET() {
   try {
     const userId = await getAuthUserId()
-    console.log("API called with userId:", userId)
 
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })

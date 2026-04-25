@@ -37,8 +37,6 @@ export default function OnboardingModal({ activeLang, onComplete, onSkip }) {
       const periodStart = startDate.toISOString().split('T')[0]
       const periodEnd = endDate.toISOString().split('T')[0]
 
-      console.log('Inserting with userId:', userId, typeof userId)
-
       const { data, error } = await supabase
         .from('cycles')
         .insert([{
@@ -49,8 +47,6 @@ export default function OnboardingModal({ activeLang, onComplete, onSkip }) {
           created_at: new Date().toISOString()
         }])
         .select()
-
-      console.log('Supabase response:', data, error)
 
       if (error) {
         const errMsg = error?.message || error?.details || error?.hint || JSON.stringify(error) || 'Unknown error'
@@ -65,8 +61,6 @@ export default function OnboardingModal({ activeLang, onComplete, onSkip }) {
         setSaving(false)
         return
       }
-
-      console.log('Cycle saved successfully:', data)
       localStorage.setItem('onboarding_complete', 'true')
       toast.success('✅ Cycle saved! Your calendar is now updated.')
       setSaving(false)

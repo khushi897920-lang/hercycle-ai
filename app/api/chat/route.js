@@ -19,7 +19,6 @@ const withTimeout = async (promise, ms) => {
  * Primary AI Call: Google Gemini API
  */
 async function callGemini(message, systemPrompt) {
-  console.log('Attempting to call primary API (Gemini)...');
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
   const chat = model.startChat({
     history: [
@@ -36,7 +35,6 @@ async function callGemini(message, systemPrompt) {
  * Fallback AI Call: Groq API (llama3-8b-8192)
  */
 async function callGroq(message, systemPrompt) {
-  console.log('Attempting to call fallback API (Groq)...');
   if (!process.env.GROQ_API_KEY) {
     throw new Error('GROQ_API_KEY environment variable is not defined.');
   }

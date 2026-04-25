@@ -10,14 +10,11 @@ const supabaseAdmin = createClient(
 export async function POST(request) {
   try {
     const userId = await getAuthUserId()
-    console.log("API called with userId:", userId)
-
     if (!userId) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
-    console.log("Log day request:", body)
     const { date, symptoms, mood, flow } = body
 
     const { error } = await supabaseAdmin
