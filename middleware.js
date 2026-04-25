@@ -1,10 +1,8 @@
-import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { NextResponse } from 'next/server'
 
 export async function middleware(request) {
-  let response = NextResponse.next({
-    request: { headers: request.headers },
-  })
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -15,50 +13,51 @@ export async function middleware(request) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options)
-          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            request.cookies.set(name, value, options)
+          )
+          supabaseResponse = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
         },
       },
     }
   )
 
-  // Refresh the session (required for server components to stay in sync)
+  // IMPORTANT: do not add logic between createServerClient and getUser()
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
 
-  // Redirect authenticated users away from auth pages to dashboard
-  if (user && pathname.startsWith('/auth')) {
-    // If it's the callback, we let it process the auth code
-    if (!pathname.startsWith('/auth/callback')) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
-  }
-
-  // Always pass through API and static files
+  // Always pass through static assets and API routes
   if (
     pathname.startsWith('/api') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon')
   ) {
-    return response
+    return supabaseResponse
   }
 
-  // Redirect to login if no user and trying to access a protected route
+  // Redirect logged-in users away from auth pages (but NOT the callback)
+  if (user && pathname.startsWith('/auth') && !pathname.startsWith('/auth/callback')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    return NextResponse.redirect(url)
+  }
+
+  // Redirect unauthenticated users to login
   if (!user && !pathname.startsWith('/auth')) {
-    const loginUrl = new URL('/auth/login', request.url)
-    return NextResponse.redirect(loginUrl)
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    return NextResponse.redirect(url)
   }
 
-  return response
+  return supabaseResponse
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except static files.
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
