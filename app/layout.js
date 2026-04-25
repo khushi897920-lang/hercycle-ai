@@ -14,8 +14,35 @@ const inter = Inter({
 })
 
 export const metadata = {
-  title: 'HerCycle AI - Smart Menstrual Health Platform',
-  description: 'Track your cycle, predict periods, assess PCOD risk with AI-powered health guidance',
+  title: 'HerCycle AI — Smart Menstrual Health Tracker',
+  description: 'AI-powered period tracking with PCOD risk prediction in Hindi & English. Know your body, love yourself.',
+  keywords: ['period tracker', 'PCOD', 'menstrual health', 'AI health', 'women health India'],
+  openGraph: {
+    title: 'HerCycle AI',
+    description: 'AI-powered menstrual health companion',
+    url: 'https://hercycle-ai.vercel.app',
+    siteName: 'HerCycle AI',
+    images: [
+      {
+        url: 'https://hercycle-ai.vercel.app/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'HerCycle AI'
+      }
+    ],
+    type: 'website'
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'HerCycle AI',
+    description: 'AI-powered menstrual health companion',
+    images: ['https://hercycle-ai.vercel.app/og-image.jpg']
+  },
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg'
+  }
 }
 
 export default function RootLayout({ children }) {

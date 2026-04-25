@@ -1,0 +1,5 @@
+Create a 1200x630px image with:
+- Pink gradient background (#C2185B to #7B1FA2)
+- HerCycle AI logo/text centered in white
+- Tagline: Know your body, love yourself
+- Save as public/og-image.jpg

@@ -1,0 +1,16 @@
+{
+  "name": "HerCycle AI",
+  "short_name": "HerCycle",
+  "description": "AI-powered menstrual health companion",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#C2185B",
+  "theme_color": "#C2185B",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
