@@ -383,8 +383,8 @@ nav ul li a.active {
 }
 .cycle-card-header h3 {
   font-family: var(--serif);
-  font-size: 1.15rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: white;
   letter-spacing: -0.01em;
 }
@@ -396,12 +396,12 @@ nav ul li a.active {
   color: var(--text-faint);
 }
 .month-nav button {
-  width: 26px; height: 26px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.22);
-  color: rgba(255,255,255,0.7);
-  font-size: 0.75rem;
+  color: rgba(255,255,255,0.9);
+  font-size: 0.85rem;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.18s;
@@ -413,7 +413,7 @@ nav ul li a.active {
 .mini-cal {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
+  gap: 6px;
   margin-bottom: 18px;
 }
 .cal-d {
@@ -422,47 +422,57 @@ nav ul li a.active {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  font-size: 0.72rem;
-  color: var(--text-soft);
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.95);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
   cursor: pointer;
   transition: all 0.18s;
-  font-weight: 400;
+  font-weight: 600;
   position: relative;
 }
 .cal-d:hover:not(.header):not(.empty) {
-  background: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.25);
   color: white;
 }
 .cal-d.header {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  color: var(--text-faint);
-  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.05em;
   cursor: default;
+  text-shadow: none;
 }
 .cal-d.period {
   background: linear-gradient(135deg, var(--rose-mid), var(--rose-bright));
   color: white;
-  font-weight: 600;
+  font-weight: 700;
   box-shadow: 0 3px 12px rgba(228,82,126,0.45);
 }
 .cal-d.predicted {
   background: rgba(244,114,182,0.22);
-  color: rgba(255,255,255,0.8);
+  color: white;
+  font-weight: 600;
   border: 1.5px dashed rgba(244,114,182,0.55);
 }
 .cal-d.today {
-  background: white;
-  color: var(--rose-deep);
-  font-weight: 700;
-  box-shadow: 0 0 0 2.5px rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.15);
+  color: white;
+  font-weight: 800;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px rgba(194,24,91,0.5);
 }
 .cal-d.ovulation {
   background: rgba(192,132,252,0.28);
-  color: rgba(255,255,255,0.9);
+  color: white;
+  font-weight: 700;
   border: 1.5px solid rgba(192,132,252,0.45);
 }
-.cal-d.empty { cursor: default; color: var(--text-faint); }
+.cal-d.empty { 
+  cursor: default; 
+  color: rgba(255,255,255,0.35); 
+  text-shadow: none; 
+  font-weight: 500; 
+}
 
 /* Legend */
 .cal-legend {
