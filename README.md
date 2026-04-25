@@ -19,13 +19,33 @@
 
 ## 📸 Screenshots
 
-| Dashboard | Cycle Tracker |
-|-----------|--------------|
-| ![Dashboard](screenshots/dashboard.png) | ![Track](screenshots/track.png) |
+### 🏠 Dashboard — *"Know your body, love yourself"*
+![Dashboard](screenshots/dashboard.png)
 
-| Insights & Analytics | AI Health Assistant |
-|----------------------|---------------------|
-| ![Insights](screenshots/insights.png) | ![Chat](screenshots/chat.png) |
+<table>
+<tr>
+<td width="50%">
+
+### 🗓️ Cycle Tracker
+![Cycle Tracker](screenshots/track.png)
+
+</td>
+<td width="50%">
+
+### 📊 Insights & Analytics
+![Insights](screenshots/insights.png)
+
+</td>
+</tr>
+<tr>
+<td colspan="2">
+
+### 🤖 AI Health Assistant
+![AI Chat](screenshots/chat.png)
+
+</td>
+</tr>
+</table>
 
 ---
 
@@ -144,10 +164,8 @@ CREATE TABLE daily_logs (
 
 ### Row Level Security (RLS)
 
-For development, you can disable RLS or add the following policies:
-
 ```sql
--- Allow users to read and write their own data
+-- Enable RLS and allow users to manage their own data
 ALTER TABLE cycles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_logs ENABLE ROW LEVEL SECURITY;
 
@@ -157,9 +175,6 @@ CREATE POLICY "Users can manage their own cycles"
 CREATE POLICY "Users can manage their own daily logs"
   ON daily_logs FOR ALL USING (auth.uid() = user_id);
 ```
-
-> **Note:** For local development without RLS, you can temporarily run:
-> `ALTER TABLE cycles DISABLE ROW LEVEL SECURITY;`
 
 ---
 
