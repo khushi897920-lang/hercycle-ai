@@ -291,10 +291,10 @@ Thank you to all the amazing people who built HerCycle AI!
 
 | Avatar | Name | Role | GitHub | LinkedIn |
 |--------|------|------|--------|----------|
-| <img src="https://github.com/khushi897920-lang.png" width="60" style="border-radius:50%"> | **Khushi** | Full Stack Developer & AI Integration · Project Lead | [@khushi897920-lang](https://github.com/khushi897920-lang) | [LinkedIn](www.linkedin.com/in/khushii-singh01) |
-| <img src="https://github.com/TEAMMATE2_GITHUB.png" width="60" style="border-radius:50%"> | **Add Your Name** | Add Your Role | [@TEAMMATE2_GITHUB](https://github.com/TEAMMATE2_GITHUB) | [LinkedIn](https://linkedin.com/in/ADD_LINKEDIN) |
-| <img src="https://github.com/TEAMMATE3_GITHUB.png" width="60" style="border-radius:50%"> | **Add Your Name** | Add Your Role | [@TEAMMATE3_GITHUB](https://github.com/TEAMMATE3_GITHUB) | [LinkedIn](https://linkedin.com/in/ADD_LINKEDIN) |
-| <img src="https://github.com/TEAMMATE4_GITHUB.png" width="60" style="border-radius:50%"> | **Add Your Name** | Add Your Role | [@TEAMMATE4_GITHUB](https://github.com/TEAMMATE4_GITHUB) | [LinkedIn](https://linkedin.com/in/ADD_LINKEDIN) |
+| <img src="https://github.com/khushi897920-lang.png" width="60" style="border-radius:50%"> | **Khushi** | Full Stack Developer & AI Integration · Project Lead | [@khushi897920-lang](https://github.com/khushi897920-lang) | [LinkedIn](https://www.linkedin.com/in/khushii-singh01) |
+| <img src="https://github.com/TEAMMATE2_GITHUB.png" width="60" style="border-radius:50%"> | **Add Your Name** | ML + Database | [@TEAMMATE2_GITHUB](https://GitHub.com/zaaraf027-glitch) | [LinkedIn](https://linkedin.com/in/ADD_LINKEDIN) |
+| <img src="https://github.com/TEAMMATE3_GITHUB.png" width="60" style="border-radius:50%"> | **Add Your Name** | Backend + Presentation | [@TEAMMATE3_GITHUB](https://github.com/Samiksha48787) | [LinkedIn](https://www.linkedin.com/in/samiksha-mishra-25939b370) |
+| <img src="https://github.com/TEAMMATE4_GITHUB.png" width="60" style="border-radius:50%"> | **Add Your Name** | UI/UX Designer | [@TEAMMATE4_GITHUB](https://github.com/mehakdutta2005-lab) | [LinkedIn](https://linkedin.com/in/ADD_LINKEDIN) |
 
 ### How to Add Yourself
 
