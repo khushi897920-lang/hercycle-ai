@@ -17,7 +17,7 @@
 
 <div align="center">
 
-<img src="https://readme-typing-svg.demolab.com?font=Playfair+Display&size=22&duration=3000&pause=1000&color=C2185B&center=true&vCenter=true&multiline=true&repeat=true&width=600&height=80&lines=AI-Powered+Menstrual+Health+Companion+%F0%9F%8C%B8;Know+your+body.+Love+yourself.+%F0%9F%92%95;Built+for+every+woman+in+India+%F0%9F%87%AE%F0%9F%87%B3" alt="Typing SVG" />
+<img src="https://readme-typing-svg.demolab.com?font=Playfair+Display&size=22&duration=3000&pause=1000&color=C2185B&center=true&vCenter=true&multiline=true&repeat=true&width=600&height=120&lines=AI-Powered+Menstrual+Health+Companion+%F0%9F%8C%B8;Know+your+body.+Love+yourself.+%F0%9F%92%95;Built+for+every+woman+in+India+%F0%9F%87%AE%F0%9F%87%B3" alt="Typing SVG" />
 
 </div>
 
