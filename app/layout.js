@@ -19,15 +19,15 @@ export const metadata = {
   keywords: ['period tracker', 'PCOD', 'menstrual health', 'AI health', 'women health India'],
   openGraph: {
     title: 'HerCycle AI',
-    description: 'AI-powered menstrual health companion',
+    description: 'Track cycles, predict with AI, screen PCOS risk — beautifully, in your language.',
     url: 'https://hercycle-ai.vercel.app',
     siteName: 'HerCycle AI',
     images: [
       {
-        url: 'https://hercycle-ai.vercel.app/og-image.jpg',
+        url: 'https://hercycle-ai.vercel.app/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'HerCycle AI'
+        alt: 'HerCycle AI — Know your body, love yourself'
       }
     ],
     type: 'website'
@@ -35,8 +35,8 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'HerCycle AI',
-    description: 'AI-powered menstrual health companion',
-    images: ['https://hercycle-ai.vercel.app/og-image.jpg']
+    description: 'Track cycles, predict with AI, screen PCOS risk — beautifully, in your language.',
+    images: ['https://hercycle-ai.vercel.app/og-image.png']
   },
   icons: {
     icon: '/favicon.svg',
