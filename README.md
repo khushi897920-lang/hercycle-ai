@@ -15,6 +15,33 @@
 
 </div>
 
+<div align="center">
+
+<img src="https://readme-typing-svg.demolab.com?font=Playfair+Display&size=22&duration=3000&pause=1000&color=C2185B&center=true&vCenter=true&multiline=true&repeat=true&width=600&height=80&lines=AI-Powered+Menstrual+Health+Companion+%F0%9F%8C%B8;Know+your+body.+Love+yourself.+%F0%9F%92%95;Built+for+every+woman+in+India+%F0%9F%87%AE%F0%9F%87%B3" alt="Typing SVG" />
+
+</div>
+
+---
+
+> 💬 *"1 in 5 Indian women has PCOD. Most are undiagnosed.*
+> *We built HerCycle AI to change that."*
+
+---
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center"><b>🌍 355M+</b><br/><sub>Women in India</sub></td>
+<td align="center"><b>🤖 Gemini 2.0</b><br/><sub>AI Powered</sub></td>
+<td align="center"><b>🌐 EN + हिंदी</b><br/><sub>Bilingual</sub></td>
+<td align="center"><b>🩺 PCOD AI</b><br/><sub>Risk Screening</sub></td>
+<td align="center"><b>⚡ Live</b><br/><sub>Deployed on Vercel</sub></td>
+</tr>
+</table>
+
+</div>
+
 ---
 
 ## 📸 Screenshots
@@ -62,6 +89,25 @@
 | 🌐 **Bilingual Support** | Full Hindi (हिंदी) and English language toggle throughout the app |
 | 🔐 **Secure Auth** | Email/password + Google OAuth via Supabase Auth with middleware route protection |
 | 🌙 **Beautiful UI** | Glassmorphism design with pink-purple gradient, smooth animations, and mobile-responsive layout |
+
+---
+
+## 🔄 How It Works
+
+```mermaid
+flowchart LR
+    A["🔐 Sign Up / Login"] --> B["🗓️ Log Your Period"]
+    B --> C["📝 Track Symptoms Daily"]
+    C --> D["🤖 AI Analyzes Patterns"]
+    D --> E["🩺 PCOD Risk Score"]
+    D --> F["🔮 Cycle Predictions"]
+    E --> G["📄 PDF Doctor Report"]
+    F --> G
+```
+
+> **Step 1** — Sign up with email or Google · **Step 2** — Log your period start/end dates  
+> **Step 3** — Track daily symptoms & mood · **Step 4** — AI analyzes your patterns  
+> **Step 5** — Get PCOD risk score & cycle predictions · **Step 6** — Export a PDF report for your doctor
 
 ---
 
@@ -221,6 +267,30 @@ Phase 8  🔲  Community forum for anonymous peer support
 
 ---
 
+## 📊 Project Progress
+
+| Feature | Progress |
+|---------|----------|
+| Core Dashboard | ![100%](https://progress-bar.xyz/100/?title=Complete&color=C2185B&width=200) |
+| AI Chat (EN+HI) | ![100%](https://progress-bar.xyz/100/?title=Complete&color=C2185B&width=200) |
+| PCOD Risk Engine | ![100%](https://progress-bar.xyz/100/?title=Complete&color=C2185B&width=200) |
+| User Authentication | ![100%](https://progress-bar.xyz/100/?title=Complete&color=C2185B&width=200) |
+| Cycle Prediction | ![100%](https://progress-bar.xyz/100/?title=Complete&color=C2185B&width=200) |
+| PDF Doctor Report | ![100%](https://progress-bar.xyz/100/?title=Complete&color=C2185B&width=200) |
+| Hindi Localization | ![60%](https://progress-bar.xyz/60/?title=In+Progress&color=7B1FA2&width=200) |
+| Mobile App | ![10%](https://progress-bar.xyz/10/?title=Planned&color=9E9E9E&width=200) |
+| Doctor Connect | ![5%](https://progress-bar.xyz/5/?title=Planned&color=9E9E9E&width=200) |
+
+---
+
+## 👩‍💻 Contributors
+
+See [CONTRIBUTORS.md](CONTRIBUTORS.md) for the full list of team members and how to add yourself.
+
+[![Contributors](https://contrib.rocks/image?repo=khushi897920-lang/hercycle-ai)](CONTRIBUTORS.md)
+
+---
+
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome!
@@ -246,12 +316,35 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 ---
 
+## 📈 Repository Activity
+
+![GitHub Activity](https://github-readme-activity-graph.vercel.app/graph?username=khushi897920-lang&theme=react-dark&bg_color=0D1117&color=C2185B&line=C2185B&point=ffffff&area=true&hide_border=true)
+
 <div align="center">
 
-Built with 💕 for women's health tech
+![GitHub Stats](https://github-readme-stats.vercel.app/api?username=khushi897920-lang&show_icons=true&theme=radical&bg_color=0D1117&title_color=C2185B&icon_color=C2185B&text_color=ffffff&border_color=C2185B)
 
-**HerCycle AI — Know your body, love yourself** 🌸
+</div>
 
-*Made in India 🇮🇳 · Powered by AI · Built for every woman*
+<div align="center">
+
+---
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=150&section=footer&text=HerCycle%20AI&fontSize=42&fontColor=ffffff&animation=twinkling&fontAlignY=65" width="100%"/>
+
+### 🌸 Thank you for visiting HerCycle AI
+
+*Every woman deserves to understand her own body.*
+*We built this so she can.*
+
+[![Live Demo](https://img.shields.io/badge/🚀%20Try%20Live%20Demo-C2185B?style=for-the-badge&logoColor=white)](https://hercycle-ai.vercel.app)
+[![GitHub Stars](https://img.shields.io/github/stars/khushi897920-lang/hercycle-ai?style=for-the-badge&color=C2185B&logo=github)](https://github.com/khushi897920-lang/hercycle-ai)
+[![Contributors](https://img.shields.io/github/contributors/khushi897920-lang/hercycle-ai?style=for-the-badge&color=7B1FA2)](CONTRIBUTORS.md)
+
+<br/>
+
+*Made with* 💕 *in India 🇮🇳*
+
+*© 2026 HerCycle AI Team · MIT License*
 
 </div>

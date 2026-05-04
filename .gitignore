@@ -30,14 +30,21 @@ next-env.d.ts
 dist/
 dist
 
-# Environment files (for local development only)
+# Environment files - NEVER commit these
 .env
 .env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
 .env.development.local
 .env.test.local
 .env.production.local
 *token.json*
 *credentials.json*
+
+# Supabase
+.supabase/
 
 # Logs and debug files
 npm-debug.log*
@@ -48,7 +55,9 @@ dump.rdb
 
 # System files
 .DS_Store
+Thumbs.db
 *.pem
+*.swp
 
 # Python
 __pycache__/
