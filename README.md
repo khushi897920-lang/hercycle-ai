@@ -285,9 +285,42 @@ Phase 8  🔲  Community forum for anonymous peer support
 
 ## 👩‍💻 Contributors
 
-See [CONTRIBUTORS.md](CONTRIBUTORS.md) for the full list of team members and how to add yourself.
+Thank you to all the amazing people who built HerCycle AI!
 
-[![Contributors](https://contrib.rocks/image?repo=khushi897920-lang/hercycle-ai)](CONTRIBUTORS.md)
+### Team Members
+
+| Avatar | Name | Role | GitHub | LinkedIn |
+|--------|------|------|--------|----------|
+| <img src="https://github.com/khushi897920-lang.png" width="60" style="border-radius:50%"> | **Khushi** | Full Stack Developer & AI Integration · Project Lead | [@khushi897920-lang](https://github.com/khushi897920-lang) | [LinkedIn](https://linkedin.com/in/ADD_YOUR_LINKEDIN) |
+| <img src="https://github.com/TEAMMATE2_GITHUB.png" width="60" style="border-radius:50%"> | **Add Your Name** | Add Your Role | [@TEAMMATE2_GITHUB](https://github.com/TEAMMATE2_GITHUB) | [LinkedIn](https://linkedin.com/in/ADD_LINKEDIN) |
+| <img src="https://github.com/TEAMMATE3_GITHUB.png" width="60" style="border-radius:50%"> | **Add Your Name** | Add Your Role | [@TEAMMATE3_GITHUB](https://github.com/TEAMMATE3_GITHUB) | [LinkedIn](https://linkedin.com/in/ADD_LINKEDIN) |
+| <img src="https://github.com/TEAMMATE4_GITHUB.png" width="60" style="border-radius:50%"> | **Add Your Name** | Add Your Role | [@TEAMMATE4_GITHUB](https://github.com/TEAMMATE4_GITHUB) | [LinkedIn](https://linkedin.com/in/ADD_LINKEDIN) |
+
+### How to Add Yourself
+
+1. Fork this repository
+2. Edit this file: `README.md`
+3. Replace your row's placeholder with your real details:
+   - Replace `TEAMMATE_GITHUB` with your GitHub username
+   - Replace `Add Your Name` with your real name
+   - Replace `Add Your Role` with your role in the project
+   - Replace `ADD_LINKEDIN` with your LinkedIn profile URL
+4. Commit with message: `docs: add [YOUR NAME] to contributors`
+5. Push and open a Pull Request
+
+### Roles Reference
+
+| Role | Description |
+|------|-------------|
+| Full Stack Developer | Built frontend + backend + API routes |
+| UI/UX Designer | Designed the glassmorphism interface |
+| AI Integration | Integrated Gemini + Groq chat system |
+| Database Architect | Designed Supabase schema + RLS policies |
+| Project Lead | Overall project direction and management |
+| Backend Developer | Built API routes and business logic |
+| Frontend Developer | Built React components and pages |
+
+[![Contributors](https://contrib.rocks/image?repo=khushi897920-lang/hercycle-ai)](#-contributors)
 
 ---
 
@@ -339,7 +372,7 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 [![Live Demo](https://img.shields.io/badge/🚀%20Try%20Live%20Demo-C2185B?style=for-the-badge&logoColor=white)](https://hercycle-ai.vercel.app)
 [![GitHub Stars](https://img.shields.io/github/stars/khushi897920-lang/hercycle-ai?style=for-the-badge&color=C2185B&logo=github)](https://github.com/khushi897920-lang/hercycle-ai)
-[![Contributors](https://img.shields.io/github/contributors/khushi897920-lang/hercycle-ai?style=for-the-badge&color=7B1FA2)](CONTRIBUTORS.md)
+[![Contributors](https://img.shields.io/github/contributors/khushi897920-lang/hercycle-ai?style=for-the-badge&color=7B1FA2)](#-contributors)
 
 <br/>
 
