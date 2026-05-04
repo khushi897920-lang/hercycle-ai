@@ -353,11 +353,6 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 ![GitHub Activity](https://github-readme-activity-graph.vercel.app/graph?username=khushi897920-lang&theme=react-dark&bg_color=0D1117&color=C2185B&line=C2185B&point=ffffff&area=true&hide_border=true)
 
-<div align="center">
-
-![GitHub Stats](https://github-readme-stats.vercel.app/api?username=khushi897920-lang&show_icons=true&theme=radical&bg_color=0D1117&title_color=C2185B&icon_color=C2185B&text_color=ffffff&border_color=C2185B)
-
-</div>
 
 <div align="center">
 
