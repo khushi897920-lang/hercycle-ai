@@ -1,16 +1,10 @@
 const nextConfig = {
-  output: 'standalone',
+  // ⚠️ Do NOT use output: 'standalone' on Vercel — it breaks serverless routing
   images: {
     unoptimized: true,
   },
-  // Moved from experimental.serverComponentsExternalPackages (Next.js 16+)
-  serverExternalPackages: ['mongodb'],
   // Silence the Turbopack/webpack conflict warning
   turbopack: {},
-  onDemandEntries: {
-    maxInactiveAge: 10000,
-    pagesBufferLength: 2,
-  },
   async headers() {
     return [
       {
