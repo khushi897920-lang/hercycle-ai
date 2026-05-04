@@ -356,6 +356,12 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 <div align="center">
 
+![GitHub Stats](https://github-readme-stats.vercel.app/api?username=khushi897920-lang&show_icons=true&theme=radical&bg_color=0D1117&title_color=C2185B&icon_color=C2185B&text_color=ffffff&border_color=C2185B&cache_seconds=1800)
+
+</div>
+
+<div align="center">
+
 ---
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=150&section=footer&text=HerCycle%20AI&fontSize=42&fontColor=ffffff&animation=twinkling&fontAlignY=65" width="100%"/>
@@ -367,7 +373,7 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 [![Live Demo](https://img.shields.io/badge/🚀%20Try%20Live%20Demo-C2185B?style=for-the-badge&logoColor=white)](https://hercycle-ai.vercel.app)
 [![GitHub Stars](https://img.shields.io/github/stars/khushi897920-lang/hercycle-ai?style=for-the-badge&color=C2185B&logo=github)](https://github.com/khushi897920-lang/hercycle-ai)
-[![Contributors](https://img.shields.io/github/contributors/khushi897920-lang/hercycle-ai?style=for-the-badge&color=7B1FA2)](#-contributors)
+[![Contributors](https://img.shields.io/github/contributors/khushi897920-lang/hercycle-ai?style=for-the-badge&color=7B1FA2&cacheSeconds=1800)](#-contributors)
 
 <br/>
 
