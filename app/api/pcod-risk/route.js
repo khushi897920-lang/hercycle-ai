@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { calculatePCODRisk } from '@/lib/api-helpers'
 import { getAuthUserId } from '@/lib/clerk-server'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 export async function GET() {
   try {
@@ -15,6 +10,7 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
+    const supabaseAdmin = getSupabaseAdmin()
     const { data: cycles } = await supabaseAdmin
       .from('cycles')
       .select('*')
@@ -36,7 +32,8 @@ export async function GET() {
   } catch (error) {
     console.error('Error calculating PCOD risk:', error)
     return NextResponse.json({
-      success: true,
+      success: false,
+      error: `Failed to calculate PCOD risk: ${error.message || error}`,
       data: {
         score: 25, label: 'LOW RISK',
         factors: ['Regular cycle length maintained', 'No significant hormonal symptoms'],

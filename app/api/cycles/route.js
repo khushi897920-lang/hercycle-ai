@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { predictNextPeriod } from '@/lib/api-helpers'
 import { getAuthUserId } from '@/lib/clerk-server'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 export async function GET() {
   try {
     const userId = await getAuthUserId()
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 
+    const supabaseAdmin = getSupabaseAdmin()
     const { data: cycles, error } = await supabaseAdmin
       .from('cycles')
       .select('*')
@@ -27,7 +23,8 @@ export async function GET() {
     const prediction = predictNextPeriod(cycles || [])
     return NextResponse.json({ success: true, data: { cycles: cycles || [], nextPeriodDate: prediction.nextPeriodDate, confidence: prediction.confidence, averageCycleLength: prediction.averageCycleLength } })
   } catch (error) {
-    return NextResponse.json({ success: true, data: { cycles: [], nextPeriodDate: null, confidence: null, averageCycleLength: 28 } })
+    console.error('Error fetching cycles:', error)
+    return NextResponse.json({ success: false, error: `Failed to fetch cycles: ${error.message || error}` }, { status: 500 })
   }
 }
 
@@ -39,6 +36,7 @@ export async function POST(request) {
     const body = await request.json()
     const { start_date, end_date, cycle_length } = body
 
+    const supabaseAdmin = getSupabaseAdmin()
     const { error } = await supabaseAdmin.from('cycles').insert([{
       user_id: userId,
       start_date,
@@ -53,7 +51,8 @@ export async function POST(request) {
     }
     return NextResponse.json({ success: true })
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 })
+    console.error('Error starting period cycle:', error)
+    return NextResponse.json({ success: false, error: `Failed to start period: ${error.message || error}` }, { status: 500 })
   }
 }
 
@@ -65,6 +64,7 @@ export async function PATCH(request) {
     const body = await request.json()
     const { id, end_date } = body
 
+    const supabaseAdmin = getSupabaseAdmin()
     const { error } = await supabaseAdmin
       .from('cycles')
       .update({ end_date })
@@ -74,6 +74,7 @@ export async function PATCH(request) {
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     return NextResponse.json({ success: true })
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 })
+    console.error('Error ending period cycle:', error)
+    return NextResponse.json({ success: false, error: `Failed to end period: ${error.message || error}` }, { status: 500 })
   }
 }

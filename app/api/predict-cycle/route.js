@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { predictNextPeriod } from '@/lib/api-helpers'
 import { getAuthUserId } from '@/lib/clerk-server'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 export async function POST() {
   try {
@@ -15,6 +10,7 @@ export async function POST() {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
+    const supabaseAdmin = getSupabaseAdmin()
     const { data: cycles } = await supabaseAdmin
       .from('cycles')
       .select('*')
@@ -26,6 +22,6 @@ export async function POST() {
     return NextResponse.json({ success: true, prediction })
   } catch (error) {
     console.error('Error predicting cycle:', error)
-    return NextResponse.json({ success: false, error: 'Failed to predict cycle' }, { status: 500 })
+    return NextResponse.json({ success: false, error: `Failed to predict cycle: ${error.message || error}` }, { status: 500 })
   }
 }
