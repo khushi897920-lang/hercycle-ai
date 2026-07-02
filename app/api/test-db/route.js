@@ -1,9 +1,23 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { devLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request) {
+  // ============ RATE LIMITING (NEW CODE) ============
+  try {
+    const identifier = await getRateLimitIdentifier(request);
+    await devLimiter.check(2, identifier); // 2 requests per minute
+  } catch (rateLimitError) {
+    console.warn(`[Rate Limit] Test-DB endpoint: ${rateLimitError.message}`);
+    return NextResponse.json(
+      { success: false, error: 'Too many requests. Test route is heavily rate limited.' },
+      { status: 429 }
+    );
+  }
+  // ==================================================
+
   const diagnostics = {
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Defined (starts with ' + process.env.NEXT_PUBLIC_SUPABASE_URL.substring(0, 12) + '...)' : 'MISSING',
     supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Defined (length: ' + process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.length + ')' : 'MISSING',

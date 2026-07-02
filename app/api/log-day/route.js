@@ -1,9 +1,23 @@
 import { NextResponse } from 'next/server'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { crudLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
 
 // GET /api/log-day?date=YYYY-MM-DD — fetch a single day's log
 export async function GET(request) {
+  // ============ RATE LIMITING (NEW CODE) ============
+  try {
+    const identifier = await getRateLimitIdentifier(request);
+    await crudLimiter.check(20, identifier); // 20 requests per minute
+  } catch (rateLimitError) {
+    console.warn(`[Rate Limit] Log-day GET endpoint: ${rateLimitError.message}`);
+    return NextResponse.json(
+      { success: false, message: 'Too many requests, please slow down.' },
+      { status: 429 }
+    );
+  }
+  // ==================================================
+
   try {
     const userId = await getAuthUserId()
     if (!userId) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
@@ -29,6 +43,19 @@ export async function GET(request) {
 
 // POST /api/log-day — upsert a day's log
 export async function POST(request) {
+  // ============ RATE LIMITING (NEW CODE) ============
+  try {
+    const identifier = await getRateLimitIdentifier(request);
+    await crudLimiter.check(20, identifier); // 20 requests per minute
+  } catch (rateLimitError) {
+    console.warn(`[Rate Limit] Log-day POST endpoint: ${rateLimitError.message}`);
+    return NextResponse.json(
+      { success: false, message: 'Too many requests, please slow down.' },
+      { status: 429 }
+    );
+  }
+  // ==================================================
+
   try {
     const userId = await getAuthUserId()
     if (!userId) {

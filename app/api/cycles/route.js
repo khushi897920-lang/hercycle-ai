@@ -2,8 +2,22 @@ import { NextResponse } from 'next/server'
 import { predictNextPeriod } from '@/lib/api-helpers'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { crudLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
 
-export async function GET() {
+export async function GET(request) {
+  // ============ RATE LIMITING (NEW CODE) ============
+  try {
+    const identifier = await getRateLimitIdentifier(request);
+    await crudLimiter.check(30, identifier); // 30 requests per minute (read-heavy)
+  } catch (rateLimitError) {
+    console.warn(`[Rate Limit] Cycles GET endpoint: ${rateLimitError.message}`);
+    return NextResponse.json(
+      { success: false, error: 'Too many requests, please slow down.' },
+      { status: 429 }
+    );
+  }
+  // ==================================================
+
   try {
     const userId = await getAuthUserId()
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
@@ -29,6 +43,19 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  // ============ RATE LIMITING (NEW CODE) ============
+  try {
+    const identifier = await getRateLimitIdentifier(request);
+    await crudLimiter.check(30, identifier); // 30 requests per minute
+  } catch (rateLimitError) {
+    console.warn(`[Rate Limit] Cycles POST endpoint: ${rateLimitError.message}`);
+    return NextResponse.json(
+      { success: false, error: 'Too many requests, please slow down.' },
+      { status: 429 }
+    );
+  }
+  // ==================================================
+
   try {
     const userId = await getAuthUserId()
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
@@ -57,6 +84,19 @@ export async function POST(request) {
 }
 
 export async function PATCH(request) {
+  // ============ RATE LIMITING (NEW CODE) ============
+  try {
+    const identifier = await getRateLimitIdentifier(request);
+    await crudLimiter.check(30, identifier); // 30 requests per minute
+  } catch (rateLimitError) {
+    console.warn(`[Rate Limit] Cycles PATCH endpoint: ${rateLimitError.message}`);
+    return NextResponse.json(
+      { success: false, error: 'Too many requests, please slow down.' },
+      { status: 429 }
+    );
+  }
+  // ==================================================
+
   try {
     const userId = await getAuthUserId()
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
