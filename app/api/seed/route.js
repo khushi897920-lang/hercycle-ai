@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-
-// 🔒 SAFETY GUARD — seed route disabled in production
-if (process.env.NODE_ENV === 'production') {
-  module.exports = {
-    GET: () => NextResponse.json({ error: 'Not available in production' }, { status: 403 }),
-    POST: () => NextResponse.json({ error: 'Not available in production' }, { status: 403 }),
-  }
-}
-
+import { getAuthUserId } from '@/lib/clerk-server'
+import { logger } from '@/lib/logger'
 
 // Use service role key if available (bypasses RLS), fall back to anon
 const supabase = createClient(
@@ -53,28 +46,28 @@ function buildCycles() {
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const PERIOD_SYMPTOMS  = ['Cramps', 'Bloating', 'Fatigue', 'Headache']
-  const PMS_SYMPTOMS     = ['Bloating', 'Headache', 'Acne', 'Fatigue']
-  const OVUL_SYMPTOMS    = ['Fatigue']
+  // 1. Restrict to development only
+  if (process.env.NODE_ENV === 'production') {
+    logger.warn('Seed route invocation attempt in production blocked');
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
+  // 2. Require Clerk authentication
   try {
-    // 0. Ensure user exists to satisfy foreign key constraints
-    const { data: userResp, error: userCheckErr } = await supabase.auth.admin.getUserById(USER_ID)
-    
-    if (userCheckErr && userCheckErr.status === 404) {
-      // User doesn't exist, create them
-      const { error: createErr } = await supabase.auth.admin.createUser({
-        id: USER_ID,
-        email: 'demo@hercycle.test',
-        password: 'password123',
-        email_confirm: true
-      })
-      if (createErr) {
-        return NextResponse.json({ success: false, error: `Auth create: ${createErr.message}` }, { status: 500 })
-      }
+    const userId = await getAuthUserId()
+    if (!userId) {
+      logger.warn('Unauthenticated access attempt to seed API');
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
+    const PERIOD_SYMPTOMS  = ['Cramps', 'Bloating', 'Fatigue', 'Headache']
+    const PMS_SYMPTOMS     = ['Bloating', 'Headache', 'Acne', 'Fatigue']
+    const OVUL_SYMPTOMS    = ['Fatigue']
+
+    // 0. Ensure user exists (No-op: user_id is text type and does not reference auth.users due to Clerk migration)
+
     // 1. Clear existing data
+    logger.info(`Seeding DB: clearing existing data for mock user ${USER_ID}`);
     await supabase.from('daily_logs').delete().eq('user_id', USER_ID)
     await supabase.from('cycles').delete().eq('user_id', USER_ID)
 
@@ -89,6 +82,7 @@ export async function GET() {
 
     const { error: cycleErr } = await supabase.from('cycles').insert(cycleRows)
     if (cycleErr) {
+      logger.error('Seeding DB: Cycles insertion error:', cycleErr.message);
       return NextResponse.json({ success: false, error: `Cycles: ${cycleErr.message}` }, { status: 500 })
     }
 
@@ -140,6 +134,7 @@ export async function GET() {
       .upsert(logRows, { onConflict: 'user_id,date' })
 
     if (logErr) {
+      logger.error('Seeding DB: Logs insertion error:', logErr.message);
       return NextResponse.json({ success: false, error: `Logs: ${logErr.message}` }, { status: 500 })
     }
 
@@ -147,6 +142,7 @@ export async function GET() {
     const lastCycle  = cycles[cycles.length - 1]
     const nextPeriod = addDays(lastCycle.start, avgLen)
 
+    logger.info(`Seeding DB: seeding complete successfully for mock user ${USER_ID}`);
     return NextResponse.json({
       success: true,
       message: `✅ Seeded ${cycles.length} cycles and ${logRows.length} daily logs for demo-user`,
@@ -160,6 +156,7 @@ export async function GET() {
       }
     })
   } catch (err) {
+    logger.error('Seeding DB: unexpected error:', err.message || err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })
   }
 }

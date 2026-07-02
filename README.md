@@ -120,7 +120,7 @@ flowchart LR
 | **Charts** | Recharts (Line, Bar, custom tooltips) |
 | **Backend** | Next.js API Routes (serverless) |
 | **Database** | Supabase (PostgreSQL) |
-| **Auth** | Supabase Auth + `@supabase/ssr` |
+| **Auth** | Clerk (@clerk/nextjs) |
 | **AI (Primary)** | Google Gemini 2.0 Flash |
 | **AI (Fallback)** | Groq LLaMA 3.1 8B Instant |
 | **PDF Export** | jsPDF + jsPDF-AutoTable |
@@ -134,7 +134,8 @@ flowchart LR
 ### Prerequisites
 
 - Node.js `>= 18.x`
-- A [Supabase](https://supabase.com/) account (free tier works)
+- A [Supabase](https://supabase.com/) account (free database hosting)
+- A [Clerk](https://clerk.com/) account (free user authentication)
 - A [Google AI Studio](https://aistudio.google.com/) API key (Gemini)
 - A [Groq](https://console.groq.com/) API key (free, optional fallback)
 
@@ -157,10 +158,15 @@ cp .env.example .env.local
 Open `.env.local` and fill in your keys:
 
 ```env
-# Supabase (required)
+# Supabase Database (required)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+
+# Clerk Auth (required)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_clerk_key_here
+CLERK_SECRET_KEY=sk_test_your_clerk_secret_here
+CLERK_WEBHOOK_SECRET=whsec_your_clerk_webhook_secret_here
 
 # AI APIs (at least one required)
 GEMINI_API_KEY=your_gemini_api_key_here
@@ -186,24 +192,22 @@ This project uses [Supabase](https://supabase.com/) as its database. Create a fr
 -- Cycles table
 CREATE TABLE cycles (
   id            UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id       UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id       TEXT NOT NULL,
   start_date    DATE NOT NULL,
   end_date      DATE,
   cycle_length  INTEGER DEFAULT 28,
-  flow_intensity TEXT,
   created_at    TIMESTAMPTZ DEFAULT now()
 );
 
 -- Daily logs table
 CREATE TABLE daily_logs (
   id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id    TEXT NOT NULL,
   date       DATE NOT NULL,
   symptoms   TEXT[],
   mood       TEXT,
   flow       TEXT,
   updated_at TIMESTAMPTZ DEFAULT now(),
-  created_at TIMESTAMPTZ DEFAULT now(),
   CONSTRAINT daily_logs_user_date_unique UNIQUE (user_id, date)
 );
 ```
@@ -234,21 +238,21 @@ CREATE POLICY "Users can manage their own daily logs"
 2. Add **all environment variables** from `.env.example` in the Vercel dashboard
 3. Deploy — Vercel auto-detects Next.js and configures everything
 
-### Configure Supabase Auth URLs
+### Configure Clerk Redirects
 
-In your **Supabase Dashboard → Authentication → URL Configuration**:
+In your **Clerk Dashboard → Paths / Redirects**:
 
-| Setting | Value |
-|---------|-------|
-| **Site URL** | `https://hercycle-ai.vercel.app` |
-| **Redirect URLs** | `https://hercycle-ai.vercel.app/auth/callback` |
+* Set **Sign-in Path** to `/auth/login`
+* Set **Sign-up Path** to `/auth/signup`
+* Set **After Sign-in Redirect URL** to `/`
+* Set **After Sign-up Redirect URL** to `/`
 
-### Enable Google OAuth
+### Configure Clerk Webhook (Account Deletion Cascade)
 
-1. Go to **Supabase Dashboard → Authentication → Providers → Google**
-2. Enable Google provider
-3. Add your **Google Client ID** and **Client Secret** from [Google Cloud Console](https://console.cloud.google.com/)
-4. Add `https://your-project.supabase.co/auth/v1/callback` as an authorized redirect URI in Google Cloud
+1. Go to **Clerk Dashboard → Webhooks** and click **Add Endpoint**.
+2. Set Endpoint URL to `https://your-domain.vercel.app/api/webhooks/clerk`.
+3. Subscribe to the `user.deleted` event.
+4. Copy the Signing Secret and configure it in your Vercel/production environment as `CLERK_WEBHOOK_SECRET`. This triggers a cascading purge of user cycles and logs when their account is deleted.
 
 ---
 
@@ -309,20 +313,15 @@ Thank you to all the amazing people who built HerCycle AI!
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome!
+Contributions, issues, and feature requests are welcome! 
 
-```bash
-# Fork the repo, then:
-git checkout -b feature/your-feature-name
-git commit -m "feat: add your feature"
-git push origin feature/your-feature-name
-# Open a Pull Request
-```
+For comprehensive instructions on setting up, code styles, and opening pull requests, please read our **[Contribution Guide](docs/CONTRIBUTING.md)**.
 
 Please make sure your code:
-- Has no `console.log` debug statements
-- Uses `start_date` / `end_date` for cycle columns (not `period_start` / `period_end`)
-- Follows the existing `@supabase/ssr` client pattern
+* Has no `console.log` debug statements (use `logger` from `@/lib/logger`).
+* Uses `start_date` / `end_date` for cycle columns (not `period_start` / `period_end`).
+* Uses the server-side `getSupabaseAdmin()` client helper for database updates.
+* Passes the integration checks: `node scripts/production-check.js`.
 
 ---
 

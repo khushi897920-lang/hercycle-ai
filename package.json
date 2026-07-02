@@ -64,6 +64,7 @@
         "react-resizable-panels": "^3.0.3",
         "recharts": "^2.15.4",
         "sonner": "^2.0.5",
+        "svix": "^1.96.1",
         "tailwind-merge": "^3.3.1",
         "tailwindcss-animate": "^1.0.7",
         "uuid": "^9.0.1",

@@ -1,3 +1,4 @@
+import '@/lib/env'
 import { Playfair_Display, Inter } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { LanguageProvider } from '@/lib/LanguageContext'

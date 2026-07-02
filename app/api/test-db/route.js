@@ -1,19 +1,34 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { getAuthUserId } from '@/lib/clerk-server'
+import { logger } from '@/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const diagnostics = {
-    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Defined (starts with ' + process.env.NEXT_PUBLIC_SUPABASE_URL.substring(0, 12) + '...)' : 'MISSING',
-    supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Defined (length: ' + process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.length + ')' : 'MISSING',
-    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Defined (length: ' + process.env.SUPABASE_SERVICE_ROLE_KEY.length + ')' : 'MISSING',
-    clerkPublishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? 'Defined' : 'MISSING',
-    clerkSecretKey: process.env.CLERK_SECRET_KEY ? 'Defined (length: ' + process.env.CLERK_SECRET_KEY.length + ')' : 'MISSING',
-    nodeEnv: process.env.NODE_ENV || 'undefined',
+  // 1. Restrict to development only
+  if (process.env.NODE_ENV === 'production') {
+    logger.warn('Unauthorized production database test request blocked');
+    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
   }
 
+  // 2. Require Clerk authentication
   try {
+    const userId = await getAuthUserId()
+    if (!userId) {
+      logger.warn('Unauthenticated access attempt to test-db API');
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const diagnostics = {
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Defined (starts with ' + process.env.NEXT_PUBLIC_SUPABASE_URL.substring(0, 12) + '...)' : 'MISSING',
+      supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Defined (length: ' + process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.length + ')' : 'MISSING',
+      supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Defined (length: ' + process.env.SUPABASE_SERVICE_ROLE_KEY.length + ')' : 'MISSING',
+      clerkPublishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? 'Defined' : 'MISSING',
+      clerkSecretKey: process.env.CLERK_SECRET_KEY ? 'Defined (length: ' + process.env.CLERK_SECRET_KEY.length + ')' : 'MISSING',
+      nodeEnv: process.env.NODE_ENV || 'undefined',
+    }
+
     const supabase = getSupabaseAdmin()
     const start = Date.now()
     
@@ -26,6 +41,7 @@ export async function GET() {
     const queryTime = Date.now() - start
 
     if (cyclesError) {
+      logger.error('Test DB query failed:', cyclesError.message);
       return NextResponse.json({
         success: false,
         step: 'query_cycles',
@@ -35,6 +51,7 @@ export async function GET() {
       }, { status: 500 })
     }
 
+    logger.info('Test DB connection diagnostic successful');
     return NextResponse.json({
       success: true,
       message: 'Supabase connection successful!',
@@ -44,11 +61,14 @@ export async function GET() {
     })
 
   } catch (err) {
+    logger.error('Test DB route initialization error:', err.message || err);
     return NextResponse.json({
       success: false,
       step: 'initialization',
       error: err.message || err.toString(),
-      diagnostics
+      diagnostics: {
+        nodeEnv: process.env.NODE_ENV || 'undefined',
+      }
     }, { status: 500 })
   }
 }
