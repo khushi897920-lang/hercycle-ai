@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { aiLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 const TIMEOUT_MS = 8000; // 8 seconds timeout to prevent long hangs
@@ -86,6 +87,22 @@ async function getAIResponse(message, systemPrompt) {
 }
 
 export async function POST(request) {
+  // ============ RATE LIMITING (NEW CODE) ============
+  try {
+    const identifier = await getRateLimitIdentifier(request);
+    await aiLimiter.check(10, identifier); // 10 requests per minute
+  } catch (rateLimitError) {
+    console.warn(`[Rate Limit] Chat endpoint: ${rateLimitError.message}`);
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Too many requests, please slow down. You can try again in a minute.' 
+      },
+      { status: 429 }
+    );
+  }
+  // ==================================================
+
   let language = 'en'; // default
   
   try {

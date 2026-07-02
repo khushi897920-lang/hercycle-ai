@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { devLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
 
 // 🔒 SAFETY GUARD — seed route disabled in production
 if (process.env.NODE_ENV === 'production') {
@@ -9,12 +10,6 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 
-
-// Use service role key if available (bypasses RLS), fall back to anon
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
 
 const USER_ID      = '00000000-0000-0000-0000-000000000001'
 const CYCLE_LENGTHS  = [28, 27, 29, 28, 28, 27]
@@ -50,15 +45,39 @@ function buildCycles() {
   return cycles.sort((a, b) => a.start - b.start)
 }
 
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
+}
+
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request) {
+  // ============ RATE LIMITING (NEW CODE) ============
+  // Only apply in non-production environments (production already blocked above)
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      const identifier = await getRateLimitIdentifier(request);
+      await devLimiter.check(2, identifier); // 2 requests per minute
+    } catch (rateLimitError) {
+      console.warn(`[Rate Limit] Seed endpoint: ${rateLimitError.message}`);
+      return NextResponse.json(
+        { success: false, error: 'Too many requests. Seed route is heavily rate limited.' },
+        { status: 429 }
+      );
+    }
+  }
+  // ==================================================
+
   const PERIOD_SYMPTOMS  = ['Cramps', 'Bloating', 'Fatigue', 'Headache']
   const PMS_SYMPTOMS     = ['Bloating', 'Headache', 'Acne', 'Fatigue']
   const OVUL_SYMPTOMS    = ['Fatigue']
 
   try {
     // 0. Ensure user exists to satisfy foreign key constraints
+    const supabase = getSupabase()
     const { data: userResp, error: userCheckErr } = await supabase.auth.admin.getUserById(USER_ID)
     
     if (userCheckErr && userCheckErr.status === 404) {

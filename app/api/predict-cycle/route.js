@@ -2,8 +2,25 @@ import { NextResponse } from 'next/server'
 import { predictNextPeriod } from '@/lib/api-helpers'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { aiLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
 
-export async function POST() {
+export async function POST(request) {
+  // ============ RATE LIMITING (NEW CODE) ============
+  try {
+    const identifier = await getRateLimitIdentifier(request);
+    await aiLimiter.check(5, identifier); // 5 requests per minute
+  } catch (rateLimitError) {
+    console.warn(`[Rate Limit] Predict cycle endpoint: ${rateLimitError.message}`);
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Too many requests, please slow down. Cycle prediction is rate limited.' 
+      },
+      { status: 429 }
+    );
+  }
+  // ==================================================
+
   try {
     const userId = await getAuthUserId()
     if (!userId) {
