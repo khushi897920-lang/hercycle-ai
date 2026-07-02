@@ -14,6 +14,12 @@ const inter = Inter({
   variable: '--font-inter'  
 })
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
+
 export const metadata = {
   title: 'HerCycle AI — Smart Menstrual Health Tracker',
   description: 'AI-powered period tracking with PCOD risk prediction in Hindi & English. Know your body, love yourself.',
@@ -49,11 +55,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider clockSkewInMs={30000}>
-    <html lang="en">
+    <html lang="en" className="overflow-x-hidden">
       <head>
         <script dangerouslySetInnerHTML={{__html:'window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);'}} />
       </head>
-      <body className={`${playfair.variable} ${inter.variable}`} suppressHydrationWarning>
+      <body className={`${playfair.variable} ${inter.variable} overflow-x-hidden w-full`} suppressHydrationWarning>
         <LanguageProvider>
           {children}
           <Toaster

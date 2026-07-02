@@ -134,8 +134,8 @@ body {
 /* ──── GLASS MIXIN ──── */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(28px) saturate(1.4);
   -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  backdrop-filter: blur(28px) saturate(1.4);
   border: 1px solid var(--glass-edge);
   box-shadow:
     0 12px 48px var(--shadow-rose),
@@ -144,8 +144,8 @@ body {
 }
 .glass-dim {
   background: var(--glass-bg2);
-  backdrop-filter: blur(20px) saturate(1.2);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
   border: 1px solid var(--glass-edge2);
   box-shadow:
     0 8px 28px var(--shadow-plum),
@@ -161,6 +161,7 @@ nav {
   padding: 14px 26px;
   margin-bottom: 32px;
   gap: 20px;
+  flex-wrap: wrap;
   animation: slideDown 0.7s cubic-bezier(0.22,1,0.36,1) both;
 }
 @keyframes slideDown { from { transform: translateY(-18px); opacity: 0; } }
@@ -213,8 +214,8 @@ nav ul li a.active {
 .nav-right {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
-  white-space: nowrap;
 }
 
 .lang-toggle {
@@ -354,6 +355,7 @@ nav ul li a.active {
   font-weight: 500;
   font-size: 0.9rem;
   cursor: pointer;
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   transition: all 0.22s;
   font-family: var(--sans);
@@ -893,8 +895,8 @@ nav ul li a.active {
   border-radius: 20px;
   border: 1px solid rgba(232,82,126,0.35);
   background: rgba(232,82,126,0.12);
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   color: var(--text-white);
   font-size: 0.8rem;
   font-family: var(--sans);
@@ -1182,8 +1184,8 @@ footer {
   inset: 0;
   z-index: 100;
   background: rgba(80, 10, 60, 0.55);
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -1202,8 +1204,8 @@ footer {
   background: linear-gradient(160deg,
     rgba(255,255,255,0.22) 0%,
     rgba(255,255,255,0.12) 100%);
-  backdrop-filter: blur(36px) saturate(1.5);
   -webkit-backdrop-filter: blur(36px) saturate(1.5);
+  backdrop-filter: blur(36px) saturate(1.5);
   border: 1px solid rgba(255,255,255,0.38);
   border-bottom: none;
   border-radius: 28px 28px 0 0;
@@ -1286,8 +1288,8 @@ footer {
   inset: 0;
   z-index: 200;
   background: rgba(40, 5, 35, 0.70);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1301,8 +1303,8 @@ footer {
   background: linear-gradient(160deg,
     rgba(255,255,255,0.22) 0%,
     rgba(255,255,255,0.08) 100%);
-  backdrop-filter: blur(40px) saturate(1.6);
   -webkit-backdrop-filter: blur(40px) saturate(1.6);
+  backdrop-filter: blur(40px) saturate(1.6);
   border: 1px solid rgba(255,255,255,0.35);
   border-radius: 28px;
   padding: 40px 32px 28px;
@@ -1418,6 +1420,7 @@ footer {
 }
 .onboard-slider {
   flex: 1;
+  appearance: none;
   -webkit-appearance: none;
   height: 6px;
   border-radius: 6px;
