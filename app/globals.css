@@ -1092,6 +1092,33 @@ nav ul li a.active {
   z-index: 2;
 }
 
+/* Improved Interaction Styles */
+.symp-chip,
+.mood-btn,
+.flow-dot {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.symp-chip:hover,
+.mood-btn:hover,
+.flow-dot:hover {
+  transform: translateY(-2px);
+}
+
+.symp-chip:active,
+.mood-btn:active,
+.flow-dot:active {
+  transform: scale(0.95);
+}
+
+.symp-chip.active,
+.mood-btn.active,
+.flow-dot.active {
+  box-shadow: 0 0 15px rgba(255,105,180,.35);
+  border: 2px solid #ff4fa3;
+}
+
 .flow-lbl {
   color: var(--text-soft); 
   font-weight: 700;
