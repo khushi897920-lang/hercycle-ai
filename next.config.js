@@ -1,3 +1,6 @@
+const createNextIntlPlugin = require('next-intl/plugin');
+const withNextIntl = createNextIntlPlugin('./i18n.js');
+
 const nextConfig = {
   // Performance
   compress: true,
@@ -11,7 +14,9 @@ const nextConfig = {
   },
 
   // Turbopack (already default in dev, speeds up HMR)
-  turbopack: {},
+  turbopack: {
+    root: __dirname,
+  },
 
   // Optimize heavy packages — tree-shake on import
   experimental: {
@@ -58,4 +63,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = withNextIntl(nextConfig);

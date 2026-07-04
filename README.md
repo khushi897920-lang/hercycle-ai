@@ -314,6 +314,39 @@ Thank you to all the amazing people who built HerCycle AI!
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome! 
+## 🏆 ECSOC Contributors
+
+This project is officially participating in **ECSOC 2026**.
+
+To ensure your contribution is evaluated by the ECSOC Sentinel system, please follow these requirements carefully.
+
+### Before You Start
+- Fork the repository.
+- Comment on an issue and wait for it to be assigned.
+- Work on only one assigned issue at a time.
+- Create a separate branch for your changes.
+
+### Pull Request Requirements
+
+Every Pull Request **must**:
+
+- Reference the issue using:
+  ```text
+  Fixes #<issue_number>
+  ```
+
+- Include the **ECSoc26** label.
+
+> ⚠️ **Important**
+>
+> Pull Requests **without the `ECSoc26` label will NOT be processed by ECSOC Sentinel and will not be scored.**
+
+- Pass all GitHub Actions checks.
+- Build successfully (`npm run build`).
+- Follow the project's coding standards.
+- Update documentation when applicable.
+
+Thank you for contributing and best of luck in ECSOC! 🚀
 
 For comprehensive instructions on setting up, code styles, and opening pull requests, please read our **[Contribution Guide](docs/CONTRIBUTING.md)**.
 

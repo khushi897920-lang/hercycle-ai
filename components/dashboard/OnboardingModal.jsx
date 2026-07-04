@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { t } from '@/lib/i18n'
+import { useTranslations } from 'next-intl'
 import { useAuth } from '@clerk/nextjs'
 import toast from 'react-hot-toast'
 
-export default function OnboardingModal({ activeLang, onComplete, onSkip }) {
+export default function OnboardingModal({ onComplete, onSkip }) {
   const { userId } = useAuth()
+  const t = useTranslations('onboarding')
   const [lastPeriodDate, setLastPeriodDate] = useState('')
   const [cycleLength, setCycleLength] = useState(28)
   const [periodLength, setPeriodLength] = useState(5)
@@ -91,19 +92,17 @@ export default function OnboardingModal({ activeLang, onComplete, onSkip }) {
         </div>
 
         <h2 className="onboard-title">
-          {activeLang === 'हि' ? 'आपका स्वागत है!' : 'Welcome to HerCycle'}
+          {t('welcome')}
         </h2>
         <p className="onboard-subtitle">
-          {activeLang === 'हि'
-            ? 'हमें अपनी आखिरी माहवारी के बारे में बताएं ताकि हम आपके लिए सटीक पूर्वानुमान बना सकें।'
-            : 'Tell us about your last period so we can generate accurate predictions for you.'}
+          {t('subtitle')}
         </p>
 
         {step === 1 && (
           <div className="onboard-form fadeSlideUp">
             <div className="onboard-field">
               <label htmlFor="last-period-date">
-                {activeLang === 'हि' ? 'आखिरी माहवारी की तारीख' : 'Last period start date'}
+                {t('lastPeriod')}
               </label>
               <input
                 id="last-period-date"
@@ -120,7 +119,7 @@ export default function OnboardingModal({ activeLang, onComplete, onSkip }) {
               disabled={!lastPeriodDate}
               onClick={() => setStep(2)}
             >
-              {activeLang === 'हि' ? 'आगे बढ़ें →' : 'Continue →'}
+              {t('continue')}
             </button>
           </div>
         )}
@@ -129,7 +128,7 @@ export default function OnboardingModal({ activeLang, onComplete, onSkip }) {
           <div className="onboard-form fadeSlideUp">
             <div className="onboard-field">
               <label htmlFor="cycle-length">
-                {activeLang === 'हि' ? 'औसत चक्र अवधि (दिन)' : 'Average cycle length (days)'}
+                {t('avgCycle')}
               </label>
               <div className="onboard-slider-row">
                 <input
@@ -147,7 +146,7 @@ export default function OnboardingModal({ activeLang, onComplete, onSkip }) {
 
             <div className="onboard-field">
               <label htmlFor="period-length">
-                {activeLang === 'हि' ? 'माहवारी की अवधि (दिन)' : 'Period length (days)'}
+                {t('periodLength')}
               </label>
               <div className="onboard-slider-row">
                 <input
@@ -170,7 +169,7 @@ export default function OnboardingModal({ activeLang, onComplete, onSkip }) {
                 </div>
               )}
               <button className="onboard-back-btn" onClick={() => setStep(1)}>
-                ← {activeLang === 'हि' ? 'वापस' : 'Back'}
+                ← {t('back')}
               </button>
               <button
                 className="onboard-next-btn"
@@ -178,8 +177,8 @@ export default function OnboardingModal({ activeLang, onComplete, onSkip }) {
                 disabled={saving}
               >
                 {saving
-                  ? (activeLang === 'हि' ? 'सहेज रहे हैं…' : 'Saving…')
-                  : (activeLang === 'हि' ? 'शुरू करें ✨' : 'Get Started ✨')}
+                  ? t('saving')
+                  : t('start')}
               </button>
             </div>
           </div>
@@ -187,7 +186,7 @@ export default function OnboardingModal({ activeLang, onComplete, onSkip }) {
 
         {/* Skip link */}
         <button className="onboard-skip" onClick={handleSkip}>
-          {activeLang === 'हि' ? 'बाद में करें' : 'Skip for now'}
+          {t('skip')}
         </button>
       </div>
     </div>

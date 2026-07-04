@@ -43,6 +43,19 @@ This issue is officially available for **ECSOC** contributors.
 - Follow the project's coding standards.
 - Update documentation if necessary.
 
+  ## 📌 ECSOC Pull Request Requirements
+
+When submitting your Pull Request for this issue:
+
+- Add `Fixes #<issue_number>` in the PR description.
+- Add the **ECSoc26** label to your Pull Request.
+- Ensure all GitHub Actions checks pass.
+- Ensure the project builds successfully.
+
+> ⚠️ **Important**
+>
+> Pull Requests without the **ECSoc26** label will **NOT** be processed by the ECSOC Sentinel system and will **not** be scored.
+
 Failure to follow these guidelines may result in the Pull Request being closed.
 
 Happy Coding! ❤️

@@ -8,11 +8,8 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import CycleCalendar from '@/components/dashboard/CycleCalendar'
 import DailyLogPanel from '@/components/dashboard/DailyLogPanel'
-
-const MONTH_NAMES = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December',
-]
+import { useOffline } from '@/lib/OfflineContext'
+import { useTranslations, useLocale } from 'next-intl'
 
 const TEXT_PRIMARY = '#ffffff'
 const TEXT_FAINT   = 'rgba(255,255,255,0.65)'
@@ -51,12 +48,15 @@ function deriveDateSets(cycleData) {
   return { periodDays, ovulationDays, predictedDays, today }
 }
 
-function buildCalendarDays(year, month, periodDays, ovulationDays, predictedDays, todayStr) {
+function buildCalendarDays(year, month, periodDays, ovulationDays, predictedDays, todayStr, locale) {
   const firstDay        = new Date(year, month, 1).getDay()
   const daysInMonth     = new Date(year, month + 1, 0).getDate()
   const daysInPrevMonth = new Date(year, month, 0).getDate()
   const days = []
-  ;['S','M','T','W','T','F','S'].forEach(h => days.push({ type: 'header', label: h }))
+  
+  const weekDays = locale === 'hi' ? ['र', 'सो', 'मं', 'बु', 'गु', 'शु', 'श'] : ['S','M','T','W','T','F','S']
+  weekDays.forEach(h => days.push({ type: 'header', label: h }))
+  
   for (let i = firstDay - 1; i >= 0; i--) days.push({ type: 'empty', label: daysInPrevMonth - i })
   for (let i = 1; i <= daysInMonth; i++) {
     const iso     = `${year}-${String(month + 1).padStart(2,'0')}-${String(i).padStart(2,'0')}`
@@ -72,8 +72,11 @@ function buildCalendarDays(year, month, periodDays, ovulationDays, predictedDays
 }
 
 export default function TrackPage() {
+  const t = useTranslations('pages.track')
+  const locale = useLocale()
   const router   = useRouter()
   const { isLoaded, isSignedIn } = useAuth()
+  const { offlineClient } = useOffline()
   const now      = new Date()
 
   const [viewYear,  setViewYear]  = useState(now.getFullYear())
@@ -86,8 +89,7 @@ export default function TrackPage() {
 
   const fetchCycleData = async () => {
     try {
-      const res  = await fetch('/api/cycles')
-      const data = await res.json()
+      const data = await offlineClient.fetchCycles()
       if (data.success) setCycleData(data.data)
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
@@ -96,9 +98,7 @@ export default function TrackPage() {
   const fetchTodayLog = async () => {
     try {
       const today = new Date().toISOString().split('T')[0]
-      const res = await fetch(`/api/log-day?date=${today}`)
-      if (!res.ok) return
-      const data = await res.json()
+      const data = await offlineClient.fetchTodayLog(today)
       if (data.success && data.data) {
         if (data.data.symptoms) setSelectedSymptoms(data.data.symptoms)
         if (data.data.mood)     setSelectedMood(data.data.mood)
@@ -115,19 +115,19 @@ export default function TrackPage() {
 
   const handleSaveLog = async () => {
     try {
-      const res  = await fetch('/api/log-day', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: new Date().toISOString().split('T')[0],
-          symptoms: selectedSymptoms,
-          mood: selectedMood,
-          flow: selectedFlow,
-        }),
-      })
-      const data = await res.json()
+      const logData = {
+        date: new Date().toISOString().split('T')[0],
+        symptoms: selectedSymptoms,
+        mood: selectedMood,
+        flow: selectedFlow,
+      }
+      const data = await offlineClient.saveDailyLog(logData)
       if (data.success) {
-        toast.success('✅ Log saved!')
+        if (data.offline) {
+          toast.success('💾 Saved offline! Will sync when online.')
+        } else {
+          toast.success('✅ Log saved!')
+        }
         setSelectedSymptoms([])
         setSelectedMood(null)
         setSelectedFlow(null)
@@ -144,23 +144,23 @@ export default function TrackPage() {
     const today   = new Date()
     const endDate = new Date(today)
     endDate.setDate(endDate.getDate() + 5)
+    const cycleDataObj = {
+      start_date:   today.toISOString().split('T')[0],
+      end_date:     endDate.toISOString().split('T')[0],
+      cycle_length: cycleData?.averageCycleLength || 28,
+    }
 
     try {
-      const res = await fetch('/api/cycles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          start_date:   today.toISOString().split('T')[0],
-          end_date:     endDate.toISOString().split('T')[0],
-          cycle_length: cycleData?.averageCycleLength || 28,
-        }),
-      })
-      const data = await res.json()
+      const data = await offlineClient.startPeriod(cycleDataObj)
       if (!data.success) { 
         toast.error(`❌ Could not start period: ${data.error || data.message || 'Unknown error'}`)
         return 
       }
-      toast.success('🌸 Period started! Your cycle is now being tracked.')
+      if (data.offline) {
+        toast.success('🌸 Period started! Saved offline, will sync when online.')
+      } else {
+        toast.success('🌸 Period started! Your cycle is now being tracked.')
+      }
       fetchCycleData()
     } catch (err) {
       toast.error(`❌ Could not start period: ${err.message || err}`)
@@ -174,17 +174,16 @@ export default function TrackPage() {
     if (!open) { toast.error('No open period found to end'); return }
 
     try {
-      const res = await fetch('/api/cycles', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: open.id, end_date: today }),
-      })
-      const data = await res.json()
+      const data = await offlineClient.endPeriod(open.id, today)
       if (!data.success) { 
         toast.error(`❌ Could not end period: ${data.error || data.message || 'Unknown error'}`)
         return 
       }
-      toast.success('✅ Period ended!')
+      if (data.offline) {
+        toast.success('✅ Period ended! Saved offline, will sync when online.')
+      } else {
+        toast.success('✅ Period ended!')
+      }
       fetchCycleData()
     } catch (err) {
       toast.error(`❌ Could not end period: ${err.message || err}`)
@@ -204,7 +203,7 @@ export default function TrackPage() {
   }
 
   const { periodDays, ovulationDays, predictedDays, today } = deriveDateSets(cycleData)
-  const calendarDays = buildCalendarDays(viewYear, viewMonth, periodDays, ovulationDays, predictedDays, today)
+  const calendarDays = buildCalendarDays(viewYear, viewMonth, periodDays, ovulationDays, predictedDays, today, locale)
   const daysUntilNext = cycleData?.nextPeriodDate
     ? Math.max(0, Math.round((new Date(cycleData.nextPeriodDate) - new Date()) / 86400000))
     : null
@@ -225,10 +224,10 @@ export default function TrackPage() {
 
           {/* Page header */}
           <h1 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>
-            🗓️ <span className="gradient-text">Cycle Tracker</span>
+            🗓️ <span className="gradient-text">{t('title')}</span>
           </h1>
           <p style={{ color: TEXT_FAINT, marginBottom: '2rem' }}>
-            Log your daily symptoms and manage your cycle timeline.
+            {t('subtitle')}
           </p>
 
           {/* Period action buttons */}
@@ -238,7 +237,7 @@ export default function TrackPage() {
               onClick={handleStartPeriod}
               style={{ padding: '0.75rem 1.75rem', fontSize: '0.95rem', fontWeight: 600 }}
             >
-              🔴 Start Period Today
+              {t('startPeriod')}
             </button>
             {openCycle && (
               <button
@@ -246,7 +245,7 @@ export default function TrackPage() {
                 onClick={handleEndPeriod}
                 style={{ padding: '0.75rem 1.75rem', fontSize: '0.95rem', fontWeight: 600 }}
               >
-                ✅ End Period Today
+                {t('endPeriod')}
               </button>
             )}
           </div>
@@ -258,11 +257,8 @@ export default function TrackPage() {
               border: '1px solid rgba(232,82,126,0.35)',
               borderRadius: 12,
               padding: '0.9rem 1.2rem',
-              marginBottom: '1.5rem',
-              color: TEXT_PRIMARY,
-              fontSize: '0.9rem',
             }}>
-              💡 <strong>No cycles recorded yet.</strong> Click <em>"🔴 Start Period Today"</em> to begin tracking your first cycle. Saving daily logs separately will not create a cycle record.
+              {t('noCycles')}
             </div>
           )}
 
@@ -270,7 +266,7 @@ export default function TrackPage() {
           <div style={{ marginBottom: '2rem' }}>
             <CycleCalendar
               calendarDays={calendarDays}
-              currentMonth={`${MONTH_NAMES[viewMonth]} ${viewYear}`}
+              currentMonth={`${new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-US', { month: 'long' }).format(new Date(viewYear, viewMonth))} ${viewYear}`}
               onPrevMonth={goToPrevMonth}
               onNextMonth={goToNextMonth}
               averageCycleLength={cycleData?.averageCycleLength || 28}
@@ -286,7 +282,7 @@ export default function TrackPage() {
             fontWeight: 700,
             marginBottom: '1.25rem',
           }}>
-            📝 Log Today&apos;s Symptoms
+            {t('logToday')}
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
             <DailyLogPanel

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { t } from '@/lib/i18n'
+import { useTranslations } from 'next-intl'
 
 /**
  * Animated count-up hook.
@@ -40,7 +40,8 @@ function useCountUp(target, duration = 1800, startDelay = 400) {
   return value
 }
 
-export default function PredictionCard({ cycleData, activeLang }) {
+export default function PredictionCard({ cycleData }) {
+  const t = useTranslations('Prediction')
   const rawConfidence = cycleData?.confidence
     ? parseInt(cycleData.confidence)
     : null
@@ -70,19 +71,19 @@ export default function PredictionCard({ cycleData, activeLang }) {
       <div className="pred-sparkle-bar">
         <span>✨</span>
         <span className="pred-badge">
-          {activeLang === 'हि' ? 'AI पूर्वानुमान' : 'AI Prediction'}
+          {t('aiTitle')}
         </span>
         <span>✨</span>
       </div>
 
       <h3 className="pred-title">
-        {activeLang === 'हि' ? 'अगली माहवारी का पूर्वानुमान' : 'Next Cycle Prediction'}
+        {t('nextCycle')}
       </h3>
 
       {/* Predicted date — big hero number */}
       <div className="pred-date-hero">
         <div className="pred-date-label">
-          {activeLang === 'हि' ? 'अनुमानित तारीख' : 'Expected Start Date'}
+          {t('expectedDate')}
         </div>
         <div className="pred-date-value">{nextDate}</div>
       </div>
@@ -117,7 +118,7 @@ export default function PredictionCard({ cycleData, activeLang }) {
           </div>
         </div>
         <div className="pred-conf-text">
-          {activeLang === 'हि' ? 'भविष्यवाणी विश्वास' : 'Prediction Confidence'}
+          {t('confidence')}
         </div>
       </div>
 
@@ -126,22 +127,20 @@ export default function PredictionCard({ cycleData, activeLang }) {
         <div className="pred-stat-item">
           <div className="pred-stat-num">{animatedCycleLen}</div>
           <div className="pred-stat-label">
-            {activeLang === 'हि' ? 'औसत चक्र (दिन)' : 'Avg Cycle (days)'}
+            {t('avgCycle')}
           </div>
         </div>
         <div className="pred-stat-divider"></div>
         <div className="pred-stat-item">
           <div className="pred-stat-num">{cycleData?.cycles?.length || 0}</div>
           <div className="pred-stat-label">
-            {activeLang === 'हि' ? 'रिकॉर्ड किए गए चक्र' : 'Cycles Recorded'}
+            {t('cyclesRecorded')}
           </div>
         </div>
       </div>
 
       <p className="pred-footer-note">
-        {activeLang === 'हि'
-          ? `आपके ${avgLen}-दिवसीय औसत चक्र के आधार पर।`
-          : `Based on your ${avgLen}-day average cycle.`}
+        {t('basedOn', { avg: avgLen })}
       </p>
     </div>
   )

@@ -1,3 +1,4 @@
+import { validateEnv } from "@/lib/env";
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { getAuthUserId } from '@/lib/clerk-server'
@@ -5,7 +6,7 @@ import { isAllowed } from '@/lib/rate-limiter'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+
 const TIMEOUT_MS = 8000; // 8 seconds timeout to prevent long hangs
 
 const chatPayloadSchema = z.object({
@@ -36,14 +37,31 @@ const withTimeout = async (promise, ms) => {
  * Primary AI Call: Google Gemini API
  */
 async function callGemini(message, systemPrompt) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  validateEnv();
+
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.0-flash',
+  });
+
   const chat = model.startChat({
     history: [
-      { role: 'user', parts: [{ text: systemPrompt }] },
-      { role: 'model', parts: [{ text: 'I understand. I will provide helpful menstrual health guidance.' }] }
-    ]
+      {
+        role: 'user',
+        parts: [{ text: systemPrompt }],
+      },
+      {
+        role: 'model',
+        parts: [
+          {
+            text: 'I understand. I will provide helpful menstrual health guidance.',
+          },
+        ],
+      },
+    ],
   });
-  
+
   const result = await chat.sendMessage(message);
   return result.response.text();
 }
@@ -52,6 +70,8 @@ async function callGemini(message, systemPrompt) {
  * Fallback AI Call: Groq API (llama3-8b-8192)
  */
 async function callGroq(message, systemPrompt) {
+  validateEnv();
+
   if (!process.env.GROQ_API_KEY) {
     throw new Error('GROQ_API_KEY environment variable is not defined.');
   }
@@ -90,7 +110,7 @@ async function getAIResponse(message, systemPrompt) {
     return responseText;
   } catch (error) {
     logger.warn(`Gemini API failed (${error.message}). Switching to Groq fallback...`);
-    
+
     // 2. Try Groq as fallback (with timeout)
     try {
       const fallbackText = await withTimeout(callGroq(message, systemPrompt), TIMEOUT_MS);
@@ -103,8 +123,9 @@ async function getAIResponse(message, systemPrompt) {
 }
 
 export async function POST(request) {
+  validateEnv();
   let language = 'en'; // default
-  
+
   try {
     // 1. Clerk Authentication
     const userId = await getAuthUserId()
@@ -129,36 +150,36 @@ export async function POST(request) {
 
     const { message, context } = result.data
     language = result.data.language || 'en'
-    
+
     let systemPrompt = `You are a helpful menstrual health assistant. Provide empathetic, accurate health guidance.`;
-    
+
     if (language === 'हि' || language === 'hi') {
       systemPrompt = `आप एक सहायक मासिक धर्म स्वास्थ्य सहायक हैं। सहानुभूतिपूर्ण, सटीक स्वास्थ्य मार्गदर्शन प्रदान करें। हमेशा हिंदी में जवाब दें।`;
     }
-    
+
     if (context?.nextPeriodDate) {
       systemPrompt += `\n\nUser's next period is predicted on ${context.nextPeriodDate}. Average cycle length: ${context.averageCycleLength || 28} days.`;
     }
-    
+
     if (context?.currentPhase?.day && context?.currentPhase?.phase) {
       systemPrompt += `\n\nCurrent Cycle Day: ${context.currentPhase.day}. Current Phase: ${context.currentPhase.phase}.`;
     }
-    
+
     systemPrompt += `\n\nImportant: Keep responses under 100 words. Be supportive and conversational.`;
-    
+
     // Fetch response with fallback mechanism
     const responseText = await getAIResponse(message, systemPrompt);
-    
+
     logger.info(`Successful chat assistant response generated for user ${userId}`);
     return NextResponse.json({ success: true, response: responseText });
   } catch (error) {
     logger.error('AI Chat Route Error:', error);
-    
+
     // Fallback response so no crash/error is revealed to the user (Returns clean response)
     const politeFallback = language === 'हि' || language === 'hi'
-      ? 'मुझे खेद है, मुझे अभी कुछ तकनीकी समस्या आ रही है। कृपया थोड़ी देर बाद पुनः प्रयास करें। 💕' 
+      ? 'मुझे खेद है, मुझे अभी कुछ तकनीकी समस्या आ रही है। कृपया थोड़ी देर बाद पुनः प्रयास करें। 💕'
       : 'I apologize, but I am experiencing a technical hiccup right now. Please try again in a little while. 💕';
-      
+
     return NextResponse.json({
       success: true,
       response: politeFallback

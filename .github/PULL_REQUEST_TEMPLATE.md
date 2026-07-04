@@ -19,10 +19,17 @@ Describe the tests you ran to verify your changes. Include commands and details 
 Add screenshots or screen recordings demonstrating the visual changes before and after.
 
 ## Checklist
+
 - [ ] This PR is submitted under ECSOC.
-- [ ] Linked issue number added.
+- [ ] Added the required **ECSoc26** label to this Pull Request.
+- [ ] Linked issue using `Fixes #<issue_number>`.
 - [ ] Tested locally.
-- [ ] Build passes (`npm run build` completes successfully).
-- [ ] No breaking changes (backward compatibility is fully maintained).
-- [ ] Documentation updated if required (e.g. docs, readme, or comments).
+- [ ] `npm run build` completes successfully.
 - [ ] GitHub Actions checks pass.
+- [ ] No breaking changes introduced.
+- [ ] Documentation updated if required.
+
+> ⚠️ **Important**
+>
+> PRs submitted for ECSOC **must include the `ECSoc26` label**.
+> Pull Requests without this label **will not be processed by ECSOC Sentinel and will not receive a score.**
