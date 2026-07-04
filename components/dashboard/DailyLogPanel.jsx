@@ -18,13 +18,15 @@ export default function DailyLogPanel({
         <h4>{t(activeLang, 'log', 'symptoms')}</h4>
         <div className="symp-grid">
           {['Cramps', 'Headache', 'Bloating', 'Fatigue', 'Acne', 'Nausea'].map(symptom => (
-            <div
+            <button
+              type="button"
               key={symptom}
               className={`symp-chip ${selectedSymptoms.includes(symptom) ? 'active' : ''}`}
               onClick={() => toggleSymptom(symptom)}
+              aria-pressed={selectedSymptoms.includes(symptom)}
             >
               {symptom}
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -52,12 +54,15 @@ export default function DailyLogPanel({
             { id: 'f3', label: 'Heavy' },
             { id: 'f4', label: 'Very Heavy' }
           ].map(flow => (
-            <div
+            <button
+              type="button"
               key={flow.id}
               className={`flow-dot ${flow.id} ${selectedFlow === flow.id ? 'active' : ''}`}
               onClick={() => setSelectedFlow(flow.id)}
               title={flow.label}
-            ></div>
+              aria-label={`${flow.label} flow`}
+              aria-pressed={selectedFlow === flow.id}
+            ></button>
           ))}
         </div>
 
