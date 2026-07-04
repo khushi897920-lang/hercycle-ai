@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations, useLocale } from 'next-intl'
+import { useTranslations } from 'next-intl'
 
 export default function ChatAssistant({
   chatMessages,
@@ -11,7 +11,6 @@ export default function ChatAssistant({
   nextPeriodDate,   // injected into AI context so it can answer date questions accurately
 }) {
   const t = useTranslations('Chat')
-  const locale = useLocale()
 
   // Chips disappear once the user has sent at least one message
   // (chatMessages starts with 1 AI greeting, so > 1 means user has replied)
