@@ -1,29 +1,27 @@
 
-import { Playfair_Display, Inter } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { LanguageProvider } from '@/lib/LanguageContext'
+import { OfflineProvider } from '@/lib/OfflineContext'
 import { Toaster } from 'react-hot-toast'
 import './globals.css'
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-playfair'
-})
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter'
-})
 
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
+  userScalable: false,
 }
 
 export const metadata = {
   title: 'HerCycle AI — Smart Menstrual Health Tracker',
   description: 'AI-powered period tracking with PCOD risk prediction in Hindi & English. Know your body, love yourself.',
   keywords: ['period tracker', 'PCOD', 'menstrual health', 'AI health', 'women health India'],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'HerCycle AI',
+  },
   openGraph: {
     title: 'HerCycle AI',
     description: 'Track cycles, predict with AI, screen PCOS risk — beautifully, in your language.',
@@ -48,36 +46,43 @@ export const metadata = {
   icons: {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',
-    apple: '/favicon.svg'
+    apple: '/icon-192.png'
   }
 }
 
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider clockSkewInMs={30000}>
-      <html lang="en" className="overflow-x-hidden">
+      <html lang="en">
         <head>
+          <link rel="apple-touch-icon" href="/icon-192.png" />
+          <link rel="apple-touch-icon" sizes="152x152" href="/icon-192.png" />
+          <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
           <script dangerouslySetInnerHTML={{ __html: 'window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);' }} />
         </head>
-        <body className={`${playfair.variable} ${inter.variable} overflow-x-hidden w-full`} suppressHydrationWarning>
-          <LanguageProvider>
-            {children}
-            <Toaster
-              position="top-center"
-              toastOptions={{
-                style: {
-                  background: 'rgba(30,12,40,0.95)',
-                  color: '#fff',
-                  border: '1px solid rgba(232,82,126,0.4)',
-                  borderRadius: '12px',
-                  backdropFilter: 'blur(12px)',
-                  fontFamily: 'Inter, sans-serif',
-                },
-                success: { iconTheme: { primary: '#e8527e', secondary: '#fff' } },
-                error: { iconTheme: { primary: '#f87171', secondary: '#fff' } },
-              }}
-            />
-          </LanguageProvider>
+        <body className="w-full" suppressHydrationWarning>
+          <OfflineProvider>
+            <LanguageProvider>
+              {children}
+              <Toaster
+                position="top-center"
+                toastOptions={{
+                  style: {
+                    background: 'rgba(30,12,40,0.95)',
+                    color: '#fff',
+                    border: '1px solid rgba(232,82,126,0.4)',
+                    borderRadius: '12px',
+                    backdropFilter: 'blur(12px)',
+                    fontFamily: 'Inter, sans-serif',
+                  },
+                  success: { iconTheme: { primary: '#e8527e', secondary: '#fff' } },
+                  error: { iconTheme: { primary: '#f87171', secondary: '#fff' } },
+                }}
+              />
+            </LanguageProvider>
+          </OfflineProvider>
         </body>
       </html>
     </ClerkProvider>

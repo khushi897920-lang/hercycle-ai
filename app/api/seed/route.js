@@ -4,12 +4,6 @@ import { createClient } from '@supabase/supabase-js'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { logger } from '@/lib/logger'
 
-// Use service role key if available (bypasses RLS), fall back to anon
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
 const USER_ID = '00000000-0000-0000-0000-000000000001'
 const CYCLE_LENGTHS = [28, 27, 29, 28, 28, 27]
 const PERIOD_LENGTHS = [5, 5, 6, 5, 6, 5]
@@ -61,6 +55,11 @@ export async function GET() {
       logger.warn('Unauthenticated access attempt to seed API');
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    )
 
     const PERIOD_SYMPTOMS = ['Cramps', 'Bloating', 'Fatigue', 'Headache']
     const PMS_SYMPTOMS = ['Bloating', 'Headache', 'Acne', 'Fatigue']

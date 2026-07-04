@@ -5,7 +5,30 @@
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+html, body {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Standalone PWA Safe Area Adjustments */
+nav.glass {
+  padding-top: calc(env(safe-area-inset-top) + 0.75rem) !important;
+}
+
+body {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 1rem) !important;
+}
+
 :root {
+  --font-playfair: 'Playfair Display', Georgia, serif;
+  --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
   --rose-deep:   #c9375f;
   --rose-mid:    #e8527e;
   --rose-bright: #f472b6;

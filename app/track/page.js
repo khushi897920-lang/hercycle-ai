@@ -8,6 +8,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import CycleCalendar from '@/components/dashboard/CycleCalendar'
 import DailyLogPanel from '@/components/dashboard/DailyLogPanel'
+import { useOffline } from '@/lib/OfflineContext'
 
 const MONTH_NAMES = [
   'January','February','March','April','May','June',
@@ -74,6 +75,7 @@ function buildCalendarDays(year, month, periodDays, ovulationDays, predictedDays
 export default function TrackPage() {
   const router   = useRouter()
   const { isLoaded, isSignedIn } = useAuth()
+  const { offlineClient } = useOffline()
   const now      = new Date()
 
   const [viewYear,  setViewYear]  = useState(now.getFullYear())
@@ -86,8 +88,7 @@ export default function TrackPage() {
 
   const fetchCycleData = async () => {
     try {
-      const res  = await fetch('/api/cycles')
-      const data = await res.json()
+      const data = await offlineClient.fetchCycles()
       if (data.success) setCycleData(data.data)
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
@@ -96,9 +97,7 @@ export default function TrackPage() {
   const fetchTodayLog = async () => {
     try {
       const today = new Date().toISOString().split('T')[0]
-      const res = await fetch(`/api/log-day?date=${today}`)
-      if (!res.ok) return
-      const data = await res.json()
+      const data = await offlineClient.fetchTodayLog(today)
       if (data.success && data.data) {
         if (data.data.symptoms) setSelectedSymptoms(data.data.symptoms)
         if (data.data.mood)     setSelectedMood(data.data.mood)
@@ -115,19 +114,19 @@ export default function TrackPage() {
 
   const handleSaveLog = async () => {
     try {
-      const res  = await fetch('/api/log-day', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: new Date().toISOString().split('T')[0],
-          symptoms: selectedSymptoms,
-          mood: selectedMood,
-          flow: selectedFlow,
-        }),
-      })
-      const data = await res.json()
+      const logData = {
+        date: new Date().toISOString().split('T')[0],
+        symptoms: selectedSymptoms,
+        mood: selectedMood,
+        flow: selectedFlow,
+      }
+      const data = await offlineClient.saveDailyLog(logData)
       if (data.success) {
-        toast.success('✅ Log saved!')
+        if (data.offline) {
+          toast.success('💾 Saved offline! Will sync when online.')
+        } else {
+          toast.success('✅ Log saved!')
+        }
         setSelectedSymptoms([])
         setSelectedMood(null)
         setSelectedFlow(null)
@@ -144,23 +143,23 @@ export default function TrackPage() {
     const today   = new Date()
     const endDate = new Date(today)
     endDate.setDate(endDate.getDate() + 5)
+    const cycleDataObj = {
+      start_date:   today.toISOString().split('T')[0],
+      end_date:     endDate.toISOString().split('T')[0],
+      cycle_length: cycleData?.averageCycleLength || 28,
+    }
 
     try {
-      const res = await fetch('/api/cycles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          start_date:   today.toISOString().split('T')[0],
-          end_date:     endDate.toISOString().split('T')[0],
-          cycle_length: cycleData?.averageCycleLength || 28,
-        }),
-      })
-      const data = await res.json()
+      const data = await offlineClient.startPeriod(cycleDataObj)
       if (!data.success) { 
         toast.error(`❌ Could not start period: ${data.error || data.message || 'Unknown error'}`)
         return 
       }
-      toast.success('🌸 Period started! Your cycle is now being tracked.')
+      if (data.offline) {
+        toast.success('🌸 Period started! Saved offline, will sync when online.')
+      } else {
+        toast.success('🌸 Period started! Your cycle is now being tracked.')
+      }
       fetchCycleData()
     } catch (err) {
       toast.error(`❌ Could not start period: ${err.message || err}`)
@@ -174,17 +173,16 @@ export default function TrackPage() {
     if (!open) { toast.error('No open period found to end'); return }
 
     try {
-      const res = await fetch('/api/cycles', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: open.id, end_date: today }),
-      })
-      const data = await res.json()
+      const data = await offlineClient.endPeriod(open.id, today)
       if (!data.success) { 
         toast.error(`❌ Could not end period: ${data.error || data.message || 'Unknown error'}`)
         return 
       }
-      toast.success('✅ Period ended!')
+      if (data.offline) {
+        toast.success('✅ Period ended! Saved offline, will sync when online.')
+      } else {
+        toast.success('✅ Period ended!')
+      }
       fetchCycleData()
     } catch (err) {
       toast.error(`❌ Could not end period: ${err.message || err}`)

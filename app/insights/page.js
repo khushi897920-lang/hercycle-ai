@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import { useOffline } from '@/lib/OfflineContext'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const PINK         = '#e8527e'
@@ -125,6 +126,7 @@ const gridProps = { strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }
 export default function InsightsPage() {
   const router   = useRouter()
   const { isLoaded, isSignedIn } = useAuth()
+  const { offlineClient } = useOffline()
 
   const [cycleData, setCycleData] = useState(null)
   const [pcodRisk,  setPcodRisk]  = useState(null)
@@ -137,9 +139,9 @@ export default function InsightsPage() {
 
     const init = async () => {
       const [cycleRes, pcodRes, logsRes] = await Promise.all([
-        fetch('/api/cycles').then(r => r.json()),
-        fetch('/api/pcod-risk').then(r => r.json()),
-        fetch('/api/log-day/all').then(r => r.json()),
+        offlineClient.fetchCycles(),
+        offlineClient.fetchPCODRisk(),
+        offlineClient.fetchAllLogs(),
       ])
       if (cycleRes.success) setCycleData(cycleRes.data)
       if (pcodRes.success)  setPcodRisk(pcodRes.data)

@@ -16,6 +16,7 @@ import DailyLogPanel from '@/components/dashboard/DailyLogPanel'
 import OnboardingModal from '@/components/dashboard/OnboardingModal'
 import PredictionCard from '@/components/dashboard/PredictionCard'
 import { t } from '@/lib/i18n'
+import { useOffline } from '@/lib/OfflineContext'
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
@@ -105,6 +106,7 @@ function buildCalendarDays(year, month, periodDays, ovulationDays, predictedDays
 const HerCycleApp = () => {
   const router = useRouter()
   const { isLoaded, isSignedIn } = useAuth()
+  const { offlineClient } = useOffline()
   const now = new Date()
   const [activeNav, setActiveNav] = useState('Dashboard')
   const [activeLang, setActiveLang] = useState('EN')
@@ -156,8 +158,7 @@ const HerCycleApp = () => {
 
   const fetchCycleData = async () => {
     try {
-      const response = await fetch('/api/cycles')
-      const data = await response.json()
+      const data = await offlineClient.fetchCycles()
       if (data.success) {
         setCycleData(data.data)
         
@@ -187,8 +188,7 @@ const HerCycleApp = () => {
   const fetchPCODRisk = async () => {
     setPcodRiskLoading(true)
     try {
-      const response = await fetch('/api/pcod-risk')
-      const data = await response.json()
+      const data = await offlineClient.fetchPCODRisk()
       if (data.success) {
         setPcodRisk(data.data)
       }
@@ -235,20 +235,19 @@ const HerCycleApp = () => {
 
   const handleSaveLog = async () => {
     try {
-      const response = await fetch('/api/log-day', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: new Date().toISOString().split('T')[0],
-          symptoms: selectedSymptoms,
-          mood: selectedMood,
-          flow: selectedFlow
-        })
-      })
-
-      const data = await response.json()
+      const logData = {
+        date: new Date().toISOString().split('T')[0],
+        symptoms: selectedSymptoms,
+        mood: selectedMood,
+        flow: selectedFlow
+      }
+      const data = await offlineClient.saveDailyLog(logData)
       if (data.success) {
-        toast.success('✅ Log saved!')
+        if (data.offline) {
+          toast.success('💾 Saved offline! Will sync when online.')
+        } else {
+          toast.success('✅ Log saved!')
+        }
         setSelectedSymptoms([])
         setSelectedMood(null)
         setSelectedFlow(null)
