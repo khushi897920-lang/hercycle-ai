@@ -71,7 +71,7 @@ export default function Navbar() {
         
         {/* Hamburger Icon */}
         <button 
-          className="md:hidden text-white/80 hover:text-white p-1"
+          className="nav-menu-btn md:hidden text-white/80 hover:text-white p-1"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle Menu"
         >
@@ -105,7 +105,7 @@ export default function Navbar() {
             <Link
               key={key}
               href={href}
-              className={`block px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${isActive(href) ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10'}`}
+              className={`nav-mobile-link block px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${isActive(href) ? 'active bg-white/20 text-white' : 'text-white/80 hover:bg-white/10'}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               {label}
@@ -126,11 +126,11 @@ export default function Navbar() {
             onClick={() => setLanguage('हि')}
           >हि</button>
         </div>
-        <button className="btn-pill shrink-0 px-3 py-1.5 sm:px-5 text-[12px] sm:text-sm whitespace-nowrap" onClick={handleLogToday}>
+        <button className="btn-pill nav-action nav-log-btn shrink-0 px-3 py-1.5 sm:px-5 text-[12px] sm:text-sm whitespace-nowrap" onClick={handleLogToday}>
           Log Today
         </button>
         <button
-          className="btn-pill shrink-0 px-3 py-1.5 sm:px-5 text-[12px] sm:text-sm whitespace-nowrap"
+          className="btn-pill nav-action nav-signout-btn shrink-0 px-3 py-1.5 sm:px-5 text-[12px] sm:text-sm whitespace-nowrap"
           onClick={handleLogout}
           style={{
             background: 'rgba(255,255,255,0.12)',

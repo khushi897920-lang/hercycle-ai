@@ -39,7 +39,7 @@ export default function HeroSection({ activeLang, cycleDayInfo }) {
       </h1>
       <p>{subtitle}</p>
       <div className="hero-btns">
-        <button className="btn-white" onClick={handleStartTracking}>
+        <button className="btn-white start-tracking-shine" onClick={handleStartTracking}>
           {useTranslation('hero', 'btn1') || 'Start Tracking ✨'}
         </button>
         <button className="btn-outline" onClick={handleCheckPCOD}>

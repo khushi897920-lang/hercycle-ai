@@ -47,7 +47,7 @@ function IconBadge({ children, size = 'lg' }) {
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({ icon, label, value, sub }) {
   return (
-    <div style={{
+    <div className="insight-card interactive-card" style={{
       textAlign: 'center',
       padding: '1.5rem 1rem',
       background: CARD_BG,
@@ -78,7 +78,7 @@ function StatCard({ icon, label, value, sub }) {
 // ─── Section card ─────────────────────────────────────────────────────────────
 function SectionCard({ icon, title, children }) {
   return (
-    <div style={{
+    <div className="insight-card interactive-card" style={{
       background: CARD_BG,
       border: CARD_BORDER,
       borderRadius: 16,
@@ -316,7 +316,7 @@ export default function InsightsPage() {
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
                   {moodData.map(({ emoji, label, pct }) => (
-                    <div key={label} style={{
+                    <div key={label} className="mood-summary-card interactive-card" style={{
                       textAlign: 'center', padding: '1rem 0.5rem',
                       background: 'rgba(255,255,255,0.06)',
                       borderRadius: 12,

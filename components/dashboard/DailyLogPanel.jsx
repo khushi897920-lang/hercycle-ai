@@ -23,6 +23,7 @@ export default function DailyLogPanel({
               type='button'
               className={`symp-chip ${selectedSymptoms.includes(symptom) ? 'active' : ''}`}
               onClick={() => toggleSymptom(symptom)}
+              aria-pressed={selectedSymptoms.includes(symptom)}
             >
               {symptom}
             </button>
