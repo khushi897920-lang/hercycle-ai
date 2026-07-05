@@ -4,9 +4,15 @@ import { createClient } from '@supabase/supabase-js'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { logger } from '@/lib/logger'
 
-const USER_ID = '00000000-0000-0000-0000-000000000001'
 const CYCLE_LENGTHS = [28, 27, 29, 28, 28, 27]
 const PERIOD_LENGTHS = [5, 5, 6, 5, 6, 5]
+
+const MOOD_LABELS = {
+  SAD: 'sad',
+  NEUTRAL: 'neutral',
+  HAPPY: 'happy',
+  // ANGRY: 'angry', // Uncomment if you use '😡' elsewhere
+}
 
 function addDays(date, n) {
   const d = new Date(date)
@@ -16,7 +22,6 @@ function addDays(date, n) {
 function fmt(date) { return date.toISOString().split('T')[0] }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)] }
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
-
 function flowPattern(day, totalDays) {
   if (day === 0) return 'f1'
   if (day === 1 || day === 2) return 'f3'
@@ -25,23 +30,51 @@ function flowPattern(day, totalDays) {
 }
 
 function buildCycles() {
-  const today = new Date()
-  const cycles = []
-  let runningStart = new Date(today)
-
-  for (let i = CYCLE_LENGTHS.length - 1; i >= 0; i--) {
-    runningStart = addDays(runningStart, -CYCLE_LENGTHS[i])
-    const start = new Date(runningStart)
-    const end = addDays(start, PERIOD_LENGTHS[i] - 1)
-    cycles.push({ start, end, periodLen: PERIOD_LENGTHS[i], cycleLen: CYCLE_LENGTHS[i] })
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalize to midnight
+  const cycles = [];
+  const totalDays = CYCLE_LENGTHS.reduce((a, b) => a + b, 0);
+  let cycleStart = new Date(today);
+  cycleStart.setDate(cycleStart.getDate() - totalDays); // Start of oldest cycle
+  for (let i = 0; i < CYCLE_LENGTHS.length; i++) {
+    const cycleLen = CYCLE_LENGTHS[i];
+    const periodLen = PERIOD_LENGTHS[i];
+    const start = new Date(cycleStart);
+    const end = new Date(start);
+    end.setDate(end.getDate() + cycleLen - 1); // End of CYCLE
+    cycles.push({ start, end, periodLen, cycleLen });
+    cycleStart = new Date(end);
+    cycleStart.setDate(cycleStart.getDate() + 1); // Next cycle starts day after this ends
   }
-  return cycles.sort((a, b) => a.start - b.start)
+  return cycles; // Chronological: Oldest -> Newest
 }
 
 export const dynamic = 'force-dynamic'
 
+// ──────────────────────────────────────────────
+// ✅ EVERYTHING BELOW IS INSIDE THE GET FUNCTION
+// ──────────────────────────────────────────────
 export async function GET() {
   validateEnv();
+
+  // ✅ FIX #5: REQUIRE SERVICE ROLE KEY (No Anon Fallback)
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    logger.error('Missing SUPABASE_SERVICE_ROLE_KEY env var');
+    return NextResponse.json({ error: 'Server config error: Missing Service Role Key' }, { status: 500 });
+  }
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    serviceRoleKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
+
   // 1. Restrict to development only
   if (process.env.NODE_ENV === 'production') {
     logger.warn('Seed route invocation attempt in production blocked');
@@ -67,16 +100,16 @@ export async function GET() {
 
     // 0. Ensure user exists (No-op: user_id is text type and does not reference auth.users due to Clerk migration)
 
-    // 1. Clear existing data
-    logger.info(`Seeding DB: clearing existing data for mock user ${USER_ID}`);
-    await supabase.from('daily_logs').delete().eq('user_id', USER_ID)
-    await supabase.from('cycles').delete().eq('user_id', USER_ID)
+    // 1. Clear existing data FOR THIS USER
+    logger.info(`Seeding DB: clearing existing data for user ${userId}`);
+    await supabase.from('daily_logs').delete().eq('user_id', userId)
+    await supabase.from('cycles').delete().eq('user_id', userId)
 
     const cycles = buildCycles()
 
-    // 2. Insert cycles
+    // 2. Insert cycles FOR THIS USER
     const cycleRows = cycles.map(({ start, end }) => ({
-      user_id: USER_ID,
+      user_id: userId,
       start_date: fmt(start),
       end_date: fmt(end),
     }))
@@ -94,9 +127,12 @@ export async function GET() {
       for (let day = 0; day < cycleLen; day++) {
         const date = addDays(cycleStart, day)
         const dateStr = fmt(date)
+        
+        // ✅ FIX #7: Dynamic Phase Calculation (based on cycleLen)
+        const ovulationDay = Math.round(cycleLen / 2)
         const isPeriod = day < periodLen
-        const isPMS = day >= 20
-        const isOvul = day >= 12 && day <= 15
+        const isOvul = day === ovulationDay || day === ovulationDay + 1
+        const isPMS = day >= cycleLen - 7 // Last 7 days
 
         let symptoms = []
         let mood = null
@@ -104,26 +140,27 @@ export async function GET() {
 
         if (isPeriod) {
           symptoms = shuffle(PERIOD_SYMPTOMS).slice(0, Math.floor(Math.random() * 3) + 1)
-          mood = day <= 2 ? '😢' : pick(['😐', '😊'])
+          mood = day <= 2 ? MOOD_LABELS.SAD : pick([MOOD_LABELS.NEUTRAL, MOOD_LABELS.HAPPY])
           flow = flowPattern(day, periodLen)
         } else if (isPMS) {
           symptoms = shuffle(PMS_SYMPTOMS).slice(0, 2)
-          mood = pick(['😐', '😡'])
+          mood = pick([MOOD_LABELS.NEUTRAL, MOOD_LABELS.SAD])
         } else if (isOvul) {
           symptoms = Math.random() > 0.5 ? OVUL_SYMPTOMS : []
-          mood = pick(['😊', '😐'])
+          mood = pick([MOOD_LABELS.HAPPY, MOOD_LABELS.NEUTRAL])
         } else {
           if (Math.random() < 0.6) {
-            mood = pick(['😊', '😊', '😐'])
+            mood = pick([MOOD_LABELS.HAPPY, MOOD_LABELS.HAPPY, MOOD_LABELS.NEUTRAL])
           } else {
             continue
           }
         }
 
         logRows.push({
-          user_id: USER_ID,
+          user_id: userId,
           date: dateStr,
           symptoms: symptoms.length ? symptoms : null,
+          mood,
           mood,
           flow,
         })
@@ -143,10 +180,10 @@ export async function GET() {
     const lastCycle = cycles[cycles.length - 1]
     const nextPeriod = addDays(lastCycle.start, avgLen)
 
-    logger.info(`Seeding DB: seeding complete successfully for mock user ${USER_ID}`);
+    logger.info(`Seeding DB: seeding complete successfully for user ${userId}`);
     return NextResponse.json({
       success: true,
-      message: `✅ Seeded ${cycles.length} cycles and ${logRows.length} daily logs for demo-user`,
+      message: `✅ Seeded ${cycles.length} cycles and ${logRows.length} daily logs for user ${userId}`,
       summary: {
         cycles: cycles.length,
         dailyLogs: logRows.length,
