@@ -1,0 +1,180 @@
+{
+  "Navbar": {
+    "dashboard": "Dashboard",
+    "track": "Track",
+    "insights": "Insights",
+    "chat": "Chat",
+    "offline": "Offline",
+    "syncPending": "Sync Pending",
+    "syncing": "Syncing",
+    "logToday": "Log Today",
+    "signOut": "Sign Out"
+  },
+  "Hero": {
+    "title1": "Listen to your",
+    "title2": "body's rhythm",
+    "subtitle": "Track cycles, predict moods, and screen for PCOS with our intelligent assistant.",
+    "btn1": "Start Tracking ✨",
+    "btn2": "Check PCOD Risk",
+    "status": "Log your cycle"
+  },
+  "Chat": {
+    "header": "Health Assistant",
+    "placeholder": "Ask me anything...",
+    "greeting": "Hello! I'm your health assistant. Ask me anything about your cycle or health. 💕",
+    "error": "Sorry, I encountered an error. Please try again.",
+    "chips": {
+      "nextPeriod": "📅 Next period?",
+      "nextPeriodMsg": "When is my next period predicted?",
+      "pcod": "🩺 What is PCOD?",
+      "pcodMsg": "Can you explain what PCOD/PCOS is?",
+      "cramps": "😖 Cramp relief?",
+      "crampsMsg": "What helps with period cramps?",
+      "nutrition": "🥗 Cycle nutrition?",
+      "nutritionMsg": "What should I eat during my period?"
+    }
+  },
+  "Risk": {
+    "title": "PCOD Risk Assessment",
+    "riskSub": "Based on your cycle data",
+    "high": "High Risk",
+    "med": "Medium Risk",
+    "low": "Low Risk",
+    "riskScore": "Risk Score",
+    "exportDoc": "Export Doctor Report PDF",
+    "noData": "No Data",
+    "logTwoCycles": "Log at least 2 cycles to see your risk assessment.",
+    "currentCycles": "You currently have {count} cycle(s) recorded.",
+    "noRiskFactors": "No risk factors identified."
+  },
+  "Prediction": {
+    "aiTitle": "AI Prediction",
+    "nextCycle": "Next Cycle Prediction",
+    "expectedDate": "Expected Start Date",
+    "confidence": "Prediction Confidence",
+    "avgCycle": "Avg Cycle (days)",
+    "cyclesRecorded": "Cycles Recorded",
+    "basedOn": "Based on your {avg}-day average cycle."
+  },
+  "features": {
+    "title": "Core Features",
+    "feat1Title": "Period Tracking",
+    "feat1Desc": "Log your cycle with symptoms, mood, and flow intensity for accurate predictions.",
+    "feat2Title": "Smart Predictions",
+    "feat2Desc": "AI-powered cycle predictions that adapt to irregular patterns.",
+    "feat3Title": "PCOD Risk Analysis",
+    "feat3Desc": "Machine learning model assesses your risk based on cycle data and symptoms."
+  },
+  "headings": {
+    "insights": "Health Insights",
+    "log": "Log Your Day",
+    "sectionCalendar": "Your Cycle",
+    "sectionLog": "Log Your Day",
+    "sectionChat": "Health Assistant",
+    "sectionPCOD": "PCOD Risk Assessment",
+    "sectionPrediction": "Smart Prediction"
+  },
+  "cycle": {
+    "period": "Period",
+    "predicted": "Predicted",
+    "ovulation": "Ovulation",
+    "cycleLen": "Cycle Length",
+    "nextPeriod": "Next Period",
+    "days": "days",
+    "startTracking": "Start tracking to see your cycle phase",
+    "menstrualPhase": "Menstrual Phase",
+    "follicularPhase": "Follicular Phase",
+    "ovulationWindow": "Ovulation Window",
+    "lutealPhase": "Luteal Phase",
+    "lateIrregular": "Late / Irregular",
+    "cycleDay": "Cycle Day {day} · {phase}"
+  },
+  "log": {
+    "title": "Log Your Day 💕",
+    "symptoms": "Today's Symptoms",
+    "mood": "Today's Mood",
+    "flow": "Flow Intensity",
+    "save": "Save Log"
+  },
+  "onboarding": {
+    "welcome": "Welcome to HerCycle",
+    "subtitle": "Tell us about your last period so we can generate accurate predictions for you.",
+    "lastPeriod": "Last period start date",
+    "continue": "Continue →",
+    "avgCycle": "Average cycle length (days)",
+    "periodLength": "Period length (days)",
+    "back": "Back",
+    "saving": "Saving…",
+    "start": "Get Started ✨",
+    "skip": "Skip for now"
+  },
+  "pages": {
+    "chat": {
+      "title": "Health Assistant",
+      "subtitle": "Ask me anything about your cycle, symptoms, or reproductive health."
+    },
+    "insights": {
+      "title": "Insights",
+      "subtitle": "Your personalised health analytics at a glance.",
+      "avgCycle": "Avg Cycle Length",
+      "daysLogged": "Days Logged",
+      "cyclesRecorded": "Cycles Recorded",
+      "entries": "Log entries",
+      "entry": "Log entry",
+      "moodBasedOn": "Based on {count} {entryLabel}",
+      "cycles": "cycles",
+      "nextPeriod": "Next Period",
+      "predicted": "predicted",
+      "pcodRisk": "PCOD Risk Score",
+      "trendTitle": "Cycle Length Trend",
+      "trendEmpty": "No cycles recorded yet. Use the Track page to start your first period.",
+      "symptomTitle": "Symptom Frequency",
+      "symptomEmpty": "No daily logs yet. Log your symptoms on the Track page or dashboard.",
+      "moodTitle": "😊 Mood Distribution",
+      "moodEmpty": "Log your mood daily to see your mood distribution here."
+    },
+    "track": {
+      "title": "Cycle Tracker",
+      "subtitle": "Log your daily symptoms and manage your cycle timeline.",
+      "startPeriod": "🔴 Start Period Today",
+      "endPeriod": "✅ End Period Today",
+      "noCycles": "💡 No cycles recorded yet. Click \"🔴 Start Period Today\" to begin tracking your first cycle. Saving daily logs separately will not create a cycle record.",
+      "logToday": "📝 Log Today's Symptoms"
+    }
+  },
+  "footer": {
+    "copyright": "© 2025 HerCycle AI. Built with 💕 for women's health tech."
+  },
+  "symptoms": {
+    "Cramps": "Cramps",
+    "Headache": "Headache",
+    "Bloating": "Bloating",
+    "Fatigue": "Fatigue",
+    "Acne": "Acne",
+    "Nausea": "Nausea"
+  },
+  "moods": {
+    "Happy": "Happy",
+    "Neutral": "Neutral",
+    "Sad": "Sad",
+    "Angry": "Angry"
+  },
+  "flow": {
+    "Light": "Light",
+    "Medium": "Medium",
+    "Heavy": "Heavy",
+    "Very Heavy": "Very Heavy"
+  },
+  "factors": {
+    "Irregular cycle patterns detected": "Irregular cycle patterns detected",
+    "Cycle length outside normal range": "Cycle length outside normal range",
+    "Multiple PCOD-related symptoms reported": "Multiple PCOD-related symptoms reported",
+    "Some hormonal symptoms present": "Some hormonal symptoms present",
+    "Regular cycle length maintained": "Regular cycle length maintained",
+    "No significant hormonal symptoms": "No significant hormonal symptoms"
+  },
+  "recommendations": {
+    "consult": "Consider consulting with a healthcare provider for detailed assessment.",
+    "keepTracking": "Keep tracking your cycle and maintaining healthy habits."
+  }
+}

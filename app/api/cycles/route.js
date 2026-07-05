@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 const cyclePostSchema = z.object({
+  id: z.string().uuid('Must be a valid UUID').optional(),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be in YYYY-MM-DD format'),
   end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be in YYYY-MM-DD format').optional().nullable(),
   cycle_length: z.number().int().min(21).max(45).optional().nullable()
@@ -69,16 +70,21 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Bad Request', details: result.error.errors }, { status: 400 })
     }
 
-    const { start_date, end_date, cycle_length } = result.data
+    const { id, start_date, end_date, cycle_length } = result.data
 
     const supabaseAdmin = getSupabaseAdmin()
-    const { error } = await supabaseAdmin.from('cycles').insert([{
+    const insertObj = {
       user_id: userId,
       start_date,
       end_date,
       cycle_length: cycle_length || 28,
       created_at: new Date().toISOString(),
-    }])
+    }
+    if (id) {
+      insertObj.id = id
+    }
+
+    const { error } = await supabaseAdmin.from('cycles').insert([insertObj])
 
     if (error) {
       logger.error(`Database error inserting cycle for user ${userId}:`, error.message);

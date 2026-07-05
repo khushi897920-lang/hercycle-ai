@@ -1,16 +1,17 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { useLanguage } from '@/lib/LanguageContext'
+import { useTranslations, useLocale } from 'next-intl'
 
 export default function HeroSection({ activeLang, cycleDayInfo }) {
-  const { useTranslation } = useLanguage()
+  const t = useTranslations('Hero')
+  const locale = useLocale()
   const router = useRouter()
 
-  const title1   = useTranslation('hero', 'heroTitle')  || useTranslation('hero', 'title1')
-  const title2   = useTranslation('hero', 'title2')
-  const subtitle = useTranslation('hero', 'heroSubtitle') || useTranslation('hero', 'subtitle')
+  const title1   = t('title1')
+  const title2   = t('title2')
+  const subtitle = t('subtitle')
 
-  const handleStartTracking = () => router.push('/track')
+  const handleStartTracking = () => router.push(`/${locale}/track`)
 
   const handleCheckPCOD = () => {
     const el = document.getElementById('pcod-risk-section')
@@ -32,18 +33,18 @@ export default function HeroSection({ activeLang, cycleDayInfo }) {
     <div className="hero-left">
       <div className="status-badge" style={badgeStyle}>
         <span className="pulse-dot" style={dotStyle}></span>
-        {cycleDayInfo?.text || useTranslation('hero', 'status')}
+        {cycleDayInfo?.text || t('status')}
       </div>
       <h1>
         {title1} <br/><span className="gradient-text">{title2}</span>
       </h1>
       <p>{subtitle}</p>
       <div className="hero-btns">
-        <button className="btn-white" onClick={handleStartTracking}>
-          {useTranslation('hero', 'btn1') || 'Start Tracking ✨'}
+        <button className="btn-white start-tracking-shine" onClick={handleStartTracking}>
+          {t('btn1')}
         </button>
         <button className="btn-outline" onClick={handleCheckPCOD}>
-          {useTranslation('hero', 'btn2') || 'Check PCOD Risk'}
+          {t('btn2')}
         </button>
       </div>
     </div>

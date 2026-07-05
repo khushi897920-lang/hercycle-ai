@@ -1,4 +1,4 @@
-import { t } from '@/lib/i18n'
+import { useTranslations, useLocale } from 'next-intl'
 
 /**
  * CycleCalendar — renders a monthly grid with period/ovulation/predicted/today markers.
@@ -33,9 +33,10 @@ export default function CycleCalendar({
   onPrevMonth,
   onNextMonth,
   averageCycleLength,
-  daysUntilNext,
-  activeLang,
+  daysUntilNext
 }) {
+  const t = useTranslations('cycle')
+  const locale = useLocale()
   // Build calendar from explicit Sets if Mode B props are provided
   let calendarDays = calendarDaysProp
   if (!calendarDays && viewYear != null && viewMonth != null) {
@@ -43,7 +44,10 @@ export default function CycleCalendar({
     const daysInMonth     = new Date(viewYear, viewMonth + 1, 0).getDate()
     const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate()
     const days = []
-    ;['S','M','T','W','T','F','S'].forEach(h => days.push({ type: 'header', label: h }))
+    
+    const weekDays = locale === 'hi' ? ['र', 'सो', 'मं', 'बु', 'गु', 'शु', 'श'] : ['S','M','T','W','T','F','S']
+    weekDays.forEach(h => days.push({ type: 'header', label: h }))
+    
     for (let i = firstDay - 1; i >= 0; i--) {
       days.push({ type: 'empty', label: daysInPrevMonth - i })
     }
@@ -93,28 +97,28 @@ export default function CycleCalendar({
       <div className="cal-legend">
         <div className="legend-item">
           <div className="legend-dot" style={{ background: 'linear-gradient(135deg, rgba(232,82,126,0.35), rgba(157,63,122,0.30))' }}></div>
-          <span>{t(activeLang, 'cycle', 'period')}</span>
+          <span>{t('period')}</span>
         </div>
         <div className="legend-item">
           <div className="legend-dot" style={{ background: 'rgba(232,82,126,0.15)', border: '1.5px dashed rgba(232,82,126,0.5)' }}></div>
-          <span>{t(activeLang, 'cycle', 'predicted')}</span>
+          <span>{t('predicted')}</span>
         </div>
         <div className="legend-item">
           <div className="legend-dot" style={{ background: 'rgba(110,231,183,0.20)', border: '1px solid rgba(110,231,183,0.4)' }}></div>
-          <span>{t(activeLang, 'cycle', 'ovulation')}</span>
+          <span>{t('ovulation')}</span>
         </div>
       </div>
 
       <div className="stat-row">
         <div className="stat-tile">
-          <label>{t(activeLang, 'cycle', 'cycleLen')}</label>
-          <div className="val">{averageCycleLength}<span>{t(activeLang, 'cycle', 'days')}</span></div>
+          <label>{t('cycleLen')}</label>
+          <div className="val">{averageCycleLength}<span>{t('days')}</span></div>
         </div>
         <div className="stat-tile">
-          <label>{t(activeLang, 'cycle', 'nextPeriod')}</label>
+          <label>{t('nextPeriod')}</label>
           <div className="val">
             {daysUntilNext !== null ? daysUntilNext : '—'}
-            <span>{daysUntilNext !== null ? t(activeLang, 'cycle', 'days') : ''}</span>
+            <span>{daysUntilNext !== null ? t('days') : ''}</span>
           </div>
         </div>
       </div>

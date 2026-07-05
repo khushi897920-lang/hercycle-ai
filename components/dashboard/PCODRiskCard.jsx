@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { t } from '@/lib/i18n'
 import generateReport from '@/lib/generateReport'
+import { useTranslations, useLocale } from 'next-intl'
 
 // ── Tier normalization ────────────────────────────────────────────────────────
 // Accepts both "MEDIUM RISK" (label) and "MEDIUM" (tier) from the API
@@ -53,9 +53,13 @@ function SkeletonRow({ width = '100%' }) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles = [], recentSymptoms = [], activeLang }) {
+export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles = [], recentSymptoms = [] }) {
   // Animate gauge width on mount / data change
   const [gaugeWidth, setGaugeWidth] = useState(0)
+  const t = useTranslations('Risk')
+  const tFactors = useTranslations('factors')
+  const tRec = useTranslations('recommendations')
+  const locale = useLocale()
 
   const label          = normalizeLabel(pcodRisk?.label || pcodRisk?.tier)
   const score          = pcodRisk?.score  ?? 0
@@ -101,9 +105,9 @@ export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles
       <div className="risk-card glass">
         <div className="risk-header">
           <div>
-            <h3>{t(activeLang, 'risk', 'title')}</h3>
+            <h3>{t('title')}</h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-faint)', marginTop: 4 }}>
-              {t(activeLang, 'risk', 'riskSub')}
+              {t('riskSub')}
             </p>
           </div>
           <div className="risk-badge" style={{
@@ -111,26 +115,22 @@ export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles
             border: '1px solid rgba(255,255,255,0.15)',
             color: 'var(--text-faint)',
           }}>
-            {activeLang === 'हि' ? 'डेटा नहीं' : 'No Data'}
+            {t('noData')}
           </div>
         </div>
 
         <div className="risk-empty-state">
           <div className="risk-empty-icon">🩺</div>
           <p className="risk-empty-msg">
-            {activeLang === 'हि'
-              ? 'PCOD जोखिम मूल्यांकन देखने के लिए कम से कम 2 चक्र लॉग करें।'
-              : 'Log at least 2 cycles to see your risk assessment.'}
+            {t('logTwoCycles')}
           </p>
           <p className="risk-empty-sub">
-            {activeLang === 'हि'
-              ? `आपके पास अभी ${cycleCount} चक्र हैं।`
-              : `You currently have ${cycleCount} cycle${cycleCount === 1 ? '' : 's'} recorded.`}
+            {t('currentCycles', { count: cycleCount })}
           </p>
         </div>
 
         <button className="export-btn" disabled style={{ opacity: 0.4 }}>
-          {t(activeLang, 'btn', 'exportDoc')}
+          {t('exportDoc')}
         </button>
       </div>
     )
@@ -142,9 +142,9 @@ export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles
       {/* Header row */}
       <div className="risk-header">
         <div>
-          <h3>{t(activeLang, 'risk', 'title')}</h3>
+          <h3>{t('title')}</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-faint)', marginTop: 4 }}>
-            {t(activeLang, 'risk', 'riskSub')}
+            {t('riskSub')}
           </p>
         </div>
 
@@ -158,9 +158,9 @@ export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles
             transition:   'all 0.4s ease',
           }}
         >
-          {label === 'HIGH RISK'   ? t(activeLang, 'risk', 'high') :
-           label === 'MEDIUM RISK' ? t(activeLang, 'risk', 'med')  :
-           t(activeLang, 'risk', 'low')}
+          {label === 'HIGH RISK'   ? t('high') :
+           label === 'MEDIUM RISK' ? t('med')  :
+           t('low')}
         </div>
       </div>
 
@@ -179,7 +179,7 @@ export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles
 
       {/* Numeric score */}
       <p style={{ fontSize: '0.78rem', color: 'var(--text-faint)', marginBottom: 16 }}>
-        {t(activeLang, 'risk', 'riskScore')}:{' '}
+        {t('riskScore')}:{' '}
         <strong style={{ color: tokens.badgeColor }}>{score}/100</strong>
       </p>
 
@@ -188,12 +188,12 @@ export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles
         {factors.length > 0
           ? factors.map((f, i) => (
               <li key={i} style={{ '--dot-color': tokens.dotColor }}>
-                {f}
+                {tFactors(f)}
               </li>
             ))
           : (
             <li style={{ color: 'var(--text-faint)', fontStyle: 'italic' }}>
-              {activeLang === 'हि' ? 'कोई जोखिम कारक नहीं मिला।' : 'No risk factors identified.'}
+              {t('noRiskFactors')}
             </li>
           )
         }
@@ -211,12 +211,16 @@ export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles
           border:     '1px solid rgba(255,255,255,0.07)',
           lineHeight: 1.55,
         }}>
-          💡 {recommendation}
+          💡 {tRec(
+            recommendation.includes('consulting') ? 'consult' :
+            recommendation.includes('Keep tracking') ? 'keepTracking' :
+            recommendation
+          )}
         </p>
       )}
 
-      <button className="export-btn" onClick={() => generateReport({ userName: 'khushji', email: 'khushi79916234@gmail.com', cycles, pcod: pcodRisk, recentSymptoms })}>
-        {t(activeLang, 'btn', 'exportDoc')}
+      <button className="export-btn" onClick={() => generateReport({ userName: 'khushji', email: 'khushi79916234@gmail.com', cycles, pcod: pcodRisk, recentSymptoms, locale })}>
+        {t('exportDoc')}
       </button>
     </div>
   )

@@ -1,7 +1,10 @@
+import { useTranslations } from 'next-intl'
+
 export default function Footer() {
+  const t = useTranslations('footer')
   return (
     <footer>
-      © 2025 HerCycle AI. Built with 💕 for women's health tech.
+      {t('copyright')}
     </footer>
   );
 }
