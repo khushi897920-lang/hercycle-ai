@@ -20,7 +20,6 @@ export default function Navbar() {
     { key: 'track',     label: t('track'),     href: `/${locale}/track` },
     { key: 'insights',  label: t('insights'),  href: `/${locale}/insights` },
     { key: 'chat',      label: t('chat'),      href: `/${locale}/chat` },
-    { key: 'community', label: t('community'), href: `/${locale}/community` },
   ]
 
   const handleLogToday = () => {
