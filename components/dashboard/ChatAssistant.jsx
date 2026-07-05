@@ -1,22 +1,6 @@
 'use client'
 
-// ── Suggestion chip definitions ───────────────────────────────────────────────
-// Each chip has a visible label and the full message sent to the AI.
-// Hindi variants are provided for the language toggle.
-const CHIPS = {
-  EN: [
-    { label: '📅 Next period?',   message: 'When is my next period predicted?' },
-    { label: '🩺 What is PCOD?',  message: 'Can you explain what PCOD/PCOS is?' },
-    { label: '😖 Cramp relief?',  message: 'What helps with period cramps?' },
-    { label: '🥗 Cycle nutrition?', message: 'What should I eat during my period?' },
-  ],
-  हि: [
-    { label: '📅 अगला पीरियड?',      message: 'मेरा अगला पीरियड कब होगा?' },
-    { label: '🩺 PCOD क्या है?',     message: 'PCOD/PCOS क्या होता है, समझाएं।' },
-    { label: '😖 क्रैम्प्स से राहत?', message: 'पीरियड क्रैम्प्स से राहत के उपाय बताएं।' },
-    { label: '🥗 चक्र पोषण?',        message: 'पीरियड के दौरान क्या खाना चाहिए?' },
-  ],
-}
+import { useTranslations } from 'next-intl'
 
 export default function ChatAssistant({
   chatMessages,
@@ -24,14 +8,20 @@ export default function ChatAssistant({
   chatInput,
   setChatInput,
   handleSendMessage,
-  activeLang,
   nextPeriodDate,   // injected into AI context so it can answer date questions accurately
 }) {
+  const t = useTranslations('Chat')
+
   // Chips disappear once the user has sent at least one message
   // (chatMessages starts with 1 AI greeting, so > 1 means user has replied)
   const showChips = chatMessages.length <= 1
 
-  const chips = CHIPS[activeLang] || CHIPS.EN
+  const chips = [
+    { label: t('chips.nextPeriod'), message: t('chips.nextPeriodMsg') },
+    { label: t('chips.pcod'), message: t('chips.pcodMsg') },
+    { label: t('chips.cramps'), message: t('chips.crampsMsg') },
+    { label: t('chips.nutrition'), message: t('chips.nutritionMsg') },
+  ]
 
   const handleChipClick = (chip) => {
     // Send the full message, optionally enriched with the predicted date
@@ -49,7 +39,7 @@ export default function ChatAssistant({
       {/* Header */}
       <div className="chat-header">
         <div className="chat-avatar">🤖</div>
-        <h4>Health Assistant</h4>
+        <h4>{t('header')}</h4>
       </div>
 
       {/* Message thread */}
@@ -89,12 +79,12 @@ export default function ChatAssistant({
         <input
           type="text"
           className="chat-input"
-          placeholder={activeLang === 'EN' ? 'Ask me anything...' : 'मुझसे कुछ भी पूछें...'}
+          placeholder={t('placeholder')}
           value={chatInput}
           onChange={(e) => setChatInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
         />
-        <button className="chat-send-btn" onClick={handleSendMessage} aria-label="Send">➤</button>
+        <button className="chat-send-btn" onClick={()=>handleSendMessage()} aria-label="Send">➤</button>
       </div>
     </div>
   )

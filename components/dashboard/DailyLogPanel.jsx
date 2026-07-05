@@ -1,4 +1,4 @@
-import { t } from '@/lib/i18n'
+import { useTranslations } from 'next-intl'
 
 export default function DailyLogPanel({
   selectedSymptoms,
@@ -8,34 +8,39 @@ export default function DailyLogPanel({
   selectedFlow,
   setSelectedFlow,
   handleSaveLog,
-  cycleData,
-  activeLang
+  cycleData
 }) {
+  const t = useTranslations('log')
+  const tSymp = useTranslations('symptoms')
+  const tFlow = useTranslations('flow')
   return (
     <>
       {/* Symptoms Panel */}
       <div className="panel glass-dim">
-        <h4>{t(activeLang, 'log', 'symptoms')}</h4>
+        <h4>{t('symptoms')}</h4>
         <div className="symp-grid">
           {['Cramps', 'Headache', 'Bloating', 'Fatigue', 'Acne', 'Nausea'].map(symptom => (
-            <div
+            <button
               key={symptom}
+              type='button'
               className={`symp-chip ${selectedSymptoms.includes(symptom) ? 'active' : ''}`}
               onClick={() => toggleSymptom(symptom)}
+              aria-pressed={selectedSymptoms.includes(symptom)}
             >
-              {symptom}
-            </div>
+              {tSymp(symptom)}
+            </button>
           ))}
         </div>
       </div>
 
       {/* Mood & Flow Panel */}
       <div className="panel glass-dim">
-        <h4>{t(activeLang, 'log', 'mood')}</h4>
+        <h4>{t('mood')}</h4>
         <div className="mood-row">
           {['😊', '😐', '😢', '😡'].map((emoji, i) => (
             <button
               key={i}
+              type='button'
               className={`mood-btn ${selectedMood === emoji ? 'active' : ''}`}
               onClick={() => setSelectedMood(emoji)}
             >
@@ -44,7 +49,7 @@ export default function DailyLogPanel({
           ))}
         </div>
 
-        <div className="flow-lbl">{t(activeLang, 'log', 'flow')}</div>
+        <div className="flow-lbl">{t('flow')}</div>
         <div className="flow-row">
           {[
             { id: 'f1', label: 'Light' },
@@ -52,17 +57,18 @@ export default function DailyLogPanel({
             { id: 'f3', label: 'Heavy' },
             { id: 'f4', label: 'Very Heavy' }
           ].map(flow => (
-            <div
+            <button
               key={flow.id}
+              type='button'
               className={`flow-dot ${flow.id} ${selectedFlow === flow.id ? 'active' : ''}`}
               onClick={() => setSelectedFlow(flow.id)}
-              title={flow.label}
-            ></div>
+              title={tFlow(flow.label)}
+            ></button>
           ))}
         </div>
 
         <button className="save-btn" onClick={handleSaveLog}>
-          {t(activeLang, 'btn', 'saveLog')}
+          {t('save')}
         </button>
       </div>
     </>

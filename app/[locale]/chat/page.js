@@ -1,30 +1,44 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import ChatAssistant from '@/components/dashboard/ChatAssistant'
+import { useTranslations, useLocale } from 'next-intl'
+import { useRouter } from 'next/navigation'
+import { useOffline } from '@/lib/OfflineContext'
 
 export default function ChatPage() {
+  const t = useTranslations('pages.chat')
+  const tChat = useTranslations('Chat')
+  const locale = useLocale()
   const router   = useRouter()
   const { isLoaded, isSignedIn } = useAuth()
+  const { offlineClient } = useOffline()
 
   const [cycleData,     setCycleData]     = useState(null)
-  const [chatMessages,  setChatMessages]  = useState([
-    { role: 'ai', text: "Hello! I'm your HerCycle AI health assistant. Ask me anything about your cycle or health. 💕" }
-  ])
+  const [chatMessages,  setChatMessages]  = useState([])
   const [chatInput,   setChatInput]   = useState('')
   const [isTyping,    setIsTyping]    = useState(false)
 
   useEffect(() => {
     if (!isLoaded) return
     if (!isSignedIn) { router.push('/auth/login'); return }
-    fetch('/api/cycles').then(r => r.json()).then(data => {
-      if (data.success) setCycleData(data.data)
-    })
-  }, [isLoaded, isSignedIn, router])
+    
+    const init = async () => {
+      try {
+        const data = await offlineClient.fetchCycles()
+        if (data.success) setCycleData(data.data)
+      } catch (err) {
+        console.error('Failed to fetch cycles', err)
+      }
+    }
+    init()
+    
+    // Set initial greeting after mount to avoid hydration mismatch
+    setChatMessages([{ role: 'ai', text: tChat('greeting') }])
+  }, [isLoaded, isSignedIn, router, offlineClient, tChat])
 
   const handleSendMessage = async (directMessage) => {
     const userMessage = directMessage || chatInput
@@ -38,7 +52,7 @@ export default function ChatPage() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage, language: 'EN', context: cycleData }),
+        body: JSON.stringify({ message: userMessage, language: locale, context: cycleData }),
       })
       const data = await res.json()
       setIsTyping(false)
@@ -49,7 +63,7 @@ export default function ChatPage() {
       setIsTyping(false)
       setChatMessages(prev => [...prev, {
         role: 'ai',
-        text: 'Sorry, I encountered an error. Please try again.',
+        text: tChat('error'),
       }])
     }
   }
@@ -70,20 +84,19 @@ export default function ChatPage() {
           minHeight: 'calc(100vh - 80px)',
         }}>
           <h1 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>
-            🤖 <span className="gradient-text">Health Assistant</span>
+            🤖 <span className="gradient-text">{t('title')}</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.65)', marginBottom: '1.5rem' }}>
-            Ask me anything about your cycle, symptoms, or reproductive health.
+            {t('subtitle')}
           </p>
 
-          <div style={{ flex: 1 }}>
+        <div style={{ flex: 1 }}>
             <ChatAssistant
               chatMessages={chatMessages}
               isTyping={isTyping}
               chatInput={chatInput}
               setChatInput={setChatInput}
               handleSendMessage={handleSendMessage}
-              activeLang="EN"
               nextPeriodDate={cycleData?.nextPeriodDate}
             />
           </div>
