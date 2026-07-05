@@ -8,10 +8,9 @@ const CYCLE_LENGTHS = [28, 27, 29, 28, 28, 27]
 const PERIOD_LENGTHS = [5, 5, 6, 5, 6, 5]
 
 const MOOD_LABELS = {
-  SAD: 'sad',
-  NEUTRAL: 'neutral',
-  HAPPY: 'happy',
-  // ANGRY: 'angry', // Uncomment if you use '😡' elsewhere
+  SAD: '😢',
+  NEUTRAL: '😐',
+  HAPPY: '😊',
 }
 
 function addDays(date, n) {
