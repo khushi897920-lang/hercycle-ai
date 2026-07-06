@@ -8,6 +8,8 @@ This document guides you through the process of contributing, from raising issue
 
 ## 1. Code of Conduct
 By participating in this project, you agree to abide by our standards of respectful, inclusive, and professional behavior. Always be supportive, kind, and collaborative in discussions, issues, and reviews.
+ 
+Here is the Detailed [code of conduct](./CODE_OF_CONDUCT.md).
 
 ---
 
