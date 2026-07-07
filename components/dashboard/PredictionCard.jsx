@@ -140,7 +140,7 @@ export default function PredictionCard({ cycleData }) {
       </div>
 
       <p className="pred-footer-note">
-        {t('basedOn', { avg: avgLen })}
+        {t('basedOn', { avg: String(avgLen) })}
       </p>
     </div>
   )
