@@ -5,6 +5,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { useClerk } from '@clerk/nextjs'
 import { useOffline } from '@/lib/OfflineContext'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+import { Settings, LogOut, Languages } from 'lucide-react'
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -127,31 +129,72 @@ export default function Navbar() {
       )}
 
       {/* Action Buttons Row */}
-      <div className="nav-right flex flex-wrap items-center justify-center md:justify-end gap-2 sm:gap-3 w-full md:w-auto overflow-visible pb-0">
-        <div className="lang-toggle shrink-0">
-          <button
-            className={`lang-btn ${locale === 'en' ? 'active' : ''}`}
-            onClick={() => switchLanguage('en')}
-          >EN</button>
-          <button
-            className={`lang-btn ${locale === 'hi' ? 'active' : ''}`}
-            onClick={() => switchLanguage('hi')}
-          >हि</button>
-        </div>
+      <div className="nav-right flex items-center justify-center md:justify-end gap-2 sm:gap-3 w-full md:w-auto overflow-visible pb-0">
         <button className="btn-pill nav-action nav-log-btn shrink-0 px-3 py-1.5 sm:px-5 text-[12px] sm:text-sm whitespace-nowrap" onClick={handleLogToday}>
           {t('logToday')}
         </button>
-        <button
-          className="btn-pill nav-action nav-signout-btn shrink-0 px-3 py-1.5 sm:px-5 text-[12px] sm:text-sm whitespace-nowrap"
-          onClick={handleLogout}
-          style={{
-            background: 'rgba(255,255,255,0.12)',
-            border: '1px solid rgba(255,255,255,0.3)',
-          }}
-          title={t('signOut')}
-        >
-          {t('signOut')}
-        </button>
+
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button
+              className="p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-colors border border-transparent hover:border-white/20 outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              aria-label="Settings"
+            >
+              <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-white/90" />
+            </button>
+          </DropdownMenu.Trigger>
+
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              align="end"
+              sideOffset={8}
+              className="z-[100] min-w-[200px] p-2 rounded-xl border border-white/20 shadow-xl animate-in fade-in zoom-in-95 duration-200"
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                boxShadow: '0 8px 32px 0 rgba(228, 115, 168, 0.2)'
+              }}
+            >
+              <div className="px-2 py-1.5 text-[10px] font-semibold text-white/70 uppercase tracking-wider mb-1">
+                Settings
+              </div>
+              
+              <div className="flex items-center justify-between px-2 py-2 mb-1 rounded-lg hover:bg-white/5 transition-colors">
+                <div className="flex items-center gap-2 text-sm text-white/90">
+                  <Languages className="w-4 h-4 text-white/70" />
+                  <span>Language</span>
+                </div>
+                <div className="flex bg-white/10 rounded-lg p-0.5 border border-white/10">
+                  <button
+                    className={`px-2 py-1 rounded-md text-xs font-bold transition-all duration-200 ${locale === 'en' ? 'bg-white/25 text-white shadow-sm' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                    onClick={() => switchLanguage('en')}
+                  >
+                    EN
+                  </button>
+                  <button
+                    className={`px-2 py-1 rounded-md text-xs font-bold transition-all duration-200 ${locale === 'hi' ? 'bg-white/25 text-white shadow-sm' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                    onClick={() => switchLanguage('hi')}
+                  >
+                    हि
+                  </button>
+                </div>
+              </div>
+
+              <DropdownMenu.Separator className="h-[1px] bg-white/20 my-1 mx-1" />
+
+              <DropdownMenu.Item asChild>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-2 py-2 text-sm text-white hover:text-white hover:bg-white/15 rounded-lg transition-colors outline-none cursor-pointer mt-1 group"
+                >
+                  <LogOut className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
+                  <span>{t('signOut')}</span>
+                </button>
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       </div>
     </nav>
   )
