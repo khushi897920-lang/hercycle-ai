@@ -55,7 +55,10 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 
 export default async function RootLayout({ children, params }) {
-  const { locale } = await params;
+  let { locale } = await params;
+  if (locale !== 'en' && locale !== 'hi') {
+    locale = 'en';
+  }
   setRequestLocale(locale);
   const messages = await getMessages();
 
