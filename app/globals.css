@@ -23,7 +23,7 @@ nav.glass {
 }
 
 body {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 6rem) !important;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 1rem) !important;
 }
 
 :root {
