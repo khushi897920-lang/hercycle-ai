@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth, useUser } from '@clerk/nextjs'
 import toast from 'react-hot-toast'
 
 import Navbar from '@/components/layout/Navbar'
@@ -106,6 +106,7 @@ function buildCalendarDays(year, month, periodDays, ovulationDays, predictedDays
 const HerCycleApp = () => {
   const router = useRouter()
   const { isLoaded, isSignedIn } = useAuth()
+  const { user } = useUser()
   const { offlineClient } = useOffline()
   const now = new Date()
   const [activeNav, setActiveNav] = useState('Dashboard')
@@ -154,18 +155,29 @@ const HerCycleApp = () => {
 
   // Check session on mount and load data
   useEffect(() => {
-    if (!isLoaded) return
+    if (!isLoaded || !user) return
     if (!isSignedIn) {
-      router.push('/auth/login')
+      router.push(`/${locale}/auth/login`)
       return
     }
+
+    const role = user?.publicMetadata?.role
+    if (!role) {
+      router.push(`/${locale}/onboarding`)
+      return
+    }
+    if (role === 'partner') {
+      router.push(`/${locale}/partner`)
+      return
+    }
+
     Promise.all([fetchCycleData(), fetchPCODRisk()])
     
     // Set initial greeting after mount to avoid hydration mismatch
     if (chatMessages.length === 0) {
       setChatMessages([{ role: 'ai', text: tChat('greeting') }])
     }
-  }, [isLoaded, isSignedIn, router, tChat])
+  }, [isLoaded, isSignedIn, user, router, tChat, locale])
 
   const fetchCycleData = async () => {
     try {

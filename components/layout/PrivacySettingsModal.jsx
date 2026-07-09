@@ -5,6 +5,7 @@ import { useAuth } from '@clerk/nextjs'
 import * as Dialog from '@radix-ui/react-dialog'
 import toast from 'react-hot-toast'
 import { Download, AlertTriangle, Trash2, X } from 'lucide-react'
+import PartnerSharing from '@/components/settings/PartnerSharing'
 
 export default function PrivacySettingsModal({ isOpen, setIsOpen }) {
   const { getToken } = useAuth()
@@ -77,7 +78,7 @@ export default function PrivacySettingsModal({ isOpen, setIsOpen }) {
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] animate-in fade-in" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-lg z-[101] animate-in zoom-in-95 duration-200">
+        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-lg z-[101] max-h-[85vh] overflow-y-auto animate-in zoom-in-95 duration-200 rounded-3xl">
           
           <div className="glass p-6 sm:p-8 rounded-3xl space-y-6 shadow-2xl relative overflow-hidden" style={{ background: 'rgba(50, 10, 40, 0.45)' }}>
             {/* Subtle glow behind the card */}
