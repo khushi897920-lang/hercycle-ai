@@ -21,8 +21,9 @@ const cyclePatchSchema = z.object({
 export async function GET(request) {
   // ============ RATE LIMITING ============
   try {
-    const identifier = await getRateLimitIdentifier(request);
-    await crudLimiter.check(30, identifier); // 30 requests per minute (read-heavy)
+    // const identifier = await getRateLimitIdentifier(request);
+    // await crudLimiter.check(30, identifier); // 30 requests per minute (read-heavy)
+    await crudLimiter.check(request); 
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Cycles GET endpoint: ${rateLimitError.message}`);
     return NextResponse.json(
@@ -64,8 +65,9 @@ export async function GET(request) {
 export async function POST(request) {
   // ============ RATE LIMITING ============
   try {
-    const identifier = await getRateLimitIdentifier(request);
-    await crudLimiter.check(30, identifier); // 30 requests per minute
+    // const identifier = await getRateLimitIdentifier(request);
+    // await crudLimiter.checkNext(request, 30); // 30 requests per minute
+    await crudLimiter.check(request); 
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Cycles POST endpoint: ${rateLimitError.message}`);
     return NextResponse.json(
@@ -122,8 +124,9 @@ export async function POST(request) {
 export async function PATCH(request) {
   // ============ RATE LIMITING ============
   try {
-    const identifier = await getRateLimitIdentifier(request);
-    await crudLimiter.check(30, identifier); // 30 requests per minute
+    // const identifier = await getRateLimitIdentifier(request);
+    // await crudLimiter.check(30, identifier); // 30 requests per minute
+    await crudLimiter.check(request); 
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Cycles PATCH endpoint: ${rateLimitError.message}`);
     return NextResponse.json(
