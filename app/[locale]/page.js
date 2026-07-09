@@ -15,6 +15,7 @@ import ChatAssistant from '@/components/dashboard/ChatAssistant'
 import DailyLogPanel from '@/components/dashboard/DailyLogPanel'
 import OnboardingModal from '@/components/dashboard/OnboardingModal'
 import PredictionCard from '@/components/dashboard/PredictionCard'
+import CycleHistoryCard from '@/components/dashboard/CycleHistoryCard'
 import { useOffline } from '@/lib/OfflineContext'
 import { useLocale, useTranslations } from 'next-intl'
 
@@ -439,6 +440,11 @@ const HerCycleApp = () => {
             activeLang={activeLang}
           />
           <PredictionCard cycleData={cycleData} activeLang={activeLang} />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginTop: '32px', marginBottom: '48px' }}>
+          <CycleHistoryCard cycleData={cycleData} />
+          <div className="placeholder" />
         </div>
 
         <Footer />
