@@ -5,7 +5,6 @@ import { useAuth } from '@clerk/nextjs'
 import * as Dialog from '@radix-ui/react-dialog'
 import toast from 'react-hot-toast'
 import { Download, AlertTriangle, Trash2, X } from 'lucide-react'
-import PartnerSharing from '@/components/settings/PartnerSharing'
 
 export default function PrivacySettingsModal({ isOpen, setIsOpen }) {
   const { getToken } = useAuth()
