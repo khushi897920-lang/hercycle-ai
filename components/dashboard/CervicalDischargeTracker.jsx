@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useOffline } from '@/lib/OfflineContext';
-import toast from 'react-hot-toast';
 
 const dischargeOptions = [
   { id: 'none', label: 'No Discharge', insight: 'No discharge is also a normal variation during some phases of the menstrual cycle.' },
