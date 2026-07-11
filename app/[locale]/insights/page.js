@@ -13,7 +13,6 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useOffline } from '@/lib/OfflineContext'
 import { useTranslations } from 'next-intl'
-import WeightTrendChart from '@/components/dashboard/WeightTrendChart'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const PINK         = '#e8527e'
@@ -288,7 +287,6 @@ export default function InsightsPage() {
             </div>
           )}
 
-
           {/* ── Cycle Length Trend ── */}
           <SectionCard
             icon={<TrendingUp size={18} color={ACCENT} strokeWidth={1.5} />}
@@ -316,8 +314,6 @@ export default function InsightsPage() {
             )}
           </SectionCard>
 
-          <WeightTrendChart />
-          
           {/* ── Symptom Frequency ── */}
           <SectionCard
             icon={<Activity size={18} color={ACCENT} strokeWidth={1.5} />}
