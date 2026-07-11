@@ -6,7 +6,19 @@ import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 const logPostSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be in YYYY-MM-DD format'),
+  date: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be in YYYY-MM-DD format')
+    .refine((val) => {
+      const today = new Date()
+      today.setHours(23, 59, 59, 999) // allow the full current day
+      return new Date(val) <= today
+    }, { message: 'Log date cannot be in the future.' })
+    .refine((val) => {
+      const twoYearsAgo = new Date()
+      twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
+      twoYearsAgo.setHours(0, 0, 0, 0)
+      return new Date(val) >= twoYearsAgo
+    }, { message: 'Log date cannot be older than 2 years.' }),
   symptoms: z.array(z.string().max(100)).max(50),
   mood: z.string().max(50).nullable().optional(),
   flow: z.string().max(10).nullable().optional(),
