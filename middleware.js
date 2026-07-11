@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
@@ -21,7 +22,14 @@ const intlMiddleware = createMiddleware({
 
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
-    await auth.protect();
+    const { userId } = await auth();
+    if (req.nextUrl.pathname.startsWith('/api/')) {
+      if (!userId) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      }
+    } else {
+      await auth.protect();
+    }
   }
   
   // Apply next-intl middleware to all routes except API and static assets
