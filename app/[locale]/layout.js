@@ -93,7 +93,9 @@ export default async function RootLayout({ children, params }) {
                 {children}
                 <ChatFAB />
                 <Toaster
-                  position="top-center"
+                 position="top-center"
+
+
                   toastOptions={{
                     style: {
                       background: 'rgba(30,12,40,0.95)',

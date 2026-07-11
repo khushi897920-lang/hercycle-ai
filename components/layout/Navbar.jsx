@@ -3,23 +3,31 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
-import { useClerk } from '@clerk/nextjs'
+import { useClerk, useUser } from '@clerk/nextjs'
 import { useOffline } from '@/lib/OfflineContext'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { Settings, LogOut, Languages } from 'lucide-react'
+import { Settings, LogOut, Languages, Users, Link2Off } from 'lucide-react'
 import PrivacySettingsModal from './PrivacySettingsModal'
+import PartnerSharingModal from './PartnerSharingModal'
+import { disconnectAsPartner } from '@/lib/actions/partner'
+import toast from 'react-hot-toast'
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false)
+  const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false)
   const t = useTranslations('Navbar')
   const locale = useLocale()
   const router = useRouter()
   const pathname = usePathname()
   const { signOut } = useClerk()
+  const { user } = useUser()
   const { isOffline, pendingSyncCount, isSyncing } = useOffline()
 
-  const NAV_ITEMS = [
+  const role = user?.publicMetadata?.role
+  const isPartner = role === 'partner'
+
+  const NAV_ITEMS = isPartner ? [] : [
     { key: 'dashboard', label: t('dashboard'), href: `/${locale}` },
     { key: 'track',     label: t('track'),     href: `/${locale}/track` },
     { key: 'insights',  label: t('insights'),  href: `/${locale}/insights` },
@@ -40,8 +48,21 @@ export default function Navbar() {
     router.push(`/${locale}/auth/login`)
   }
 
+  const handleDisconnectAsPartner = async () => {
+    if (!confirm('Are you sure you want to disconnect? You will need a new code to reconnect.')) return
+    try {
+      await disconnectAsPartner()
+      await user?.reload()
+      toast.success('Disconnected successfully')
+      window.location.href = `/${locale}/onboarding`
+    } catch (error) {
+      toast.error('Failed to disconnect')
+    }
+  }
+
   const isActive = (href) => {
     if (href === `/${locale}`) return pathname === `/${locale}` || pathname === '/'
+    if (href === `/${locale}/partner`) return pathname === `/${locale}/partner`
     return pathname.startsWith(href)
   }
 
@@ -85,18 +106,20 @@ export default function Navbar() {
         </div>
         
         {/* Hamburger Icon */}
-        <button 
-          className="nav-menu-btn md:hidden text-white/80 hover:text-white p-1"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle Menu"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {mobileMenuOpen 
-              ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            }
-          </svg>
-        </button>
+        {NAV_ITEMS.length > 0 && (
+          <button 
+            className="nav-menu-btn md:hidden text-white/80 hover:text-white p-1"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Menu"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {mobileMenuOpen 
+                ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              }
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Desktop Links */}
@@ -131,9 +154,11 @@ export default function Navbar() {
 
       {/* Action Buttons Row */}
       <div className="nav-right flex items-center justify-center md:justify-end gap-2 sm:gap-3 w-full md:w-auto overflow-visible pb-0">
-        <button className="btn-pill nav-action nav-log-btn shrink-0 px-3 py-1.5 sm:px-5 text-[12px] sm:text-sm whitespace-nowrap" onClick={handleLogToday}>
-          {t('logToday')}
-        </button>
+        {!isPartner && (
+          <button className="btn-pill nav-action nav-log-btn shrink-0 px-3 py-1.5 sm:px-5 text-[12px] sm:text-sm whitespace-nowrap" onClick={handleLogToday}>
+            {t('logToday')}
+          </button>
+        )}
 
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
@@ -184,14 +209,27 @@ export default function Navbar() {
 
               <DropdownMenu.Separator className="h-[1px] bg-white/20 my-1 mx-1" />
 
-              <DropdownMenu.Item asChild onSelect={() => setIsPrivacyModalOpen(true)}>
-                <button
-                  className="w-full flex items-center gap-2 px-2 py-2 text-sm text-white hover:text-white hover:bg-white/15 rounded-lg transition-colors outline-none cursor-pointer mt-1 group"
-                >
-                  <Settings className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
-                  <span>Privacy & Data</span>
-                </button>
-              </DropdownMenu.Item>
+              {!isPartner && (
+                <DropdownMenu.Item asChild onSelect={() => setIsPartnerModalOpen(true)}>
+                  <button
+                    className="w-full flex items-center gap-2 px-2 py-2 text-sm text-white hover:text-white hover:bg-white/15 rounded-lg transition-colors outline-none cursor-pointer mt-1 group"
+                  >
+                    <Users className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
+                    <span>Partner Sharing</span>
+                  </button>
+                </DropdownMenu.Item>
+              )}
+
+              {!isPartner && (
+                <DropdownMenu.Item asChild onSelect={() => setIsPrivacyModalOpen(true)}>
+                  <button
+                    className="w-full flex items-center gap-2 px-2 py-2 text-sm text-white hover:text-white hover:bg-white/15 rounded-lg transition-colors outline-none cursor-pointer mt-1 group"
+                  >
+                    <Settings className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
+                    <span>Privacy & Data</span>
+                  </button>
+                </DropdownMenu.Item>
+              )}
 
               <DropdownMenu.Item asChild>
                 <button
@@ -202,12 +240,28 @@ export default function Navbar() {
                   <span>{t('signOut')}</span>
                 </button>
               </DropdownMenu.Item>
+
+              {isPartner && (
+                <>
+                  <DropdownMenu.Separator className="h-[1px] bg-white/20 my-1 mx-1" />
+                  <DropdownMenu.Item asChild>
+                    <button
+                      onClick={handleDisconnectAsPartner}
+                      className="w-full flex items-center gap-2 px-2 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors outline-none cursor-pointer mt-1 group"
+                    >
+                      <Link2Off className="w-4 h-4 text-red-400 group-hover:text-red-300 transition-colors" />
+                      <span>Disconnect</span>
+                    </button>
+                  </DropdownMenu.Item>
+                </>
+              )}
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
       </div>
 
       <PrivacySettingsModal isOpen={isPrivacyModalOpen} setIsOpen={setIsPrivacyModalOpen} />
+      <PartnerSharingModal isOpen={isPartnerModalOpen} setIsOpen={setIsPartnerModalOpen} />
     </nav>
   )
 }

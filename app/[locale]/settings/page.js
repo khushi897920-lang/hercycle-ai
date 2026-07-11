@@ -6,6 +6,7 @@ import { useClerk, useUser } from '@clerk/nextjs'
 import Navbar from '@/components/layout/Navbar'
 import toast from 'react-hot-toast'
 import { Download, AlertTriangle, Trash2 } from 'lucide-react'
+import PartnerSharing from '@/components/settings/PartnerSharing'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -71,6 +72,9 @@ export default function SettingsPage() {
           <div className="glass p-6 sm:p-8 rounded-3xl space-y-8 shadow-2xl relative overflow-hidden">
             {/* Subtle glow behind the card */}
             <div className="absolute top-[-50%] right-[-50%] w-[100%] h-[100%] bg-white/5 blur-3xl rounded-full pointer-events-none"></div>
+
+            <PartnerSharing />
+            <hr className="border-white/10 relative z-10" />
 
             {/* Data Export Section */}
             <section className="space-y-4 relative z-10">

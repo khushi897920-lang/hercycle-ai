@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth, useUser } from '@clerk/nextjs'
 import toast from 'react-hot-toast'
 
 import Navbar from '@/components/layout/Navbar'
@@ -15,6 +15,8 @@ import ChatAssistant from '@/components/dashboard/ChatAssistant'
 import DailyLogPanel from '@/components/dashboard/DailyLogPanel'
 import OnboardingModal from '@/components/dashboard/OnboardingModal'
 import PredictionCard from '@/components/dashboard/PredictionCard'
+import CycleHistoryCard from '@/components/dashboard/CycleHistoryCard'
+import CervicalDischargeTracker from '@/components/dashboard/CervicalDischargeTracker'
 import { useOffline } from '@/lib/OfflineContext'
 import { useLocale, useTranslations } from 'next-intl'
 
@@ -106,6 +108,7 @@ function buildCalendarDays(year, month, periodDays, ovulationDays, predictedDays
 const HerCycleApp = () => {
   const router = useRouter()
   const { isLoaded, isSignedIn } = useAuth()
+  const { user } = useUser()
   const { offlineClient } = useOffline()
   const now = new Date()
   const [activeNav, setActiveNav] = useState('Dashboard')
@@ -126,6 +129,8 @@ const HerCycleApp = () => {
   const [selectedSymptoms, setSelectedSymptoms] = useState([])
   const [selectedMood, setSelectedMood] = useState(null)
   const [selectedFlow, setSelectedFlow] = useState(null)
+  const [selectedDischarge, setSelectedDischarge] = useState(null)
+  const [saveTrigger, setSaveTrigger] = useState(0)
   const [cycleData, setCycleData] = useState(null)
   const [pcodRisk, setPcodRisk] = useState(null)
   const [pcodRiskLoading, setPcodRiskLoading] = useState(true)
@@ -154,18 +159,29 @@ const HerCycleApp = () => {
 
   // Check session on mount and load data
   useEffect(() => {
-    if (!isLoaded) return
+    if (!isLoaded || !user) return
     if (!isSignedIn) {
-      router.push('/auth/login')
+      router.push(`/${locale}/auth/login`)
       return
     }
+
+    const role = user?.publicMetadata?.role
+    if (!role) {
+      router.push(`/${locale}/onboarding`)
+      return
+    }
+    if (role === 'partner') {
+      router.push(`/${locale}/partner`)
+      return
+    }
+
     Promise.all([fetchCycleData(), fetchPCODRisk()])
     
     // Set initial greeting after mount to avoid hydration mismatch
     if (chatMessages.length === 0) {
       setChatMessages([{ role: 'ai', text: tChat('greeting') }])
     }
-  }, [isLoaded, isSignedIn, router, tChat])
+  }, [isLoaded, isSignedIn, user, router, tChat, locale])
 
   const fetchCycleData = async () => {
     try {
@@ -250,7 +266,8 @@ const HerCycleApp = () => {
         date: new Date().toISOString().split('T')[0],
         symptoms: selectedSymptoms,
         mood: selectedMood,
-        flow: selectedFlow
+        flow: selectedFlow,
+        cervical_discharge: selectedDischarge
       }
       const data = await offlineClient.saveDailyLog(logData)
       if (data.success) {
@@ -262,6 +279,8 @@ const HerCycleApp = () => {
         setSelectedSymptoms([])
         setSelectedMood(null)
         setSelectedFlow(null)
+        setSelectedDischarge(null)
+        setSaveTrigger(prev => prev + 1)
         fetchCycleData()
       } else {
         toast.error('❌ Failed to save')
@@ -439,6 +458,15 @@ const HerCycleApp = () => {
             activeLang={activeLang}
           />
           <PredictionCard cycleData={cycleData} activeLang={activeLang} />
+        </div>
+
+        <div className="half-row">
+          <CycleHistoryCard cycleData={cycleData} />
+          <CervicalDischargeTracker 
+            selectedDischarge={selectedDischarge} 
+            setSelectedDischarge={setSelectedDischarge} 
+            saveTrigger={saveTrigger} 
+          />
         </div>
 
         <Footer />

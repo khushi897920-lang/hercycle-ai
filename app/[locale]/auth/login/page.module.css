@@ -1,0 +1,693 @@
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.18;
+  }
+
+  50% {
+    transform: translateY(-18px) scale(1.1);
+    opacity: 0.28;
+  }
+
+  100% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.18;
+  }
+}
+
+@keyframes sunPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.05);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.4;
+  }
+}
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4rem;
+  width: 100%;
+  padding: 2rem max(2rem, calc((100vw - 1120px) / 2));
+  background:
+    radial-gradient(circle at 10% 20%, rgba(255, 230, 238, 0.5), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(255, 240, 245, 0.6), transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.4), transparent 60%),
+    #fff5f8;
+}
+
+.wavePattern {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.moonPhases {
+  position: absolute;
+  top: 40px;
+  right: 8%;
+  display: flex;
+  gap: 12px;
+  color: rgba(217, 71, 122, 0.15);
+  width: 50px;
+  height: 16px;
+  z-index: 0;
+}
+
+.cornerBlobTopLeft {
+  position: absolute;
+  top: -150px;
+  left: -150px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(250, 214, 227, 0.4) 0%, rgba(250, 214, 227, 0) 70%);
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cornerBlobBottomRight {
+  position: absolute;
+  bottom: -200px;
+  right: -200px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(248, 231, 179, 0.3) 0%, rgba(248, 231, 179, 0) 70%);
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.heroMain {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.heroCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.brand {
+  font-weight: 700;
+  margin-top: 36px;
+}
+
+.logoFloralAccent {
+  color: #F472B6;
+  font-size: 0.9em;
+  margin-left: 4px;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.subtitle {
+  max-width: 420px;
+  line-height: 1.6;
+}
+
+.illustrationWrapper {
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  transform: translate(calc(-50% - 10px), -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.centerRadialLight {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 60%);
+  border-radius: 50%;
+  z-index: -2;
+  pointer-events: none;
+}
+
+.sunCircle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255, 242, 184, 0.2) 0%, transparent 60%);
+  border-radius: 50%;
+  z-index: -2;
+  animation: sunPulse 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.glowingAura {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(248, 231, 179, 0.4) 0%, rgba(250, 214, 227, 0.3) 40%, transparent 70%);
+  border-radius: 50%;
+  z-index: -2;
+  pointer-events: none;
+}
+
+.blurredRadialGlow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(250, 214, 227, 0.25) 0%, transparent 60%);
+  border-radius: 50%;
+  z-index: -3;
+  pointer-events: none;
+}
+
+.glowingCircle1 {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  top: 10%;
+  left: -50px;
+  background: radial-gradient(circle, rgba(255, 220, 200, 0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: -2;
+}
+
+.glowingCircle2 {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  bottom: 5%;
+  right: -80px;
+  background: radial-gradient(circle, rgba(252, 180, 200, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: -2;
+}
+
+.organicBlobPink {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  top: -20px;
+  right: -60px;
+  background: radial-gradient(ellipse, rgba(217, 71, 122, 0.08) 0%, transparent 70%);
+  border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+  z-index: -2;
+}
+
+.organicBlobCream {
+  position: absolute;
+  width: 350px;
+  height: 300px;
+  bottom: 20px;
+  left: -20px;
+  background: radial-gradient(ellipse, rgba(232, 197, 71, 0.08) 0%, transparent 70%);
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  z-index: -2;
+}
+
+.organicBlobLavender {
+  position: absolute;
+  width: 300px;
+  height: 350px;
+  top: 30%;
+  left: -50px;
+  background: radial-gradient(ellipse, rgba(147, 112, 219, 0.08) 0%, transparent 70%);
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  z-index: -2;
+}
+
+.organicBlob {
+  position: absolute;
+  width: 500px;
+  height: 600px;
+  background: radial-gradient(ellipse at center, rgba(252, 231, 239, 0.6) 0%, rgba(255, 244, 230, 0.4) 40%, transparent 70%);
+  border-radius: 40% 60% 50% 50% / 50% 40% 60% 50%;
+  z-index: -2;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.headGlow {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.lowerFloralStem {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  height: 250px;
+  z-index: -1;
+  color: #D9477A;
+  opacity: 0.15;
+}
+
+.pinkGlow {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 182, 209, 0.2) 0%, rgba(255, 182, 209, 0) 70%);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.yellowGlow {
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  top: -100px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(255, 243, 186, 0.25) 0%, rgba(255, 243, 186, 0) 70%);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.organicBlob {
+  position: absolute;
+  width: 420px;
+  height: 480px;
+  bottom: -50px;
+  left: -80px;
+  background: radial-gradient(ellipse, rgba(250, 214, 227, 0.15) 0%, rgba(250, 214, 227, 0) 70%);
+  border-radius: 60% 40% 50% 50% / 50% 60% 40% 50%;
+  z-index: -1;
+}
+
+.accentDotTop {
+  position: absolute;
+  width: 45px;
+  height: 45px;
+  top: -30px;
+  right: 60px;
+  background: rgba(248, 231, 179, 0.5);
+  /* pale cream */
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.accentDotBottom {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  bottom: 40px;
+  left: -20px;
+  background: rgba(250, 214, 227, 0.45);
+  /* blush pink */
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.leafBranch {
+  position: absolute;
+  bottom: -10px;
+  left: -50px;
+  width: 60px;
+  height: 180px;
+  z-index: 0;
+  opacity: 0.8;
+}
+
+.leafBranchRight {
+  position: absolute;
+  top: 100px;
+  right: -40px;
+  width: 60px;
+  height: 140px;
+  z-index: 0;
+  opacity: 0.8;
+}
+
+.illustrationShadow {
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 30px;
+  background: radial-gradient(ellipse, rgba(232, 180, 196, 0.2) 0%, rgba(232, 180, 196, 0) 70%);
+  border-radius: 50%;
+  z-index: 0;
+}
+
+.lineArtLeaf1 {
+  position: absolute;
+  top: 15%;
+  left: 10%;
+  width: 80px;
+  height: 160px;
+  z-index: -1;
+  opacity: 0.6;
+}
+
+.leafSilhouette {
+  position: absolute;
+  top: -20px;
+  left: 20%;
+  width: 150px;
+  height: 450px;
+  z-index: -2;
+  opacity: 0.8;
+  transform: rotate(-15deg);
+}
+
+.particles,
+.sparkles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: #F8E7B3;
+  border-radius: 50%;
+  box-shadow: 0 0 8px 2px rgba(248, 231, 179, 0.4);
+  animation: particleFloat 4s ease-in-out infinite;
+}
+
+.particle {
+  position: absolute;
+  font-size: 14px;
+  color: rgba(217, 71, 122, 0.8);
+  animation: particleFloat 6s ease-in-out infinite;
+}
+
+.dotParticle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: particleFloat 5s ease-in-out infinite;
+}
+
+.petalParticle {
+  position: absolute;
+  width: 14px;
+  height: 24px;
+  background: rgba(217, 71, 122, 0.6);
+  border-radius: 50% 0 50% 0;
+  animation: particleFloat 7s ease-in-out infinite;
+}
+
+.flowerOutline {
+  position: absolute;
+  font-size: 16px;
+  color: rgba(217, 71, 122, 0.8);
+  animation: particleFloat 7s ease-in-out infinite;
+}
+
+.starSparkle {
+  position: absolute;
+  font-size: 14px;
+  color: rgba(232, 197, 71, 0.25);
+  animation: particleFloat 5s ease-in-out infinite;
+  text-shadow: 0 0 8px rgba(232, 197, 71, 0.3);
+  z-index: 0;
+}
+
+.illustrationImage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 30px rgba(244, 114, 182, 0.12));
+}
+
+.featureList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-width: 320px;
+}
+
+.featureItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 12px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: default;
+}
+
+.featureItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(217, 71, 122, 0.06);
+}
+
+.featureText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.featureTitle {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #2f2f45;
+}
+
+.featureDesc {
+  font-size: 0.8rem;
+  color: #7a7a8e;
+  line-height: 1.4;
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 12px;
+}
+
+.authSection {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.authCard {
+  width: 100%;
+  max-width: 420px;
+}
+
+.authCard :global(.cl-rootBox) {
+  width: 100%;
+}
+
+.page :global(h1),
+.page :global(h2),
+.page :global(h3),
+.page :global(p),
+.page :global(span),
+.page :global(label) {
+  color: unset !important;
+}
+
+.title .titleCycle {
+  color: #2f2f45 !important;
+}
+
+.title .titlePower {
+  background: linear-gradient(90deg, #d9477a 0%, #ff6fa5 50%, #c83c73 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+
+.brand .logoHer,
+.brand .logoAi {
+  color: #d9477a !important;
+}
+
+.brand .logoCycle {
+  color: #e8c547 !important;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+}
+
+@media (max-width: 1100px) {
+  .page {
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .illustrationWrapper {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .heroMain {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    flex-direction: column;
+    justify-content: flex-start;
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+    padding: 1.25rem;
+    gap: 1.5rem;
+  }
+
+  .title {
+    font-size: clamp(1.8rem, 7vw, 2.2rem);
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .brand {
+    margin-top: 10px;
+  }
+
+  .hero {
+    text-align: center;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .heroMain {
+    gap: 0.75rem;
+  }
+
+  .heroCopy {
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .featureList {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    max-width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .featureItem {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0.25rem;
+    width: 90px;
+    gap: 0.25rem;
+  }
+
+  .iconWrapper {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+  }
+
+  .iconWrapper svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .featureText {
+    align-items: center;
+  }
+
+  .featureTitle {
+    font-size: 0.7rem;
+    text-align: center;
+  }
+
+  .featureDesc {
+    display: none;
+  }
+
+  .authCard {
+    margin-top: -0.5rem;
+  }
+}

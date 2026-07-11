@@ -207,6 +207,7 @@ CREATE TABLE daily_logs (
   symptoms   TEXT[],
   mood       TEXT,
   flow       TEXT,
+  cervical_discharge TEXT,
   updated_at TIMESTAMPTZ DEFAULT now(),
   CONSTRAINT daily_logs_user_date_unique UNIQUE (user_id, date)
 );
@@ -218,6 +219,15 @@ CREATE TABLE daily_logs (
 -- Enable RLS and allow users to manage their own data
 ALTER TABLE cycles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_logs ENABLE ROW LEVEL SECURITY;
+
+### Existing Installation
+
+If you already have an existing `daily_logs` table, run the following SQL:
+
+```sql
+ALTER TABLE daily_logs
+ADD COLUMN cervical_discharge TEXT;
+```
 
 CREATE POLICY "Users can manage their own cycles"
   ON cycles FOR ALL USING (auth.uid() = user_id);

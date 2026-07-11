@@ -8,8 +8,9 @@ import { logger } from '@/lib/logger'
 export async function GET(request) {
   // ============ RATE LIMITING ============
   try {
-    const identifier = await getRateLimitIdentifier(request);
-    await aiLimiter.check(5, identifier); // 5 requests per minute
+    // const identifier = await getRateLimitIdentifier(request);
+    await aiLimiter.check(request);
+    // await aiLimiter.checkNext(request, 5); // 5 requests per minute
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] PCOD risk endpoint: ${rateLimitError.message}`);
     return NextResponse.json(
