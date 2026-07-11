@@ -21,7 +21,7 @@ const logPostSchema = z.object({
     }, { message: 'Log date cannot be older than 2 years.' }),
   symptoms: z.array(z.string().max(100)).max(50),
   mood: z.string().max(50).nullable().optional(),
-  flow: z.string().max(10).nullable().optional(),
+  flow: z.enum(['f1', 'f2', 'f3']).nullable().optional(),
   cervical_discharge: z.string().max(50).nullable().optional()
 })
 
