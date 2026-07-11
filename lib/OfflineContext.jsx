@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { initDB, getAllFromStore, putIntoStore, deleteFromStore, queueSyncRequest } from './db'
 import { predictNextPeriod, calculatePCODRisk } from './api-helpers'
+import { encryptPayload, decryptPayload, hashDate } from './encryption'
 import toast from 'react-hot-toast'
 
 const OfflineContext = createContext({
@@ -126,8 +127,10 @@ export function OfflineProvider({ children }) {
     }
   };
 
+
+
   const offlineClient = {
-    fetchCycles: async () => {
+    fetchCycles: async (masterKey) => {
       const isOnline = navigator.onLine;
       if (isOnline) {
         try {
@@ -138,10 +141,31 @@ export function OfflineProvider({ children }) {
             const tx = db.transaction('cycles', 'readwrite');
             const store = tx.objectStore('cycles');
             await store.clear();
+            
+            // Decrypt on the fly and store decrypted in IndexedDB
+            const decryptedCycles = [];
             for (const c of data.data.cycles) {
-              await store.put(c);
+              if (c.encrypted_data && masterKey) {
+                const dec = await decryptPayload(c.encrypted_data, masterKey);
+                if (dec) {
+                  const fullObj = { ...c, ...dec };
+                  delete fullObj.encrypted_data;
+                  decryptedCycles.push(fullObj);
+                  await store.put(fullObj);
+                }
+              }
             }
-            return data;
+            // Return decrypted format
+            const prediction = predictNextPeriod(decryptedCycles.sort((a,b)=>new Date(b.start_date)-new Date(a.start_date)));
+            return {
+              success: true,
+              data: {
+                cycles: decryptedCycles,
+                nextPeriodDate: prediction.nextPeriodDate,
+                confidence: prediction.confidence,
+                averageCycleLength: prediction.averageCycleLength
+              }
+            };
           }
         } catch (e) {
           console.warn('Fetch cycles failed, falling back to IndexedDB', e);
@@ -163,17 +187,25 @@ export function OfflineProvider({ children }) {
       };
     },
 
-    fetchTodayLog: async (date) => {
+    fetchTodayLog: async (date, masterKey) => {
       const isOnline = navigator.onLine;
-      if (isOnline) {
+      if (isOnline && masterKey) {
         try {
-          const res = await fetch(`/api/log-day?date=${date}`);
+          const dateHash = await hashDate(date, masterKey);
+          const res = await fetch(`/api/log-day?date_hash=${dateHash}`);
           if (res.ok) {
             const data = await res.json();
-            if (data.success && data.data) {
-              await putIntoStore('daily_logs', data.data);
+            if (data.success && data.data && data.data.encrypted_data) {
+              const dec = await decryptPayload(data.data.encrypted_data, masterKey);
+              if (dec) {
+                const fullObj = { ...data.data, ...dec };
+                delete fullObj.encrypted_data;
+                delete fullObj.date_hash;
+                await putIntoStore('daily_logs', fullObj);
+                return { success: true, data: fullObj };
+              }
             }
-            return data;
+            return { success: true, data: null };
           }
         } catch (e) {
           console.warn('Fetch today log failed, falling back to IndexedDB', e);
@@ -255,9 +287,8 @@ export function OfflineProvider({ children }) {
       };
     },
 
-    // FIXED: now returns explicitly on a server-rejected response,
-    // instead of falling through to the sync queue for non-network failures.
-    saveDailyLog: async (log) => {
+    saveDailyLog: async (log, masterKey) => {
+      if (!masterKey) return { success: false, error: 'Encryption key missing' };
       const localLog = {
         ...log,
         updated_at: new Date().toISOString()
@@ -265,32 +296,35 @@ export function OfflineProvider({ children }) {
       await putIntoStore('daily_logs', localLog);
 
       const isOnline = navigator.onLine;
+      const dateHash = await hashDate(log.date, masterKey);
+      const encryptedData = await encryptPayload(log, masterKey);
+      
+      const payload = { date_hash: dateHash, encrypted_data: encryptedData };
+
       if (isOnline) {
         try {
           const res = await fetch('/api/log-day', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(log)
+            body: JSON.stringify(payload)
           });
           const data = await res.json();
           if (data.success) {
             return { success: true };
           }
-          // Server responded but rejected the request — don't queue, surface the error
           return { success: false, error: data.error || 'Failed to save log' };
         } catch (e) {
           console.warn('Save daily log network request failed, queuing', e);
-          // Only genuine network/fetch errors fall through to the queue below
         }
       }
 
-      await queueSyncRequest('/api/log-day', 'POST', log);
+      await queueSyncRequest('/api/log-day', 'POST', payload);
       updateSyncCount();
       return { success: true, offline: true };
     },
 
-    // FIXED: same pattern as saveDailyLog
-    startPeriod: async (cycle) => {
+    startPeriod: async (cycle, masterKey) => {
+      if (!masterKey) return { success: false, error: 'Encryption key missing' };
       const clientCycle = {
         ...cycle,
         id: cycle.id || generateUUID(),
@@ -299,12 +333,16 @@ export function OfflineProvider({ children }) {
       await putIntoStore('cycles', clientCycle);
 
       const isOnline = navigator.onLine;
+      const payloadObj = { start_date: clientCycle.start_date, end_date: clientCycle.end_date, cycle_length: clientCycle.cycle_length };
+      const encryptedData = await encryptPayload(payloadObj, masterKey);
+      const payload = { id: clientCycle.id, encrypted_data: encryptedData };
+
       if (isOnline) {
         try {
           const res = await fetch('/api/cycles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(clientCycle)
+            body: JSON.stringify(payload)
           });
           const data = await res.json();
           if (data.success) {
@@ -316,13 +354,13 @@ export function OfflineProvider({ children }) {
         }
       }
 
-      await queueSyncRequest('/api/cycles', 'POST', clientCycle);
+      await queueSyncRequest('/api/cycles', 'POST', payload);
       updateSyncCount();
       return { success: true, offline: true };
     },
 
-    // FIXED: same pattern as saveDailyLog
-    endPeriod: async (id, end_date) => {
+    endPeriod: async (id, end_date, masterKey) => {
+      if (!masterKey) return { success: false, error: 'Encryption key missing' };
       const cachedCycles = await getAllFromStore('cycles');
       const cycle = cachedCycles.find(c => c.id === id);
       if (cycle) {
@@ -331,12 +369,21 @@ export function OfflineProvider({ children }) {
       }
 
       const isOnline = navigator.onLine;
+      // We must re-encrypt the whole cycle object for PATCH, or PATCH API route expects partial.
+      // Since our API expects the full payload to be re-encrypted:
+      let payloadObj = { end_date };
+      if (cycle) {
+        payloadObj = { start_date: cycle.start_date, end_date: end_date, cycle_length: cycle.cycle_length };
+      }
+      const encryptedData = await encryptPayload(payloadObj, masterKey);
+      const payload = { id, encrypted_data: encryptedData };
+
       if (isOnline) {
         try {
           const res = await fetch('/api/cycles', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, end_date })
+            body: JSON.stringify(payload)
           });
           const data = await res.json();
           if (data.success) {
@@ -348,7 +395,7 @@ export function OfflineProvider({ children }) {
         }
       }
 
-      await queueSyncRequest('/api/cycles', 'PATCH', { id, end_date });
+      await queueSyncRequest('/api/cycles', 'PATCH', payload);
       updateSyncCount();
       return { success: true, offline: true };
     }

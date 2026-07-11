@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useOffline } from '@/lib/OfflineContext';
+import { useEncryption } from '@/lib/EncryptionContext';
 
 const dischargeOptions = [
   { id: 'none', label: 'No Discharge', insight: 'No discharge is also a normal variation during some phases of the menstrual cycle.' },
@@ -11,6 +12,7 @@ const dischargeOptions = [
 
 export default function CervicalDischargeTracker({ selectedDischarge, setSelectedDischarge, saveTrigger }) {
   const { offlineClient } = useOffline();
+  const { encryptionKey } = useEncryption();
   const [savedDischarge, setSavedDischarge] = useState(null);
   const [activeTab, setActiveTab] = useState("Today's Entry");
   const [recentEntries, setRecentEntries] = useState([]);
@@ -18,14 +20,14 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
   useEffect(() => {
     const fetchLog = async () => {
       const today = new Date().toISOString().split('T')[0];
-      const res = await offlineClient.fetchTodayLog(today);
+      const res = await offlineClient.fetchTodayLog(today, encryptionKey);
       if (res.success && res.data && res.data.cervical_discharge) {
         setSavedDischarge(res.data.cervical_discharge);
       }
     };
 
     const fetchRecentLogs = async () => {
-      const res = await offlineClient.fetchAllLogs();
+      const res = await offlineClient.fetchAllLogs(encryptionKey);
       if (res.success && res.data) {
         // filter for logs with cervical_discharge
         const filtered = res.data.filter(log => log.cervical_discharge !== null && log.cervical_discharge !== undefined);
@@ -34,11 +36,11 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
       }
     };
 
-    if (offlineClient) {
+    if (offlineClient && encryptionKey) {
       fetchLog();
       fetchRecentLogs();
     }
-  }, [offlineClient, saveTrigger]);
+  }, [offlineClient, saveTrigger, encryptionKey]);
 
   const activeOption = dischargeOptions.find(opt => opt.id === selectedDischarge);
   const savedOption = dischargeOptions.find(opt => opt.id === savedDischarge);

@@ -17,7 +17,9 @@ import OnboardingModal from '@/components/dashboard/OnboardingModal'
 import PredictionCard from '@/components/dashboard/PredictionCard'
 import CycleHistoryCard from '@/components/dashboard/CycleHistoryCard'
 import CervicalDischargeTracker from '@/components/dashboard/CervicalDischargeTracker'
+import PinModal from '@/components/layout/PinModal'
 import { useOffline } from '@/lib/OfflineContext'
+import { useEncryption } from '@/lib/EncryptionContext'
 import { useLocale, useTranslations } from 'next-intl'
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -110,6 +112,7 @@ const HerCycleApp = () => {
   const { isLoaded, isSignedIn } = useAuth()
   const { user } = useUser()
   const { offlineClient } = useOffline()
+  const { isKeyReady, encryptionKey } = useEncryption()
   const now = new Date()
   const [activeNav, setActiveNav] = useState('Dashboard')
   const locale = useLocale()
@@ -161,9 +164,37 @@ const HerCycleApp = () => {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // Check session on mount and load data
+  useEffect(() => {
+    if (!isLoaded || !user) return
+    if (!isSignedIn) {
+      router.push(`/${locale}/auth/login`)
+      return
+    }
+
+    const role = user?.publicMetadata?.role
+    if (!role) {
+      router.push(`/${locale}/onboarding`)
+      return
+    }
+    if (role === 'partner') {
+      router.push(`/${locale}/partner`)
+      return
+    }
+
+    if (isKeyReady) {
+      Promise.all([fetchCycleData(), fetchPCODRisk()])
+    }
+    
+    // Set initial greeting after mount to avoid hydration mismatch
+    if (chatMessages.length === 0) {
+      setChatMessages([{ role: 'ai', text: tChat('greeting') }])
+    }
+  }, [isLoaded, isSignedIn, user, router, tChat, locale, isKeyReady])
+
   const fetchCycleData = async () => {
     try {
-      const data = await offlineClient.fetchCycles()
+      const data = await offlineClient.fetchCycles(encryptionKey)
       if (data.success) {
         setCycleData(data.data)
         
@@ -193,7 +224,7 @@ const HerCycleApp = () => {
   const fetchPCODRisk = async () => {
     setPcodRiskLoading(true)
     try {
-      const data = await offlineClient.fetchPCODRisk()
+      const data = await offlineClient.fetchPCODRisk() // PCOD risk calculates locally now if offline, maybe we need to pass encryptionKey there too if it fetches? Wait, fetchPCODRisk just reads IndexedDB which has decrypted data.
       if (data.success) {
         setPcodRisk(data.data)
       }
@@ -311,7 +342,7 @@ const HerCycleApp = () => {
         flow: selectedFlow,
         cervical_discharge: selectedDischarge
       }
-      const data = await offlineClient.saveDailyLog(logData)
+      const data = await offlineClient.saveDailyLog(logData, encryptionKey)
       if (data.success) {
         if (data.offline) {
           toast.success('💾 Saved offline! Will sync when online.')
@@ -414,6 +445,7 @@ const HerCycleApp = () => {
 
   return (
     <>
+      <PinModal />
       {/* ── Onboarding Modal ── */}
       {showOnboarding && (
         <OnboardingModal

@@ -8,26 +8,11 @@ import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 const logPostSchema = z.object({
-  date: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be in YYYY-MM-DD format')
-    .refine((val) => {
-      const today = new Date()
-      today.setHours(23, 59, 59, 999) // allow the full current day
-      return new Date(val) <= today
-    }, { message: 'Log date cannot be in the future.' })
-    .refine((val) => {
-      const twoYearsAgo = new Date()
-      twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
-      twoYearsAgo.setHours(0, 0, 0, 0)
-      return new Date(val) >= twoYearsAgo
-    }, { message: 'Log date cannot be older than 2 years.' }),
-  symptoms: z.array(z.string().max(100)).max(50),
-  mood: z.string().max(50).nullable().optional(),
-  flow: z.string().max(10).nullable().optional(),
-  cervical_discharge: z.string().max(50).nullable().optional()
+  date_hash: z.string().min(1, 'Missing date hash'),
+  encrypted_data: z.string().min(1, 'Missing encrypted payload')
 })
 
-// GET /api/log-day?date=YYYY-MM-DD — fetch a single day's log
+// GET /api/log-day?date_hash=... — fetch a single day's log
 export async function GET(request) {
   // ============ RATE LIMITING ============
   try {
@@ -49,11 +34,10 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url)
-    const date = searchParams.get('date') || new Date().toISOString().split('T')[0]
-
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      logger.warn(`Invalid date format requested by user ${userId}: ${date}`);
-      return NextResponse.json({ success: false, message: 'Bad Request: Invalid date format. Use YYYY-MM-DD.' }, { status: 400 })
+    const dateHash = searchParams.get('date_hash')
+    
+    if (!dateHash) {
+      return NextResponse.json({ success: false, message: 'Bad Request: Missing date hash.' }, { status: 400 })
     }
 
     const supabaseAdmin = getSupabaseAdmin()
@@ -61,15 +45,15 @@ export async function GET(request) {
       .from('daily_logs')
       .select('*')
       .eq('user_id', userId)
-      .eq('date', date)
+      .eq('date_hash', dateHash)
       .maybeSingle()
 
     if (error) {
-      logger.error(`Database error fetching daily log for user ${userId} on date ${date}:`, error.message);
+      logger.error(`Database error fetching daily log for user ${userId}:`, error.message);
       return NextResponse.json({ success: false, message: error.message }, { status: 500 })
     }
 
-    logger.info(`Successfully fetched daily log for user ${userId} on date ${date}`);
+    logger.info(`Successfully fetched daily log for user ${userId}`);
     return NextResponse.json({ success: true, data: data || null })
   } catch (error) {
     logger.error('Error fetching day log:', error.message || error);
@@ -105,22 +89,22 @@ export async function POST(request) {
       return NextResponse.json({ success: false, message: 'Bad Request', details: result.error.errors }, { status: 400 })
     }
 
-    const { date, symptoms, mood, flow, cervical_discharge } = result.data
+    const { date_hash, encrypted_data } = result.data
 
     const supabaseAdmin = getSupabaseAdmin()
     const { error } = await supabaseAdmin
       .from('daily_logs')
       .upsert(
-        { user_id: userId, date, symptoms, mood, flow, cervical_discharge, updated_at: new Date().toISOString() },
-        { onConflict: 'user_id,date' }
+        { user_id: userId, date_hash, encrypted_data, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id,date_hash' } // Requires updating constraint on Supabase if date was previously the unique key
       )
 
     if (error) {
-      logger.error(`Database error upserting daily log for user ${userId} on date ${date}:`, error.message);
+      logger.error(`Database error upserting daily log for user ${userId}:`, error.message);
       return NextResponse.json({ success: false, message: `Failed to log day: ${error.message}` }, {status: 500 })
     }
 
-    logger.info(`Successfully upserted daily log for user ${userId} on date ${date}`);
+    logger.info(`Successfully upserted daily log for user ${userId}`);
     return NextResponse.json({ success: true, message: 'Day logged successfully!' })
   } catch (error) {
     logger.error('Error logging day:', error.message || error);
