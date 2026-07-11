@@ -8,14 +8,12 @@ import { z } from 'zod'
 
 const cyclePostSchema = z.object({
   id: z.string().uuid('Must be a valid UUID').optional(),
-  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be in YYYY-MM-DD format'),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be in YYYY-MM-DD format').optional().nullable(),
-  cycle_length: z.number().int().min(21).max(45).optional().nullable()
+  encrypted_data: z.string().min(1, 'Missing encrypted payload')
 })
 
 const cyclePatchSchema = z.object({
   id: z.string().uuid('Must be a valid UUID'),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be in YYYY-MM-DD format')
+  encrypted_data: z.string().min(1, 'Missing encrypted payload')
 })
 
 export async function GET(request) {
@@ -45,7 +43,7 @@ export async function GET(request) {
       .from('cycles')
       .select('*')
       .eq('user_id', userId)
-      .order('start_date', { ascending: false })
+      .order('created_at', { ascending: false }) // Can no longer order by encrypted start_date
       .limit(12)
 
     if (error && error.code !== 'PGRST116') {
@@ -53,9 +51,9 @@ export async function GET(request) {
       return NextResponse.json({ success: true, data: { cycles: [], nextPeriodDate: null, confidence: null, averageCycleLength: 28 } })
     }
 
-    const prediction = predictNextPeriod(cycles || [])
-    logger.info(`Successfully fetched cycles and calculated predictions for user ${userId}`);
-    return NextResponse.json({ success: true, data: { cycles: cycles || [], nextPeriodDate: prediction.nextPeriodDate, confidence: prediction.confidence, averageCycleLength: prediction.averageCycleLength } })
+    // Note: Prediction is removed here because the server can't read encrypted dates. Client handles it.
+    logger.info(`Successfully fetched cycles for user ${userId}`);
+    return NextResponse.json({ success: true, data: { cycles: cycles || [] } })
   } catch (error) {
     logger.error('Error fetching cycles:', error.message || error);
     return NextResponse.json({ success: false, error: `Failed to fetch cycles: ${error.message || error}` }, { status: 500 })
@@ -92,14 +90,12 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Bad Request', details: result.error.errors }, { status: 400 })
     }
 
-    const { id, start_date, end_date, cycle_length } = result.data
+    const { id, encrypted_data } = result.data
 
     const supabaseAdmin = getSupabaseAdmin()
     const insertObj = {
       user_id: userId,
-      start_date,
-      end_date,
-      cycle_length: cycle_length || 28,
+      encrypted_data,
       created_at: new Date().toISOString(),
     }
     if (id) {
@@ -151,12 +147,12 @@ export async function PATCH(request) {
       return NextResponse.json({ success: false, error: 'Bad Request', details: result.error.errors }, { status: 400 })
     }
 
-    const { id, end_date } = result.data
+    const { id, encrypted_data } = result.data
 
     const supabaseAdmin = getSupabaseAdmin()
     const { error } = await supabaseAdmin
       .from('cycles')
-      .update({ end_date })
+      .update({ encrypted_data })
       .eq('id', id)
       .eq('user_id', userId)
 

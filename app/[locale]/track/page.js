@@ -9,6 +9,7 @@ import Footer from '@/components/layout/Footer'
 import CycleCalendar from '@/components/dashboard/CycleCalendar'
 import DailyLogPanel from '@/components/dashboard/DailyLogPanel'
 import { useOffline } from '@/lib/OfflineContext'
+import { useEncryption } from '@/lib/EncryptionContext'
 import { useTranslations, useLocale } from 'next-intl'
 
 const TEXT_PRIMARY = '#ffffff'
@@ -77,6 +78,7 @@ export default function TrackPage() {
   const router   = useRouter()
   const { isLoaded, isSignedIn } = useAuth()
   const { offlineClient } = useOffline()
+  const { encryptionKey, isKeyReady } = useEncryption()
   const now      = new Date()
 
   const [viewYear,  setViewYear]  = useState(now.getFullYear())
@@ -89,7 +91,7 @@ export default function TrackPage() {
 
   const fetchCycleData = async () => {
     try {
-      const data = await offlineClient.fetchCycles()
+      const data = await offlineClient.fetchCycles(encryptionKey)
       if (data.success) setCycleData(data.data)
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
@@ -98,7 +100,7 @@ export default function TrackPage() {
   const fetchTodayLog = async () => {
     try {
       const today = new Date().toISOString().split('T')[0]
-      const data = await offlineClient.fetchTodayLog(today)
+      const data = await offlineClient.fetchTodayLog(today, encryptionKey)
       if (data.success && data.data) {
         if (data.data.symptoms) setSelectedSymptoms(data.data.symptoms)
         if (data.data.mood)     setSelectedMood(data.data.mood)
@@ -110,8 +112,10 @@ export default function TrackPage() {
   useEffect(() => {
     if (!isLoaded) return
     if (!isSignedIn) { router.push('/auth/login'); return }
-    Promise.all([fetchCycleData(), fetchTodayLog()])
-  }, [isLoaded, isSignedIn, router])
+    if (isKeyReady) {
+      Promise.all([fetchCycleData(), fetchTodayLog()])
+    }
+  }, [isLoaded, isSignedIn, router, isKeyReady])
 
   const handleSaveLog = async () => {
     try {
@@ -121,7 +125,7 @@ export default function TrackPage() {
         mood: selectedMood,
         flow: selectedFlow,
       }
-      const data = await offlineClient.saveDailyLog(logData)
+      const data = await offlineClient.saveDailyLog(logData, encryptionKey)
       if (data.success) {
         if (data.offline) {
           toast.success('💾 Saved offline! Will sync when online.')
@@ -151,7 +155,7 @@ export default function TrackPage() {
     }
 
     try {
-      const data = await offlineClient.startPeriod(cycleDataObj)
+      const data = await offlineClient.startPeriod(cycleDataObj, encryptionKey)
       if (!data.success) { 
         toast.error(`❌ Could not start period: ${data.error || data.message || 'Unknown error'}`)
         return 
@@ -174,7 +178,7 @@ export default function TrackPage() {
     if (!open) { toast.error('No open period found to end'); return }
 
     try {
-      const data = await offlineClient.endPeriod(open.id, today)
+      const data = await offlineClient.endPeriod(open.id, today, encryptionKey)
       if (!data.success) { 
         toast.error(`❌ Could not end period: ${data.error || data.message || 'Unknown error'}`)
         return 

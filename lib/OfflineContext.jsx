@@ -1,8 +1,10 @@
+
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { initDB, getAllFromStore, putIntoStore, deleteFromStore, queueSyncRequest } from './db'
 import { predictNextPeriod, calculatePCODRisk } from './api-helpers'
+import { encryptPayload, decryptPayload, hashDate } from './encryption'
 import toast from 'react-hot-toast'
 
 const OfflineContext = createContext({
@@ -30,7 +32,6 @@ export function OfflineProvider({ children }) {
   const [pendingSyncCount, setPendingSyncCount] = useState(0)
   const [isSyncing, setIsSyncing] = useState(false)
 
-  // Service worker registration
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
@@ -43,7 +44,6 @@ export function OfflineProvider({ children }) {
     }
   }, [])
 
-  // Sync queue count updater
   const updateSyncCount = async () => {
     try {
       const queue = await getAllFromStore('sync_queue');
@@ -53,7 +53,6 @@ export function OfflineProvider({ children }) {
     }
   }
 
-  // Network state listeners
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -74,7 +73,6 @@ export function OfflineProvider({ children }) {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Periodic sync check (every 30 seconds)
     const interval = setInterval(() => {
       if (navigator.onLine) {
         syncData();
@@ -90,10 +88,9 @@ export function OfflineProvider({ children }) {
     };
   }, []);
 
-  // Sync function
   const syncData = async () => {
     if (!navigator.onLine || isSyncing) return;
-    
+
     try {
       const queue = await getAllFromStore('sync_queue');
       if (queue.length === 0) {
@@ -102,8 +99,7 @@ export function OfflineProvider({ children }) {
       }
 
       setIsSyncing(true);
-      
-      // Sort chronologically by id
+
       const sortedQueue = [...queue].sort((a, b) => a.id - b.id);
 
       for (const item of sortedQueue) {
@@ -115,14 +111,11 @@ export function OfflineProvider({ children }) {
           });
 
           if (res.ok || res.status === 400 || res.status === 401 || res.status === 403 || res.status === 422) {
-            // Success or permanent client failure, remove from queue
             await deleteFromStore('sync_queue', item.id);
           } else {
-            // Server error (e.g. 500, 503), stop processing queue and retry later
             break;
           }
         } catch (fetchErr) {
-          // Network connection error, stop processing queue
           break;
         }
       }
@@ -134,9 +127,10 @@ export function OfflineProvider({ children }) {
     }
   };
 
-  // Offline client helper
+
+
   const offlineClient = {
-    fetchCycles: async () => {
+    fetchCycles: async (masterKey) => {
       const isOnline = navigator.onLine;
       if (isOnline) {
         try {
@@ -147,21 +141,41 @@ export function OfflineProvider({ children }) {
             const tx = db.transaction('cycles', 'readwrite');
             const store = tx.objectStore('cycles');
             await store.clear();
+            
+            // Decrypt on the fly and store decrypted in IndexedDB
+            const decryptedCycles = [];
             for (const c of data.data.cycles) {
-              await store.put(c);
+              if (c.encrypted_data && masterKey) {
+                const dec = await decryptPayload(c.encrypted_data, masterKey);
+                if (dec) {
+                  const fullObj = { ...c, ...dec };
+                  delete fullObj.encrypted_data;
+                  decryptedCycles.push(fullObj);
+                  await store.put(fullObj);
+                }
+              }
             }
-            return data;
+            // Return decrypted format
+            const prediction = predictNextPeriod(decryptedCycles.sort((a,b)=>new Date(b.start_date)-new Date(a.start_date)));
+            return {
+              success: true,
+              data: {
+                cycles: decryptedCycles,
+                nextPeriodDate: prediction.nextPeriodDate,
+                confidence: prediction.confidence,
+                averageCycleLength: prediction.averageCycleLength
+              }
+            };
           }
         } catch (e) {
           console.warn('Fetch cycles failed, falling back to IndexedDB', e);
         }
       }
 
-      // Offline or network error: load from IndexedDB
       const cachedCycles = await getAllFromStore('cycles');
       const sortedCycles = [...cachedCycles].sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
       const prediction = predictNextPeriod(sortedCycles);
-      
+
       return {
         success: true,
         data: {
@@ -173,24 +187,31 @@ export function OfflineProvider({ children }) {
       };
     },
 
-    fetchTodayLog: async (date) => {
+    fetchTodayLog: async (date, masterKey) => {
       const isOnline = navigator.onLine;
-      if (isOnline) {
+      if (isOnline && masterKey) {
         try {
-          const res = await fetch(`/api/log-day?date=${date}`);
+          const dateHash = await hashDate(date, masterKey);
+          const res = await fetch(`/api/log-day?date_hash=${dateHash}`);
           if (res.ok) {
             const data = await res.json();
-            if (data.success && data.data) {
-              await putIntoStore('daily_logs', data.data);
+            if (data.success && data.data && data.data.encrypted_data) {
+              const dec = await decryptPayload(data.data.encrypted_data, masterKey);
+              if (dec) {
+                const fullObj = { ...data.data, ...dec };
+                delete fullObj.encrypted_data;
+                delete fullObj.date_hash;
+                await putIntoStore('daily_logs', fullObj);
+                return { success: true, data: fullObj };
+              }
             }
-            return data;
+            return { success: true, data: null };
           }
         } catch (e) {
           console.warn('Fetch today log failed, falling back to IndexedDB', e);
         }
       }
 
-      // Fallback: read from IndexedDB
       const logs = await getAllFromStore('daily_logs');
       const log = logs.find(l => l.date === date) || null;
       return { success: true, data: log };
@@ -219,7 +240,6 @@ export function OfflineProvider({ children }) {
         }
       }
 
-      // Fallback: read all from IndexedDB
       const logs = await getAllFromStore('daily_logs');
       const sortedLogs = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date));
       return { success: true, data: sortedLogs };
@@ -242,12 +262,11 @@ export function OfflineProvider({ children }) {
         }
       }
 
-      // Fallback 1: Calculate locally from local DB
       try {
         const cachedCycles = await getAllFromStore('cycles');
         const cachedLogs = await getAllFromStore('daily_logs');
         const allSymptoms = cachedLogs.flatMap(log => log.symptoms || []);
-        
+
         if (cachedCycles.length > 0) {
           const localRisk = calculatePCODRisk(cachedCycles, allSymptoms);
           return { success: true, data: localRisk };
@@ -256,7 +275,6 @@ export function OfflineProvider({ children }) {
         console.error('Local PCOD calculation failed:', e);
       }
 
-      // Fallback 2: Read from localStorage cache
       const cached = localStorage.getItem('pcod_risk_cache');
       if (cached) {
         return { success: true, data: JSON.parse(cached) };
@@ -269,7 +287,8 @@ export function OfflineProvider({ children }) {
       };
     },
 
-    saveDailyLog: async (log) => {
+    saveDailyLog: async (log, masterKey) => {
+      if (!masterKey) return { success: false, error: 'Encryption key missing' };
       const localLog = {
         ...log,
         updated_at: new Date().toISOString()
@@ -277,29 +296,35 @@ export function OfflineProvider({ children }) {
       await putIntoStore('daily_logs', localLog);
 
       const isOnline = navigator.onLine;
+      const dateHash = await hashDate(log.date, masterKey);
+      const encryptedData = await encryptPayload(log, masterKey);
+      
+      const payload = { date_hash: dateHash, encrypted_data: encryptedData };
+
       if (isOnline) {
         try {
           const res = await fetch('/api/log-day', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(log)
+            body: JSON.stringify(payload)
           });
           const data = await res.json();
           if (data.success) {
             return { success: true };
           }
+          return { success: false, error: data.error || 'Failed to save log' };
         } catch (e) {
           console.warn('Save daily log network request failed, queuing', e);
         }
       }
 
-      // Offline or network error: add to queue
-      await queueSyncRequest('/api/log-day', 'POST', log);
+      await queueSyncRequest('/api/log-day', 'POST', payload);
       updateSyncCount();
       return { success: true, offline: true };
     },
 
-    startPeriod: async (cycle) => {
+    startPeriod: async (cycle, masterKey) => {
+      if (!masterKey) return { success: false, error: 'Encryption key missing' };
       const clientCycle = {
         ...cycle,
         id: cycle.id || generateUUID(),
@@ -308,28 +333,34 @@ export function OfflineProvider({ children }) {
       await putIntoStore('cycles', clientCycle);
 
       const isOnline = navigator.onLine;
+      const payloadObj = { start_date: clientCycle.start_date, end_date: clientCycle.end_date, cycle_length: clientCycle.cycle_length };
+      const encryptedData = await encryptPayload(payloadObj, masterKey);
+      const payload = { id: clientCycle.id, encrypted_data: encryptedData };
+
       if (isOnline) {
         try {
           const res = await fetch('/api/cycles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(clientCycle)
+            body: JSON.stringify(payload)
           });
           const data = await res.json();
           if (data.success) {
             return { success: true };
           }
+          return { success: false, error: data.error || 'Failed to start period' };
         } catch (e) {
           console.warn('Start period network request failed, queuing', e);
         }
       }
 
-      await queueSyncRequest('/api/cycles', 'POST', clientCycle);
+      await queueSyncRequest('/api/cycles', 'POST', payload);
       updateSyncCount();
       return { success: true, offline: true };
     },
 
-    endPeriod: async (id, end_date) => {
+    endPeriod: async (id, end_date, masterKey) => {
+      if (!masterKey) return { success: false, error: 'Encryption key missing' };
       const cachedCycles = await getAllFromStore('cycles');
       const cycle = cachedCycles.find(c => c.id === id);
       if (cycle) {
@@ -338,23 +369,33 @@ export function OfflineProvider({ children }) {
       }
 
       const isOnline = navigator.onLine;
+      // We must re-encrypt the whole cycle object for PATCH, or PATCH API route expects partial.
+      // Since our API expects the full payload to be re-encrypted:
+      let payloadObj = { end_date };
+      if (cycle) {
+        payloadObj = { start_date: cycle.start_date, end_date: end_date, cycle_length: cycle.cycle_length };
+      }
+      const encryptedData = await encryptPayload(payloadObj, masterKey);
+      const payload = { id, encrypted_data: encryptedData };
+
       if (isOnline) {
         try {
           const res = await fetch('/api/cycles', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, end_date })
+            body: JSON.stringify(payload)
           });
           const data = await res.json();
           if (data.success) {
             return { success: true };
           }
+          return { success: false, error: data.error || 'Failed to end period' };
         } catch (e) {
           console.warn('End period network request failed, queuing', e);
         }
       }
 
-      await queueSyncRequest('/api/cycles', 'PATCH', { id, end_date });
+      await queueSyncRequest('/api/cycles', 'PATCH', payload);
       updateSyncCount();
       return { success: true, offline: true };
     }
