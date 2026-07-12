@@ -59,10 +59,23 @@ export async function GET(request) {
 
     if (error) {
       logger.error(`Unable to fetch weight entries for ${userId}:`, error.message)
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      )
+      if (error.code === 'PGRST205' || error.message?.includes('schema cache')) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: 'Weight tracking is not configured yet. Please apply the database migration.',
+    },
+    { status: 503 }
+  )
+}
+
+return NextResponse.json(
+  {
+    success: false,
+    error: 'Unable to save the measurement. Please try again.',
+  },
+  { status: 500 }
+)
     }
 
     return NextResponse.json({ success: true, data: data || [] })
@@ -125,10 +138,23 @@ export async function POST(request) {
 
     if (error) {
       logger.error(`Unable to save weight entry for ${userId}:`, error.message)
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      )
+      if (error.code === 'PGRST205' || error.message?.includes('schema cache')) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: 'Weight tracking is not configured yet. Please apply the database migration.',
+    },
+    { status: 503 }
+  )
+}
+
+return NextResponse.json(
+  {
+    success: false,
+    error: 'Unable to save the measurement. Please try again.',
+  },
+  { status: 500 }
+)
     }
 
     return NextResponse.json({ success: true, data })
