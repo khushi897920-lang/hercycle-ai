@@ -55,7 +55,6 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import ChatFAB from '@/components/layout/ChatFAB';
 
-import { EncryptionProvider } from '@/lib/EncryptionContext'
 
 export default async function RootLayout({ children, params }) {
   let { locale } = await params;
@@ -77,25 +76,24 @@ export default async function RootLayout({ children, params }) {
         </head>
         <body className="w-full" suppressHydrationWarning>
           <NextIntlClientProvider locale={locale} messages={messages}>
-            <EncryptionProvider>
-              <OfflineProvider>
-                <LanguageProvider>
-                  <div className="app-decor" aria-hidden="true">
-                    <div className="blob"></div>
-                    <div className="blob"></div>
-                    <div className="blob"></div>
+            <OfflineProvider>
+              <LanguageProvider>
+                <div className="app-decor" aria-hidden="true">
+                  <div className="blob"></div>
+                  <div className="blob"></div>
+                  <div className="blob"></div>
 
-                    <div className="particle" style={{ left: '8%', animationDuration: '13s', animationDelay: '0s' }}>&#10024;</div>
-                    <div className="particle" style={{ left: '22%', animationDuration: '17s', animationDelay: '3.5s' }}>&#127800;</div>
-                    <div className="particle" style={{ left: '38%', animationDuration: '14s', animationDelay: '7s' }}>&#128171;</div>
-                    <div className="particle" style={{ left: '52%', animationDuration: '19s', animationDelay: '1s' }}>&#127799;</div>
-                    <div className="particle" style={{ left: '67%', animationDuration: '11s', animationDelay: '5s' }}>&#10024;</div>
-                    <div className="particle" style={{ left: '80%', animationDuration: '16s', animationDelay: '2s' }}>&#128149;</div>
-                    <div className="particle" style={{ left: '91%', animationDuration: '12s', animationDelay: '8s' }}>&#127800;</div>
-                  </div>
-                  {children}
-                  <ChatFAB />
-                  <Toaster
+                  <div className="particle" style={{ left: '8%', animationDuration: '13s', animationDelay: '0s' }}>&#10024;</div>
+                  <div className="particle" style={{ left: '22%', animationDuration: '17s', animationDelay: '3.5s' }}>&#127800;</div>
+                  <div className="particle" style={{ left: '38%', animationDuration: '14s', animationDelay: '7s' }}>&#128171;</div>
+                  <div className="particle" style={{ left: '52%', animationDuration: '19s', animationDelay: '1s' }}>&#127799;</div>
+                  <div className="particle" style={{ left: '67%', animationDuration: '11s', animationDelay: '5s' }}>&#10024;</div>
+                  <div className="particle" style={{ left: '80%', animationDuration: '16s', animationDelay: '2s' }}>&#128149;</div>
+                  <div className="particle" style={{ left: '91%', animationDuration: '12s', animationDelay: '8s' }}>&#127800;</div>
+                </div>
+                {children}
+                <ChatFAB />
+                <Toaster
                    position="top-center"
 
 
@@ -114,8 +112,7 @@ export default async function RootLayout({ children, params }) {
                   />
                 </LanguageProvider>
               </OfflineProvider>
-            </EncryptionProvider>
-          </NextIntlClientProvider>
+            </NextIntlClientProvider>
         </body>
       </html>
     </ClerkProvider>

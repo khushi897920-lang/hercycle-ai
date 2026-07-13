@@ -1,26 +1,27 @@
 import { NextResponse } from 'next/server'
-import { predictNextPeriod } from '@/lib/api-helpers'
-import { getAuthUserId } from '@/lib/clerk-server'
+import { getAuthUserId, ensureUserExists } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { crudLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
+import { crudLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 const cyclePostSchema = z.object({
   id: z.string().uuid('Must be a valid UUID').optional(),
-  encrypted_data: z.string().min(1, 'Missing encrypted payload')
+  start_date: z.string().min(1, 'Missing start date'),
+  end_date: z.string().nullable().optional(),
+  cycle_length: z.number().int().optional()
 })
 
 const cyclePatchSchema = z.object({
   id: z.string().uuid('Must be a valid UUID'),
-  encrypted_data: z.string().min(1, 'Missing encrypted payload')
+  start_date: z.string().optional(),
+  end_date: z.string().nullable().optional(),
+  cycle_length: z.number().int().optional()
 })
 
 export async function GET(request) {
   // ============ RATE LIMITING ============
   try {
-    // const identifier = await getRateLimitIdentifier(request);
-    // await crudLimiter.check(30, identifier); // 30 requests per minute (read-heavy)
     await crudLimiter.check(request); 
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Cycles GET endpoint: ${rateLimitError.message}`);
@@ -38,12 +39,14 @@ export async function GET(request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
+    await ensureUserExists(userId)
+
     const supabaseAdmin = getSupabaseAdmin()
     const { data: cycles, error } = await supabaseAdmin
       .from('cycles')
       .select('*')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false }) // Can no longer order by encrypted start_date
+      .order('start_date', { ascending: false })
       .limit(12)
 
     if (error && error.code !== 'PGRST116') {
@@ -51,7 +54,6 @@ export async function GET(request) {
       return NextResponse.json({ success: true, data: { cycles: [], nextPeriodDate: null, confidence: null, averageCycleLength: 28 } })
     }
 
-    // Note: Prediction is removed here because the server can't read encrypted dates. Client handles it.
     logger.info(`Successfully fetched cycles for user ${userId}`);
     return NextResponse.json({ success: true, data: { cycles: cycles || [] } })
   } catch (error) {
@@ -63,8 +65,6 @@ export async function GET(request) {
 export async function POST(request) {
   // ============ RATE LIMITING ============
   try {
-    // const identifier = await getRateLimitIdentifier(request);
-    // await crudLimiter.checkNext(request, 30); // 30 requests per minute
     await crudLimiter.check(request); 
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Cycles POST endpoint: ${rateLimitError.message}`);
@@ -82,6 +82,8 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
+    await ensureUserExists(userId)
+
     // Payload Validation
     const json = await request.json()
     const result = cyclePostSchema.safeParse(json)
@@ -90,12 +92,14 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Bad Request', details: result.error.errors }, { status: 400 })
     }
 
-    const { id, encrypted_data } = result.data
+    const { id, start_date, end_date, cycle_length } = result.data
 
     const supabaseAdmin = getSupabaseAdmin()
     const insertObj = {
       user_id: userId,
-      encrypted_data,
+      start_date,
+      end_date: end_date || null,
+      cycle_length: cycle_length || 28,
       created_at: new Date().toISOString(),
     }
     if (id) {
@@ -120,8 +124,6 @@ export async function POST(request) {
 export async function PATCH(request) {
   // ============ RATE LIMITING ============
   try {
-    // const identifier = await getRateLimitIdentifier(request);
-    // await crudLimiter.check(30, identifier); // 30 requests per minute
     await crudLimiter.check(request); 
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Cycles PATCH endpoint: ${rateLimitError.message}`);
@@ -139,6 +141,8 @@ export async function PATCH(request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
+    await ensureUserExists(userId)
+
     // Payload Validation
     const json = await request.json()
     const result = cyclePatchSchema.safeParse(json)
@@ -147,12 +151,17 @@ export async function PATCH(request) {
       return NextResponse.json({ success: false, error: 'Bad Request', details: result.error.errors }, { status: 400 })
     }
 
-    const { id, encrypted_data } = result.data
+    const { id, start_date, end_date, cycle_length } = result.data
 
     const supabaseAdmin = getSupabaseAdmin()
+    const updateObj = {}
+    if (start_date !== undefined) updateObj.start_date = start_date
+    if (end_date !== undefined) updateObj.end_date = end_date
+    if (cycle_length !== undefined) updateObj.cycle_length = cycle_length
+
     const { error } = await supabaseAdmin
       .from('cycles')
-      .update({ encrypted_data })
+      .update(updateObj)
       .eq('id', id)
       .eq('user_id', userId)
 
@@ -161,7 +170,7 @@ export async function PATCH(request) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     }
 
-    logger.info(`Successfully updated period cycle ${id} end_date for user ${userId}`);
+    logger.info(`Successfully updated period cycle ${id} for user ${userId}`);
     return NextResponse.json({ success: true })
   } catch (error) {
     logger.error('Error ending period cycle:', error.message || error);

@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { createClient } from '@/lib/supabase-client';
 
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -28,20 +27,24 @@ export default function NewPostPage({ params }) {
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const supabase = createClient();
-      const { data } = await supabase.from('forum_categories').select('*');
-      if (data) {
-        setCategories(data);
-        if (defaultCategory) {
-          const cat = data.find(c => c.slug === defaultCategory);
-          if (cat) setCategoryId(cat.id);
-        } else if (data.length > 0) {
-          setCategoryId(data[0].id);
+      try {
+        const res = await fetch('/api/forum/categories')
+        const json = await res.json()
+        if (json.success && json.data) {
+          setCategories(json.data)
+          if (defaultCategory) {
+            const cat = json.data.find(c => c.slug === defaultCategory)
+            if (cat) setCategoryId(cat.id)
+          } else if (json.data.length > 0) {
+            setCategoryId(json.data[0].id)
+          }
         }
+      } catch (e) {
+        console.error('Failed to load categories:', e)
       }
-    };
-    fetchCategories();
-  }, [defaultCategory]);
+    }
+    fetchCategories()
+  }, [defaultCategory])
 
   const handleSubmit = async (e) => {
     e.preventDefault();
