@@ -1,7 +1,9 @@
+
+
 import { NextResponse } from 'next/server'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { crudLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
+import { crudLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
 
 const DEFAULT_LIMIT = 100
@@ -11,8 +13,7 @@ const MAX_LIMIT = 365
 export async function GET(request) {
   // ============ RATE LIMITING ============
   try {
-    const identifier = await getRateLimitIdentifier(request);
-    await crudLimiter.check(20, identifier); // 20 requests per minute
+    await crudLimiter.check(request);
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Log-day/all endpoint: ${rateLimitError.message}`);
     return NextResponse.json(

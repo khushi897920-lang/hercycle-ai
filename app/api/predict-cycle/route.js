@@ -2,14 +2,13 @@ import { NextResponse } from 'next/server'
 import { predictNextPeriod } from '@/lib/api-helpers'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { aiLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
+import { aiLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
 
 export async function POST(request) {
   // ============ RATE LIMITING ============
   try {
-    const identifier = await getRateLimitIdentifier(request);
-    await aiLimiter.check(5, identifier); // 5 requests per minute
+    await aiLimiter.check(request);
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Predict cycle endpoint: ${rateLimitError.message}`);
     return NextResponse.json(

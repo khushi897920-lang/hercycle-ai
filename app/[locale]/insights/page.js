@@ -13,6 +13,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useOffline } from '@/lib/OfflineContext'
 import { useTranslations } from 'next-intl'
+import WeightTrendChart from '@/components/dashboard/WeightTrendChart'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const PINK         = '#e8527e'
@@ -194,6 +195,21 @@ export default function InsightsPage() {
   const recordedLabel = totalCycles > 0 ? t('cyclesRecorded') : t('daysLogged')
   const recordedSub   = totalCycles > 0 ? t('cycles') : t('entries')
 
+  const handleCSVExport = () => {
+    if (!cycles.length) return
+    const header = 'start_date,end_date,cycle_length'
+    const rows = cycles.map(c =>
+      `${c.start_date || ''},${c.end_date || ''},${c.cycle_length || ''}`
+    )
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'hercycle-cycles.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <>
       <div className="blob"></div>
@@ -259,6 +275,20 @@ export default function InsightsPage() {
             />
           </div>
 
+          {/* ── CSV Export Button ── */}
+          {cycles.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+              <button
+                onClick={handleCSVExport}
+                className="export-btn"
+                style={{ width: 'auto', padding: '10px 20px' }}
+              >
+                ⬇️ Export Cycles CSV
+              </button>
+            </div>
+          )}
+
+
           {/* ── Cycle Length Trend ── */}
           <SectionCard
             icon={<TrendingUp size={18} color={ACCENT} strokeWidth={1.5} />}
@@ -286,6 +316,8 @@ export default function InsightsPage() {
             )}
           </SectionCard>
 
+          <WeightTrendChart />
+          
           {/* ── Symptom Frequency ── */}
           <SectionCard
             icon={<Activity size={18} color={ACCENT} strokeWidth={1.5} />}
