@@ -9,10 +9,9 @@ const CYCLE_LENGTHS = [28, 27, 29, 28, 28, 27]
 const PERIOD_LENGTHS = [5, 5, 6, 5, 6, 5]
 
 const MOOD_LABELS = {
-  SAD: 'sad',
-  NEUTRAL: 'neutral',
-  HAPPY: 'happy',
-  // ANGRY: 'angry', // Uncomment if you use '😡' elsewhere
+  SAD: '😢',
+  NEUTRAL: '😐',
+  HAPPY: '😊',
 }
 
 function addDays(date, n) {
@@ -85,7 +84,7 @@ export async function GET(request) {
   // ============ RATE LIMITING ============
   try {
     const identifier = await getRateLimitIdentifier(request);
-    await devLimiter.check(2, identifier); // 2 requests per minute
+    await devLimiter.check(request); // 2 requests per minute
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Seed endpoint: ${rateLimitError.message}`);
     return NextResponse.json(
@@ -102,11 +101,6 @@ export async function GET(request) {
       logger.warn('Unauthenticated access attempt to seed API');
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
-
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    )
 
     const PERIOD_SYMPTOMS = ['Cramps', 'Bloating', 'Fatigue', 'Headache']
     const PMS_SYMPTOMS = ['Bloating', 'Headache', 'Acne', 'Fatigue']

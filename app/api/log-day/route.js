@@ -1,22 +1,23 @@
-
-
 import { NextResponse } from 'next/server'
-import { getAuthUserId } from '@/lib/clerk-server'
+import { getAuthUserId, ensureUserExists } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { crudLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 const logPostSchema = z.object({
-  date_hash: z.string().min(1, 'Missing date hash'),
-  encrypted_data: z.string().min(1, 'Missing encrypted payload')
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
+  symptoms: z.array(z.string()).optional(),
+  mood: z.string().nullable().optional(),
+  flow: z.string().nullable().optional(),
+  cervical_discharge: z.string().nullable().optional(),
 })
 
-// GET /api/log-day?date_hash=... — fetch a single day's log
+// GET /api/log-day?date=... — fetch a single day's log
 export async function GET(request) {
   // ============ RATE LIMITING ============
   try {
-    await crudLimiter.check(request); // 30 requests per minute (see lib/rateLimiter.js)
+    await crudLimiter.check(request);
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Log-day GET endpoint: ${rateLimitError.message}`);
     return NextResponse.json(
@@ -33,11 +34,13 @@ export async function GET(request) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
     }
 
+    await ensureUserExists(userId)
+
     const { searchParams } = new URL(request.url)
-    const dateHash = searchParams.get('date_hash')
+    const date = searchParams.get('date')
     
-    if (!dateHash) {
-      return NextResponse.json({ success: false, message: 'Bad Request: Missing date hash.' }, { status: 400 })
+    if (!date) {
+      return NextResponse.json({ success: false, message: 'Bad Request: Missing date.' }, { status: 400 })
     }
 
     const supabaseAdmin = getSupabaseAdmin()
@@ -45,7 +48,7 @@ export async function GET(request) {
       .from('daily_logs')
       .select('*')
       .eq('user_id', userId)
-      .eq('date_hash', dateHash)
+      .eq('date', date)
       .maybeSingle()
 
     if (error) {
@@ -82,6 +85,8 @@ export async function POST(request) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
     }
 
+    await ensureUserExists(userId)
+
     const json = await request.json()
     const result = logPostSchema.safeParse(json)
     if (!result.success) {
@@ -89,19 +94,27 @@ export async function POST(request) {
       return NextResponse.json({ success: false, message: 'Bad Request', details: result.error.errors }, { status: 400 })
     }
 
-    const { date_hash, encrypted_data } = result.data
+    const { date, symptoms, mood, flow, cervical_discharge } = result.data
 
     const supabaseAdmin = getSupabaseAdmin()
     const { error } = await supabaseAdmin
       .from('daily_logs')
       .upsert(
-        { user_id: userId, date_hash, encrypted_data, updated_at: new Date().toISOString() },
-        { onConflict: 'user_id,date_hash' } // Requires updating constraint on Supabase if date was previously the unique key
+        { 
+          user_id: userId, 
+          date, 
+          symptoms: symptoms || [], 
+          mood: mood || null, 
+          flow: flow || null, 
+          cervical_discharge: cervical_discharge || null, 
+          updated_at: new Date().toISOString() 
+        },
+        { onConflict: 'user_id,date' }
       )
 
     if (error) {
       logger.error(`Database error upserting daily log for user ${userId}:`, error.message);
-      return NextResponse.json({ success: false, message: `Failed to log day: ${error.message}` }, {status: 500 })
+      return NextResponse.json({ success: false, message: `Failed to log day: ${error.message}` }, { status: 500 })
     }
 
     logger.info(`Successfully upserted daily log for user ${userId}`);

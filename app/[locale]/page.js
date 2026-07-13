@@ -4,7 +4,11 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth, useUser } from '@clerk/nextjs'
 import toast from 'react-hot-toast'
-
+import CyclePhaseCard from '@/components/dashboard/CyclePhaseCard'
+import {
+  calculateCyclePhase,
+  getLatestCycle,
+} from '@/lib/calculateCyclePhase'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import HeroSection from '@/components/dashboard/HeroSection'
@@ -17,9 +21,7 @@ import OnboardingModal from '@/components/dashboard/OnboardingModal'
 import PredictionCard from '@/components/dashboard/PredictionCard'
 import CycleHistoryCard from '@/components/dashboard/CycleHistoryCard'
 import CervicalDischargeTracker from '@/components/dashboard/CervicalDischargeTracker'
-import PinModal from '@/components/layout/PinModal'
 import { useOffline } from '@/lib/OfflineContext'
-import { useEncryption } from '@/lib/EncryptionContext'
 import { useLocale, useTranslations } from 'next-intl'
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -112,7 +114,6 @@ const HerCycleApp = () => {
   const { isLoaded, isSignedIn } = useAuth()
   const { user } = useUser()
   const { offlineClient } = useOffline()
-  const { isKeyReady, encryptionKey } = useEncryption()
   const now = new Date()
   const [activeNav, setActiveNav] = useState('Dashboard')
   const locale = useLocale()
@@ -162,11 +163,12 @@ const HerCycleApp = () => {
 
   // Check session on mount and load data
   useEffect(() => {
-    if (!isLoaded || !user) return
+    if (!isLoaded) return
     if (!isSignedIn) {
       router.push(`/${locale}/auth/login`)
       return
     }
+    if (!user) return
 
     const role = user?.publicMetadata?.role
     if (!role) {
@@ -178,19 +180,20 @@ const HerCycleApp = () => {
       return
     }
 
-    if (isKeyReady) {
-      Promise.all([fetchCycleData(), fetchPCODRisk()])
-    }
-    
-    // Set initial greeting after mount to avoid hydration mismatch
-    if (chatMessages.length === 0) {
-      setChatMessages([{ role: 'ai', text: tChat('greeting') }])
-    }
-  }, [isLoaded, isSignedIn, user, router, tChat, locale, isKeyReady])
+    Promise.all([fetchCycleData(), fetchPCODRisk()])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, isSignedIn, user?.id, locale])
+
+  // Set initial greeting once on mount (tChat is intentionally excluded from deps
+  // because it creates a new reference every render and would cause an infinite loop)
+  useEffect(() => {
+    setChatMessages([{ role: 'ai', text: tChat('greeting') }])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const fetchCycleData = async () => {
     try {
-      const data = await offlineClient.fetchCycles(encryptionKey)
+      const data = await offlineClient.fetchCycles()
       if (data.success) {
         setCycleData(data.data)
         
@@ -274,7 +277,7 @@ const HerCycleApp = () => {
         flow: selectedFlow,
         cervical_discharge: selectedDischarge
       }
-      const data = await offlineClient.saveDailyLog(logData, encryptionKey)
+      const data = await offlineClient.saveDailyLog(logData)
       if (data.success) {
         if (data.offline) {
           toast.success('💾 Saved offline! Will sync when online.')
@@ -373,9 +376,42 @@ const HerCycleApp = () => {
     }
   }
 
+  
+  const latestCycle = getLatestCycle(cycleData?.cycles)
+
+const periodStart =
+  latestCycle?.start_date ||
+  latestCycle?.period_start ||
+  null
+
+const periodEnd =
+  latestCycle?.end_date ||
+  latestCycle?.period_end ||
+  null
+
+const inferredPeriodLength = periodStart && periodEnd
+  ? Math.max(
+      1,
+      Math.round(
+        (
+          new Date(`${periodEnd}T00:00:00`) -
+          new Date(`${periodStart}T00:00:00`)
+        ) / 86400000
+      ) + 1
+    )
+  : 5
+
+const phaseInfo = calculateCyclePhase({
+  periodStart,
+  cycleLength:
+    latestCycle?.cycle_length ||
+    cycleData?.averageCycleLength ||
+    28,
+  periodLength: inferredPeriodLength,
+})
+
   return (
     <>
-      <PinModal />
       {/* ── Onboarding Modal ── */}
       {showOnboarding && (
         <OnboardingModal
@@ -424,6 +460,15 @@ const HerCycleApp = () => {
             daysUntilNext={daysUntilNext}
             activeLang={activeLang}
           />
+        </div>
+        
+        <div style={{ marginTop: '1.5rem' }}>
+        <CyclePhaseCard
+        phaseKey={phaseInfo.phaseKey}
+        cycleDay={phaseInfo.cycleDay}
+        ovulationDay={phaseInfo.ovulationDay}
+        hasData={phaseInfo.hasData}
+        />
         </div>
 
         <FeaturesSection activeLang={activeLang} />

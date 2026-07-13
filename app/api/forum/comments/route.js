@@ -3,8 +3,21 @@ import { getAuthUserId } from '@/lib/clerk-server';
 import { moderateContent } from '@/lib/ai-moderation';
 import { generateAlias } from '@/lib/alias-generator';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { crudLimiter } from '@/lib/rateLimiter';
 
 export async function POST(req) {
+  // ============ RATE LIMITING ============
+  try {
+    await crudLimiter.check(req);
+  } catch (rateLimitError) {
+    console.warn(`[Rate Limit] Forum comments endpoint: ${rateLimitError.message}`);
+    return NextResponse.json(
+      { error: 'Too many requests, please slow down.' },
+      { status: 429 }
+    );
+  }
+  // =======================================
+
   try {
     const userId = await getAuthUserId();
     
