@@ -4,6 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { aiLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { z } from 'zod'
 
 
@@ -158,7 +159,31 @@ export async function POST(request) {
     const { message, context } = result.data
     language = result.data.language || 'en'
 
+    // 3. Fetch User Health Profile for Context Injection
+    let userProfile = null;
+    try {
+      const supabase = getSupabaseAdmin();
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      userProfile = data;
+    } catch (profileErr) {
+      logger.warn(`Could not fetch user profile for AI context: ${profileErr.message}`);
+    }
+
     let systemPrompt = `You are a helpful menstrual health assistant. Provide empathetic, accurate health guidance.`;
+
+    // 4. Inject Profile Context
+    if (userProfile) {
+      const conditions = userProfile.known_conditions || [];
+      const ageStr = userProfile.age ? `${userProfile.age} yrs old` : 'unknown age';
+      const weightStr = userProfile.weight_kg ? `${userProfile.weight_kg}kg` : 'unknown weight';
+      const conditionsStr = conditions.length > 0 ? conditions.join(', ') : 'none';
+      
+      systemPrompt += `\n[CONTEXT: User is ${ageStr}, weighs ${weightStr}, conditions: ${conditionsStr}]. Use this context to personalize your response, but do not explicitly repeat their data back to them unless necessary.`;
+    }
 
     if (language === 'हि' || language === 'hi') {
       systemPrompt = `आप एक सहायक मासिक धर्म स्वास्थ्य सहायक हैं। सहानुभूतिपूर्ण, सटीक स्वास्थ्य मार्गदर्शन प्रदान करें। हमेशा हिंदी में जवाब दें।`;
