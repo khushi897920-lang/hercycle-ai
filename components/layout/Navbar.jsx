@@ -31,11 +31,14 @@ export default function Navbar() {
   ]
 
   const handleLogToday = () => {
-    if (pathname === `/${locale}` || pathname === '/') {
+    if (pathname === `/${locale}/track`) {
+      const el = document.getElementById('daily-log-section')
+      if (el) el.scrollIntoView({ behavior: 'smooth' })
+    } else if (pathname === `/${locale}` || pathname === '/') {
       const el = document.getElementById('daily-log-section')
       if (el) el.scrollIntoView({ behavior: 'smooth' })
     } else {
-      router.push(`/${locale}/track`)
+      router.push(`/${locale}/track#daily-log-section`)
     }
   }
 

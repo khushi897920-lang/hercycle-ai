@@ -281,7 +281,7 @@ export default function TrackPage() {
           </div>
 
           {/* Daily log panel */}
-          <h2 style={{
+          <h2 id="daily-log-section" style={{
             color: TEXT_PRIMARY,
             fontSize: '1.4rem',
             fontWeight: 700,

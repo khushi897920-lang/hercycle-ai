@@ -48,13 +48,13 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
-          { key: 'X-Frame-Options',                value: 'ALLOWALL' },
-          { key: 'Content-Security-Policy',         value: 'frame-ancestors *;' },
-          { key: 'Access-Control-Allow-Origin',     value: process.env.CORS_ORIGINS || '*' },
-          { key: 'Access-Control-Allow-Methods',    value: 'GET, POST, PUT, PATCH, DELETE, OPTIONS' },
-          { key: 'Access-Control-Allow-Headers',    value: '*' },
-          { key: 'X-Content-Type-Options',          value: 'nosniff' },
-          { key: 'Referrer-Policy',                 value: 'strict-origin-when-cross-origin' },
+          { key: 'X-Frame-Options', value: 'ALLOWALL' },
+          { key: 'Content-Security-Policy', value: 'frame-ancestors *;' },
+          { key: 'Access-Control-Allow-Origin', value: process.env.CORS_ORIGINS || '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, PATCH, DELETE, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: '*' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         ],
       },
       // Cache static API responses (cycle data, PCOD risk) for 60s
