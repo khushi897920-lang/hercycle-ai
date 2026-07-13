@@ -129,7 +129,7 @@ export async function POST(request) {
   // ============ RATE LIMITING ============
   try {
     const identifier = await getRateLimitIdentifier(request);
-    await aiLimiter.check(10, identifier); // 10 requests per minute
+    await aiLimiter.check(request); // 10 requests per minute
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Chat endpoint: ${rateLimitError.message}`);
     return NextResponse.json(

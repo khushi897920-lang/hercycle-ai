@@ -1,6 +1,7 @@
+
 'use client'
 
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import { initDB, getAllFromStore, putIntoStore, deleteFromStore, queueSyncRequest } from './db'
 import { predictNextPeriod, calculatePCODRisk } from './api-helpers'
 import toast from 'react-hot-toast'
@@ -30,7 +31,6 @@ export function OfflineProvider({ children }) {
   const [pendingSyncCount, setPendingSyncCount] = useState(0)
   const [isSyncing, setIsSyncing] = useState(false)
 
-  // Service worker registration
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
@@ -43,7 +43,6 @@ export function OfflineProvider({ children }) {
     }
   }, [])
 
-  // Sync queue count updater
   const updateSyncCount = async () => {
     try {
       const queue = await getAllFromStore('sync_queue');
@@ -53,7 +52,6 @@ export function OfflineProvider({ children }) {
     }
   }
 
-  // Network state listeners
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -74,7 +72,6 @@ export function OfflineProvider({ children }) {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Periodic sync check (every 30 seconds)
     const interval = setInterval(() => {
       if (navigator.onLine) {
         syncData();
@@ -90,10 +87,9 @@ export function OfflineProvider({ children }) {
     };
   }, []);
 
-  // Sync function
   const syncData = async () => {
     if (!navigator.onLine || isSyncing) return;
-    
+
     try {
       const queue = await getAllFromStore('sync_queue');
       if (queue.length === 0) {
@@ -102,8 +98,7 @@ export function OfflineProvider({ children }) {
       }
 
       setIsSyncing(true);
-      
-      // Sort chronologically by id
+
       const sortedQueue = [...queue].sort((a, b) => a.id - b.id);
 
       for (const item of sortedQueue) {
@@ -115,14 +110,11 @@ export function OfflineProvider({ children }) {
           });
 
           if (res.ok || res.status === 400 || res.status === 401 || res.status === 403 || res.status === 422) {
-            // Success or permanent client failure, remove from queue
             await deleteFromStore('sync_queue', item.id);
           } else {
-            // Server error (e.g. 500, 503), stop processing queue and retry later
             break;
           }
         } catch (fetchErr) {
-          // Network connection error, stop processing queue
           break;
         }
       }
@@ -134,8 +126,9 @@ export function OfflineProvider({ children }) {
     }
   };
 
-  // Offline client helper
-  const offlineClient = {
+
+
+  const offlineClient = useMemo(() => ({
     fetchCycles: async () => {
       const isOnline = navigator.onLine;
       if (isOnline) {
@@ -147,21 +140,32 @@ export function OfflineProvider({ children }) {
             const tx = db.transaction('cycles', 'readwrite');
             const store = tx.objectStore('cycles');
             await store.clear();
+            
             for (const c of data.data.cycles) {
               await store.put(c);
             }
-            return data;
+            
+            const sortedCycles = [...data.data.cycles].sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+            const prediction = predictNextPeriod(sortedCycles);
+            return {
+              success: true,
+              data: {
+                cycles: data.data.cycles,
+                nextPeriodDate: prediction.nextPeriodDate,
+                confidence: prediction.confidence,
+                averageCycleLength: prediction.averageCycleLength
+              }
+            };
           }
         } catch (e) {
           console.warn('Fetch cycles failed, falling back to IndexedDB', e);
         }
       }
 
-      // Offline or network error: load from IndexedDB
       const cachedCycles = await getAllFromStore('cycles');
       const sortedCycles = [...cachedCycles].sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
       const prediction = predictNextPeriod(sortedCycles);
-      
+
       return {
         success: true,
         data: {
@@ -182,15 +186,15 @@ export function OfflineProvider({ children }) {
             const data = await res.json();
             if (data.success && data.data) {
               await putIntoStore('daily_logs', data.data);
+              return { success: true, data: data.data };
             }
-            return data;
+            return { success: true, data: null };
           }
         } catch (e) {
           console.warn('Fetch today log failed, falling back to IndexedDB', e);
         }
       }
 
-      // Fallback: read from IndexedDB
       const logs = await getAllFromStore('daily_logs');
       const log = logs.find(l => l.date === date) || null;
       return { success: true, data: log };
@@ -219,7 +223,6 @@ export function OfflineProvider({ children }) {
         }
       }
 
-      // Fallback: read all from IndexedDB
       const logs = await getAllFromStore('daily_logs');
       const sortedLogs = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date));
       return { success: true, data: sortedLogs };
@@ -242,12 +245,11 @@ export function OfflineProvider({ children }) {
         }
       }
 
-      // Fallback 1: Calculate locally from local DB
       try {
         const cachedCycles = await getAllFromStore('cycles');
         const cachedLogs = await getAllFromStore('daily_logs');
         const allSymptoms = cachedLogs.flatMap(log => log.symptoms || []);
-        
+
         if (cachedCycles.length > 0) {
           const localRisk = calculatePCODRisk(cachedCycles, allSymptoms);
           return { success: true, data: localRisk };
@@ -256,7 +258,6 @@ export function OfflineProvider({ children }) {
         console.error('Local PCOD calculation failed:', e);
       }
 
-      // Fallback 2: Read from localStorage cache
       const cached = localStorage.getItem('pcod_risk_cache');
       if (cached) {
         return { success: true, data: JSON.parse(cached) };
@@ -282,19 +283,19 @@ export function OfflineProvider({ children }) {
           const res = await fetch('/api/log-day', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(log)
+            body: JSON.stringify(localLog)
           });
           const data = await res.json();
           if (data.success) {
             return { success: true };
           }
+          return { success: false, error: data.message || 'Failed to save log' };
         } catch (e) {
           console.warn('Save daily log network request failed, queuing', e);
         }
       }
 
-      // Offline or network error: add to queue
-      await queueSyncRequest('/api/log-day', 'POST', log);
+      await queueSyncRequest('/api/log-day', 'POST', localLog);
       updateSyncCount();
       return { success: true, offline: true };
     },
@@ -319,6 +320,7 @@ export function OfflineProvider({ children }) {
           if (data.success) {
             return { success: true };
           }
+          return { success: false, error: data.error || 'Failed to start period' };
         } catch (e) {
           console.warn('Start period network request failed, queuing', e);
         }
@@ -338,27 +340,31 @@ export function OfflineProvider({ children }) {
       }
 
       const isOnline = navigator.onLine;
+      const payload = { id, end_date };
+
       if (isOnline) {
         try {
           const res = await fetch('/api/cycles', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, end_date })
+            body: JSON.stringify(payload)
           });
           const data = await res.json();
           if (data.success) {
             return { success: true };
           }
+          return { success: false, error: data.error || 'Failed to end period' };
         } catch (e) {
           console.warn('End period network request failed, queuing', e);
         }
       }
 
-      await queueSyncRequest('/api/cycles', 'PATCH', { id, end_date });
+      await queueSyncRequest('/api/cycles', 'PATCH', payload);
       updateSyncCount();
       return { success: true, offline: true };
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []) // stable reference — methods close over navigator/fetch, not React state
 
   return (
     <OfflineContext.Provider value={{ isOffline, pendingSyncCount, isSyncing, syncData, offlineClient }}>

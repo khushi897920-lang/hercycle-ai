@@ -8,13 +8,15 @@ import { Send, ArrowUp, ArrowDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase-client';
 
+// Create once at module level — stable reference, no new object on every render
+const supabase = createClient();
+
 export default function CommentSection({ postId, initialComments = [] }) {
   const t = useTranslations('Community');
   const [comments, setComments] = useState(initialComments);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { getToken } = useAuth();
-  const supabase = createClient();
 
   useEffect(() => {
     // Set up Supabase Realtime subscription
@@ -44,7 +46,7 @@ export default function CommentSection({ postId, initialComments = [] }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [postId, supabase]);
+  }, [postId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -10,6 +10,7 @@ import CycleCalendar from '@/components/dashboard/CycleCalendar'
 import DailyLogPanel from '@/components/dashboard/DailyLogPanel'
 import { useOffline } from '@/lib/OfflineContext'
 import { useTranslations, useLocale } from 'next-intl'
+import WeightTracker from '@/components/dashboard/WeightTracker'
 
 const TEXT_PRIMARY = '#ffffff'
 const TEXT_FAINT   = 'rgba(255,255,255,0.65)'
@@ -248,6 +249,10 @@ export default function TrackPage() {
                 {t('endPeriod')}
               </button>
             )}
+          </div>
+
+          <div style={{ marginTop: '1.5rem' }}>
+            <WeightTracker />
           </div>
 
           {/* Status banner when no cycles exist */}

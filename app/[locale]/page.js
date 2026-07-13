@@ -4,7 +4,11 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth, useUser } from '@clerk/nextjs'
 import toast from 'react-hot-toast'
-
+import CyclePhaseCard from '@/components/dashboard/CyclePhaseCard'
+import {
+  calculateCyclePhase,
+  getLatestCycle,
+} from '@/lib/calculateCyclePhase'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import HeroSection from '@/components/dashboard/HeroSection'
@@ -159,11 +163,12 @@ const HerCycleApp = () => {
 
   // Check session on mount and load data
   useEffect(() => {
-    if (!isLoaded || !user) return
+    if (!isLoaded) return
     if (!isSignedIn) {
       router.push(`/${locale}/auth/login`)
       return
     }
+    if (!user) return
 
     const role = user?.publicMetadata?.role
     if (!role) {
@@ -176,12 +181,15 @@ const HerCycleApp = () => {
     }
 
     Promise.all([fetchCycleData(), fetchPCODRisk()])
-    
-    // Set initial greeting after mount to avoid hydration mismatch
-    if (chatMessages.length === 0) {
-      setChatMessages([{ role: 'ai', text: tChat('greeting') }])
-    }
-  }, [isLoaded, isSignedIn, user, router, tChat, locale])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, isSignedIn, user?.id, locale])
+
+  // Set initial greeting once on mount (tChat is intentionally excluded from deps
+  // because it creates a new reference every render and would cause an infinite loop)
+  useEffect(() => {
+    setChatMessages([{ role: 'ai', text: tChat('greeting') }])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const fetchCycleData = async () => {
     try {
@@ -215,7 +223,7 @@ const HerCycleApp = () => {
   const fetchPCODRisk = async () => {
     setPcodRiskLoading(true)
     try {
-      const data = await offlineClient.fetchPCODRisk()
+      const data = await offlineClient.fetchPCODRisk() // PCOD risk calculates locally now if offline, maybe we need to pass encryptionKey there too if it fetches? Wait, fetchPCODRisk just reads IndexedDB which has decrypted data.
       if (data.success) {
         setPcodRisk(data.data)
       }
@@ -368,6 +376,40 @@ const HerCycleApp = () => {
     }
   }
 
+  
+  const latestCycle = getLatestCycle(cycleData?.cycles)
+
+const periodStart =
+  latestCycle?.start_date ||
+  latestCycle?.period_start ||
+  null
+
+const periodEnd =
+  latestCycle?.end_date ||
+  latestCycle?.period_end ||
+  null
+
+const inferredPeriodLength = periodStart && periodEnd
+  ? Math.max(
+      1,
+      Math.round(
+        (
+          new Date(`${periodEnd}T00:00:00`) -
+          new Date(`${periodStart}T00:00:00`)
+        ) / 86400000
+      ) + 1
+    )
+  : 5
+
+const phaseInfo = calculateCyclePhase({
+  periodStart,
+  cycleLength:
+    latestCycle?.cycle_length ||
+    cycleData?.averageCycleLength ||
+    28,
+  periodLength: inferredPeriodLength,
+})
+
   return (
     <>
       {/* ── Onboarding Modal ── */}
@@ -418,6 +460,15 @@ const HerCycleApp = () => {
             daysUntilNext={daysUntilNext}
             activeLang={activeLang}
           />
+        </div>
+        
+        <div style={{ marginTop: '1.5rem' }}>
+        <CyclePhaseCard
+        phaseKey={phaseInfo.phaseKey}
+        cycleDay={phaseInfo.cycleDay}
+        ovulationDay={phaseInfo.ovulationDay}
+        hasData={phaseInfo.hasData}
+        />
         </div>
 
         <FeaturesSection activeLang={activeLang} />

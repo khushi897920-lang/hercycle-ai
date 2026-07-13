@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAuthUserId } from '@/lib/clerk-server'
-import { devLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
+import { devLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
 
 export const dynamic = 'force-dynamic'
@@ -15,8 +15,7 @@ export async function GET(request) {
 
   // ============ RATE LIMITING ============
   try {
-    const identifier = await getRateLimitIdentifier(request);
-    await devLimiter.check(2, identifier); // 2 requests per minute
+    await devLimiter.check(request); // dev-only route, very low limit
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Test-DB endpoint: ${rateLimitError.message}`);
     return NextResponse.json(

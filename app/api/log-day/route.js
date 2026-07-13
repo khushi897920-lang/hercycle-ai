@@ -1,36 +1,23 @@
 import { NextResponse } from 'next/server'
-import { getAuthUserId } from '@/lib/clerk-server'
+import { getAuthUserId, ensureUserExists } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { crudLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
+import { crudLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 const logPostSchema = z.object({
-  date: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be in YYYY-MM-DD format')
-    .refine((val) => {
-      const today = new Date()
-      today.setHours(23, 59, 59, 999) // allow the full current day
-      return new Date(val) <= today
-    }, { message: 'Log date cannot be in the future.' })
-    .refine((val) => {
-      const twoYearsAgo = new Date()
-      twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
-      twoYearsAgo.setHours(0, 0, 0, 0)
-      return new Date(val) >= twoYearsAgo
-    }, { message: 'Log date cannot be older than 2 years.' }),
-  symptoms: z.array(z.string().max(100)).max(50),
-  mood: z.string().max(50).nullable().optional(),
-  flow: z.enum(['f1', 'f2', 'f3']).nullable().optional(),
-  cervical_discharge: z.string().max(50).nullable().optional()
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
+  symptoms: z.array(z.string()).optional(),
+  mood: z.string().nullable().optional(),
+  flow: z.string().nullable().optional(),
+  cervical_discharge: z.string().nullable().optional(),
 })
 
-// GET /api/log-day?date=YYYY-MM-DD — fetch a single day's log
+// GET /api/log-day?date=... — fetch a single day's log
 export async function GET(request) {
   // ============ RATE LIMITING ============
   try {
-    const identifier = await getRateLimitIdentifier(request);
-    await crudLimiter.check(20, identifier); // 20 requests per minute
+    await crudLimiter.check(request);
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Log-day GET endpoint: ${rateLimitError.message}`);
     return NextResponse.json(
@@ -47,13 +34,13 @@ export async function GET(request) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const date = searchParams.get('date') || new Date().toISOString().split('T')[0]
+    await ensureUserExists(userId)
 
-    // Verify date parameter format
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      logger.warn(`Invalid date format requested by user ${userId}: ${date}`);
-      return NextResponse.json({ success: false, message: 'Bad Request: Invalid date format. Use YYYY-MM-DD.' }, { status: 400 })
+    const { searchParams } = new URL(request.url)
+    const date = searchParams.get('date')
+    
+    if (!date) {
+      return NextResponse.json({ success: false, message: 'Bad Request: Missing date.' }, { status: 400 })
     }
 
     const supabaseAdmin = getSupabaseAdmin()
@@ -65,11 +52,11 @@ export async function GET(request) {
       .maybeSingle()
 
     if (error) {
-      logger.error(`Database error fetching daily log for user ${userId} on date ${date}:`, error.message);
+      logger.error(`Database error fetching daily log for user ${userId}:`, error.message);
       return NextResponse.json({ success: false, message: error.message }, { status: 500 })
     }
 
-    logger.info(`Successfully fetched daily log for user ${userId} on date ${date}`);
+    logger.info(`Successfully fetched daily log for user ${userId}`);
     return NextResponse.json({ success: true, data: data || null })
   } catch (error) {
     logger.error('Error fetching day log:', error.message || error);
@@ -81,8 +68,7 @@ export async function GET(request) {
 export async function POST(request) {
   // ============ RATE LIMITING ============
   try {
-    const identifier = await getRateLimitIdentifier(request);
-    await crudLimiter.check(20, identifier); // 20 requests per minute
+    await crudLimiter.check(request);
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Log-day POST endpoint: ${rateLimitError.message}`);
     return NextResponse.json(
@@ -99,7 +85,8 @@ export async function POST(request) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
     }
 
-    // Payload Validation
+    await ensureUserExists(userId)
+
     const json = await request.json()
     const result = logPostSchema.safeParse(json)
     if (!result.success) {
@@ -113,16 +100,24 @@ export async function POST(request) {
     const { error } = await supabaseAdmin
       .from('daily_logs')
       .upsert(
-        { user_id: userId, date, symptoms, mood, flow, cervical_discharge, updated_at: new Date().toISOString() },
+        { 
+          user_id: userId, 
+          date, 
+          symptoms: symptoms || [], 
+          mood: mood || null, 
+          flow: flow || null, 
+          cervical_discharge: cervical_discharge || null, 
+          updated_at: new Date().toISOString() 
+        },
         { onConflict: 'user_id,date' }
       )
 
     if (error) {
-      logger.error(`Database error upserting daily log for user ${userId} on date ${date}:`, error.message);
+      logger.error(`Database error upserting daily log for user ${userId}:`, error.message);
       return NextResponse.json({ success: false, message: `Failed to log day: ${error.message}` }, { status: 500 })
     }
 
-    logger.info(`Successfully upserted daily log for user ${userId} on date ${date}`);
+    logger.info(`Successfully upserted daily log for user ${userId}`);
     return NextResponse.json({ success: true, message: 'Day logged successfully!' })
   } catch (error) {
     logger.error('Error logging day:', error.message || error);

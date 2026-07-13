@@ -3,13 +3,12 @@ import { getAuthUserId } from '@/lib/clerk-server';
 import { moderateContent } from '@/lib/ai-moderation';
 import { generateAlias } from '@/lib/alias-generator';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { crudLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter';
+import { crudLimiter } from '@/lib/rateLimiter';
 
 export async function POST(req) {
   // ============ RATE LIMITING ============
   try {
-    const identifier = await getRateLimitIdentifier(req);
-    await crudLimiter.check(10, identifier); // 10 posts per minute
+    await crudLimiter.check(req);
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Forum posts endpoint: ${rateLimitError.message}`);
     return NextResponse.json(
