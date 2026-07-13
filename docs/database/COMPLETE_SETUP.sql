@@ -181,3 +181,141 @@ CREATE POLICY "forum_votes_public_read"
   USING (true);
 
 
+-- 18. Rate Limits Table & RPC
+CREATE TABLE IF NOT EXISTS public.rate_limits (
+    identifier TEXT PRIMARY KEY,
+    count INTEGER NOT NULL DEFAULT 1,
+    reset_at TIMESTAMPTZ NOT NULL
+);
+
+ALTER TABLE public.rate_limits ENABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE FUNCTION public.enforce_rate_limit(
+    p_identifier TEXT,
+    p_limit INTEGER,
+    p_interval INTEGER
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_now TIMESTAMPTZ := clock_timestamp();
+    v_record RECORD;
+    v_allowed BOOLEAN;
+    v_interval_dur INTERVAL;
+BEGIN
+    v_interval_dur := (p_interval || ' milliseconds')::interval;
+    DELETE FROM public.rate_limits WHERE reset_at < v_now;
+
+    INSERT INTO public.rate_limits (identifier, count, reset_at)
+    VALUES (p_identifier, 1, v_now + v_interval_dur)
+    ON CONFLICT (identifier) DO UPDATE
+    SET count = CASE 
+                  WHEN public.rate_limits.reset_at < v_now THEN 1
+                  ELSE public.rate_limits.count + 1
+                END,
+        reset_at = CASE 
+                     WHEN public.rate_limits.reset_at < v_now THEN v_now + v_interval_dur
+                     ELSE public.rate_limits.reset_at
+                   END
+    RETURNING count, reset_at INTO v_record;
+
+    IF v_record.count <= p_limit THEN
+        v_allowed := TRUE;
+    ELSE
+        v_allowed := FALSE;
+    END IF;
+
+    RETURN jsonb_build_object(
+        'allowed', v_allowed,
+        'count', v_record.count,
+        'reset_at', v_record.reset_at
+    );
+END;
+$$;
+
+
+-- 19. Atomic Forum Voting RPC
+CREATE OR REPLACE FUNCTION public.handle_vote(
+    p_user_id TEXT,
+    p_item_type TEXT,
+    p_item_id UUID,
+    p_vote_value INTEGER
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_existing_vote_id UUID;
+    v_existing_value INTEGER;
+    v_action TEXT;
+    v_current_vote INTEGER;
+    v_table_name TEXT;
+    v_net_change INTEGER;
+BEGIN
+    IF p_item_type = 'post' THEN
+        v_table_name := 'forum_posts';
+    ELSIF p_item_type = 'comment' THEN
+        v_table_name := 'forum_comments';
+    ELSE
+        RAISE EXCEPTION 'Invalid item type: %', p_item_type;
+    END IF;
+
+    SELECT id, vote_value INTO v_existing_vote_id, v_existing_value
+    FROM public.forum_votes
+    WHERE user_id = p_user_id AND item_type = p_item_type AND item_id = p_item_id;
+
+    IF v_existing_vote_id IS NULL THEN
+        INSERT INTO public.forum_votes (user_id, item_type, item_id, vote_value)
+        VALUES (p_user_id, p_item_type, p_item_id, p_vote_value);
+
+        v_net_change := p_vote_value;
+        v_action := 'added';
+        v_current_vote := p_vote_value;
+    ELSE
+        IF v_existing_value = p_vote_value THEN
+            DELETE FROM public.forum_votes WHERE id = v_existing_vote_id;
+            v_net_change := -p_vote_value;
+            v_action := 'removed';
+            v_current_vote := 0;
+        ELSE
+            UPDATE public.forum_votes
+            SET vote_value = p_vote_value
+            WHERE id = v_existing_vote_id;
+            v_net_change := p_vote_value * 2;
+            v_action := 'changed';
+            v_current_vote := p_vote_value;
+        END IF;
+    END IF;
+
+    IF v_table_name = 'forum_posts' THEN
+        UPDATE public.forum_posts
+        SET upvotes = COALESCE(upvotes, 0) + v_net_change
+        WHERE id = p_item_id;
+    ELSIF v_table_name = 'forum_comments' THEN
+        UPDATE public.forum_comments
+        SET upvotes = COALESCE(upvotes, 0) + v_net_change
+        WHERE id = p_item_id;
+    END IF;
+
+    RETURN jsonb_build_object(
+        'action', v_action,
+        'current_vote', v_current_vote
+    );
+END;
+$$;
+
+
+-- 20. Add Missing Cascading Deletes for weight_entries
+ALTER TABLE public.weight_entries
+  DROP CONSTRAINT IF EXISTS weight_entries_user_id_fkey;
+
+ALTER TABLE public.weight_entries
+  ADD CONSTRAINT weight_entries_user_id_fkey
+  FOREIGN KEY (user_id) REFERENCES public.users(id)
+  ON DELETE CASCADE;
+
+
+

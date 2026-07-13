@@ -5,7 +5,7 @@
     "scripts": {
         "dev": "next dev --hostname 0.0.0.0 --port 3000",
         "dev:no-reload": "next dev --hostname 0.0.0.0 --port 3000",
-        "dev:webpack": "next dev --hostname 0.0.0.0 --port 3000",
+        "dev:webpack": "next dev --webpack --hostname 0.0.0.0 --port 3000",
         "build": "next build",
         "start": "next start"
     },
