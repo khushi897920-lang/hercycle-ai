@@ -13,22 +13,22 @@ import { useTranslations, useLocale } from 'next-intl'
 import WeightTracker from '@/components/dashboard/WeightTracker'
 
 const TEXT_PRIMARY = '#ffffff'
-const TEXT_FAINT   = 'rgba(255,255,255,0.65)'
+const TEXT_FAINT = 'rgba(255,255,255,0.65)'
 
 function deriveDateSets(cycleData) {
-  const periodDays    = new Set()
+  const periodDays = new Set()
   const ovulationDays = new Set()
   const predictedDays = new Set()
-  const today         = new Date().toISOString().split('T')[0]
-  const cycles        = cycleData?.cycles || []
-  const toISO         = (d) => d.toISOString().split('T')[0]
+  const today = new Date().toISOString().split('T')[0]
+  const cycles = cycleData?.cycles || []
+  const toISO = (d) => d.toISOString().split('T')[0]
 
   cycles.forEach(cycle => {
     const startStr = cycle.start_date
-    const endStr   = cycle.end_date
+    const endStr = cycle.end_date
     if (!startStr) return
     const start = new Date(startStr)
-    const end   = endStr ? new Date(endStr) : new Date(start.getTime() + 5 * 86400000)
+    const end = endStr ? new Date(endStr) : new Date(start.getTime() + 5 * 86400000)
 
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       periodDays.add(toISO(new Date(d)))
@@ -50,20 +50,20 @@ function deriveDateSets(cycleData) {
 }
 
 function buildCalendarDays(year, month, periodDays, ovulationDays, predictedDays, todayStr, locale) {
-  const firstDay        = new Date(year, month, 1).getDay()
-  const daysInMonth     = new Date(year, month + 1, 0).getDate()
+  const firstDay = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
   const daysInPrevMonth = new Date(year, month, 0).getDate()
   const days = []
-  
-  const weekDays = locale === 'hi' ? ['र', 'सो', 'मं', 'बु', 'गु', 'शु', 'श'] : ['S','M','T','W','T','F','S']
+
+  const weekDays = locale === 'hi' ? ['र', 'सो', 'मं', 'बु', 'गु', 'शु', 'श'] : ['S', 'M', 'T', 'W', 'T', 'F', 'S']
   weekDays.forEach(h => days.push({ type: 'header', label: h }))
-  
+
   for (let i = firstDay - 1; i >= 0; i--) days.push({ type: 'empty', label: daysInPrevMonth - i })
   for (let i = 1; i <= daysInMonth; i++) {
-    const iso     = `${year}-${String(month + 1).padStart(2,'0')}-${String(i).padStart(2,'0')}`
+    const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`
     const isToday = iso === todayStr
     let type = 'normal'
-    if (periodDays?.has(iso))         type = 'period'
+    if (periodDays?.has(iso)) type = 'period'
     else if (predictedDays?.has(iso)) type = 'predicted'
     else if (ovulationDays?.has(iso)) type = 'ovulation'
     if (isToday && type === 'normal') type = 'today'
@@ -75,17 +75,17 @@ function buildCalendarDays(year, month, periodDays, ovulationDays, predictedDays
 export default function TrackPage() {
   const t = useTranslations('pages.track')
   const locale = useLocale()
-  const router   = useRouter()
+  const router = useRouter()
   const { isLoaded, isSignedIn } = useAuth()
   const { offlineClient } = useOffline()
-  const now      = new Date()
+  const now = new Date()
 
-  const [viewYear,  setViewYear]  = useState(now.getFullYear())
+  const [viewYear, setViewYear] = useState(now.getFullYear())
   const [viewMonth, setViewMonth] = useState(now.getMonth())
   const [cycleData, setCycleData] = useState(null)
   const [selectedSymptoms, setSelectedSymptoms] = useState([])
-  const [selectedMood,     setSelectedMood]     = useState(null)
-  const [selectedFlow,     setSelectedFlow]     = useState(null)
+  const [selectedMood, setSelectedMood] = useState(null)
+  const [selectedFlow, setSelectedFlow] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const fetchCycleData = async () => {
@@ -102,8 +102,8 @@ export default function TrackPage() {
       const data = await offlineClient.fetchTodayLog(today)
       if (data.success && data.data) {
         if (data.data.symptoms) setSelectedSymptoms(data.data.symptoms)
-        if (data.data.mood)     setSelectedMood(data.data.mood)
-        if (data.data.flow)     setSelectedFlow(data.data.flow)
+        if (data.data.mood) setSelectedMood(data.data.mood)
+        if (data.data.flow) setSelectedFlow(data.data.flow)
       }
     } catch (e) { console.error(e) }
   }
@@ -142,20 +142,20 @@ export default function TrackPage() {
   }
 
   const handleStartPeriod = async () => {
-    const today   = new Date()
+    const today = new Date()
     const endDate = new Date(today)
     endDate.setDate(endDate.getDate() + 5)
     const cycleDataObj = {
-      start_date:   today.toISOString().split('T')[0],
-      end_date:     endDate.toISOString().split('T')[0],
+      start_date: today.toISOString().split('T')[0],
+      end_date: endDate.toISOString().split('T')[0],
       cycle_length: cycleData?.averageCycleLength || 28,
     }
 
     try {
       const data = await offlineClient.startPeriod(cycleDataObj)
-      if (!data.success) { 
+      if (!data.success) {
         toast.error(`❌ Could not start period: ${data.error || data.message || 'Unknown error'}`)
-        return 
+        return
       }
       if (data.offline) {
         toast.success('🌸 Period started! Saved offline, will sync when online.')
@@ -169,16 +169,16 @@ export default function TrackPage() {
   }
 
   const handleEndPeriod = async () => {
-    const today  = new Date().toISOString().split('T')[0]
+    const today = new Date().toISOString().split('T')[0]
     const cycles = cycleData?.cycles || []
-    const open   = cycles.find(c => !c.end_date || new Date(c.end_date) > new Date())
+    const open = cycles.find(c => !c.end_date || new Date(c.end_date) > new Date())
     if (!open) { toast.error('No open period found to end'); return }
 
     try {
       const data = await offlineClient.endPeriod(open.id, today)
-      if (!data.success) { 
+      if (!data.success) {
         toast.error(`❌ Could not end period: ${data.error || data.message || 'Unknown error'}`)
-        return 
+        return
       }
       if (data.offline) {
         toast.success('✅ Period ended! Saved offline, will sync when online.')
@@ -262,6 +262,7 @@ export default function TrackPage() {
               border: '1px solid rgba(232,82,126,0.35)',
               borderRadius: 12,
               padding: '0.9rem 1.2rem',
+              margin: '1.5rem 0',
             }}>
               {t('noCycles')}
             </div>
@@ -289,7 +290,7 @@ export default function TrackPage() {
           }}>
             {t('logToday')}
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+          <div className="daily-log-grid">
             <DailyLogPanel
               selectedSymptoms={selectedSymptoms}
               toggleSymptom={toggleSymptom}

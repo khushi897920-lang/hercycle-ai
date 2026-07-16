@@ -1251,6 +1251,19 @@ nav ul li a.active {
   animation: fadeUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both;
 }
 
+/* ──── DAILY LOG GRID (Symptoms + Mood/Flow) ──── */
+.daily-log-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .daily-log-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .panel {
   border-radius: 20px;
   padding: 24px;

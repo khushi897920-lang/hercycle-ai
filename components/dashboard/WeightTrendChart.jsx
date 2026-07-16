@@ -75,7 +75,11 @@ export default function WeightTrendChart({ refreshKey = 0 }) {
     : null
 
   return (
-    <section style={cardStyle} aria-labelledby="weight-trend-title">
+    <section
+      className="insight-card interactive-card"
+      style={cardStyle}
+      aria-labelledby="weight-trend-title"
+    >
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
