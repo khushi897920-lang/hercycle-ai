@@ -5,11 +5,12 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { useUser, UserButton } from '@clerk/nextjs'
 import { useOffline } from '@/lib/OfflineContext'
-import { User as ProfileIcon, Bell as BellIcon, Shield as ShieldIcon, HelpCircle as HelpIcon } from 'lucide-react'
+import { User as ProfileIcon, Bell as BellIcon, Shield as ShieldIcon, HelpCircle as HelpIcon, Users as UsersIcon } from 'lucide-react'
 import PrivacySettingsContent from './PrivacySettingsModal'
 import HealthProfileSettings from './HealthProfileSettings'
 import NotificationSettings from './NotificationSettings'
 import SupportSettings from './SupportSettings'
+import PartnerSharing from '@/components/settings/PartnerSharing'
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -203,6 +204,11 @@ export default function Navbar() {
           </UserButton.UserProfilePage>
           <UserButton.UserProfilePage label="Health Profile" url="health-profile" labelIcon={<ProfileIcon className="w-4 h-4" />}>
             <HealthProfileSettings />
+          </UserButton.UserProfilePage>
+          <UserButton.UserProfilePage label="Partner Sharing" url="partner-sharing" labelIcon={<UsersIcon className="w-4 h-4" />}>
+            <div className="p-4 sm:p-8 animate-in fade-in duration-300">
+              <PartnerSharing />
+            </div>
           </UserButton.UserProfilePage>
           <UserButton.UserProfilePage label="Notifications" url="notifications" labelIcon={<BellIcon className="w-4 h-4" />}>
             <NotificationSettings />

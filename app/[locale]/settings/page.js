@@ -5,41 +5,16 @@ import { useRouter } from 'next/navigation'
 import { useClerk, useUser } from '@clerk/nextjs'
 import Navbar from '@/components/layout/Navbar'
 import toast from 'react-hot-toast'
-import { Download, AlertTriangle, Trash2 } from 'lucide-react'
+import { Download, AlertTriangle, Trash2, Shield } from 'lucide-react'
 import PartnerSharing from '@/components/settings/PartnerSharing'
+import PrivacyModal from '@/components/modals/PrivacyModal'
 
 export default function SettingsPage() {
   const router = useRouter()
   const { user } = useUser()
   const { signOut } = useClerk()
   const [isDeleting, setIsDeleting] = useState(false)
-  const [isExporting, setIsExporting] = useState(false)
 
-  const handleExportData = async () => {
-    setIsExporting(true)
-    const toastId = toast.loading('Preparing your data...')
-    try {
-      const res = await fetch('/api/export-data')
-      if (!res.ok) {
-        throw new Error('Failed to export data')
-      }
-      const blob = await res.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'my-hercycle-data.zip'
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      a.remove()
-      toast.success('Data exported successfully!', { id: toastId })
-    } catch (error) {
-      console.error(error)
-      toast.error('Could not export data. Please try again.', { id: toastId })
-    } finally {
-      setIsExporting(false)
-    }
-  }
 
   const handleDeleteAccount = async () => {
     if (!confirm('WARNING: This will permanently delete your account, including all cycle logs, predictions, and profile data. This action CANNOT be undone. Are you sure you want to proceed?')) {
@@ -76,20 +51,21 @@ export default function SettingsPage() {
             <PartnerSharing />
             <hr className="border-white/10 relative z-10" />
 
-            {/* Data Export Section */}
+            {/* Privacy & Data Settings Trigger */}
             <section className="space-y-4 relative z-10">
-              <h2 className="text-xl font-semibold text-white">Export Your Data</h2>
+              <h2 className="text-xl font-semibold text-white">Privacy & Data Control</h2>
               <p className="text-white/70 text-sm">
-                Download a copy of all your health data, including cycle logs and predictions, in JSON and CSV formats.
+                Manage your data privacy settings, AI analysis permissions, and export your health data.
               </p>
-              <button 
-                onClick={handleExportData}
-                disabled={isExporting}
-                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl transition-colors font-medium disabled:opacity-50"
-              >
-                <Download className="w-4 h-4" />
-                {isExporting ? 'Exporting...' : 'Export My Data'}
-              </button>
+              <PrivacyModal 
+                onDeleteAccount={handleDeleteAccount}
+                trigger={
+                  <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl transition-colors font-medium">
+                    <Shield className="w-4 h-4" />
+                    Manage Privacy & Data
+                  </button>
+                }
+              />
             </section>
 
             <hr className="border-white/10 relative z-10" />

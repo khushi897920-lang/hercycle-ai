@@ -116,23 +116,49 @@ export default function PartnerSharing() {
         </button>
       ) : (
         <div className="space-y-6 mt-4">
-          <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
-            <div>
-              <p className="text-sm text-white/50 mb-1">Status</p>
-              <div className="flex items-center gap-2">
-                <div className={`w-2.5 h-2.5 rounded-full ${connection.status === 'active' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></div>
-                <p className="font-medium text-white capitalize">{connection.status}</p>
+          {connection.status === 'active' && connection.partner_details ? (
+            <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {connection.partner_details.imageUrl ? (
+                  <img src={connection.partner_details.imageUrl} alt="Partner Avatar" className="w-12 h-12 rounded-full border-2 border-white/20" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center">
+                    <Users className="w-6 h-6 text-primary-light" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-white font-semibold text-lg">
+                    {connection.partner_details.firstName || 'Connected'} {connection.partner_details.lastName || 'Partner'}
+                  </p>
+                  {connection.partner_details.email && (
+                    <p className="text-white/60 text-sm">{connection.partner_details.email}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20 shrink-0">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <p className="font-medium text-green-400 text-sm">Active</p>
               </div>
             </div>
-            
-            <div className="text-right">
-              <p className="text-sm text-white/50 mb-1">Pairing Code</p>
-              <button onClick={copyCode} className="flex items-center gap-2 font-mono text-lg bg-black/20 px-3 py-1 rounded-lg hover:bg-black/40 transition-colors text-white">
-                {connection.pairing_code}
-                {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-white/50" />}
-              </button>
+          ) : (
+            <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-sm text-white/50 mb-1">Status</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse"></div>
+                  <p className="font-medium text-white capitalize">{connection.status}</p>
+                </div>
+              </div>
+              
+              <div className="text-right">
+                <p className="text-sm text-white/50 mb-1">Pairing Code</p>
+                <button onClick={copyCode} className="flex items-center gap-2 font-mono text-lg bg-black/20 px-3 py-1 rounded-lg hover:bg-black/40 transition-colors text-white">
+                  {connection.pairing_code}
+                  {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-white/50" />}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {connection.status === 'active' && connection.partner_permissions && connection.partner_permissions[0] && (
             <div className="space-y-4 bg-white/5 border border-white/10 p-5 rounded-xl">
