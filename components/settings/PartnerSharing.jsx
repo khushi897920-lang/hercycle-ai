@@ -5,8 +5,10 @@ import { generatePairingCode, getPrimaryUserConnection, updatePartnerPermissions
 import toast from 'react-hot-toast'
 import { Users, Copy, Check, Trash2 } from 'lucide-react'
 import * as Switch from '@radix-ui/react-switch'
+import { useTranslations } from 'next-intl'
 
 export default function PartnerSharing() {
+  const t = useTranslations('PartnerSharing')
   const [connection, setConnection] = useState(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
@@ -100,10 +102,10 @@ export default function PartnerSharing() {
     <section className="space-y-4 relative z-10">
       <div className="flex items-center gap-2 mb-2">
         <Users className="w-5 h-5 text-white" />
-        <h2 className="text-xl font-semibold text-white">Partner Sharing</h2>
+        <h2 className="text-xl font-semibold text-white">{t('title')}</h2>
       </div>
       <p className="text-white/70 text-sm">
-        Share your cycle insights with a partner. You control exactly what they can see.
+        {t('desc')}
       </p>
 
       {!connection ? (
@@ -112,62 +114,36 @@ export default function PartnerSharing() {
           disabled={generating}
           className="bg-primary/20 hover:bg-primary/30 text-primary-light px-5 py-2.5 rounded-xl transition-colors font-medium border border-primary/30"
         >
-          {generating ? 'Generating...' : 'Generate Pairing Code'}
+          {generating ? t('generating') : t('generateBtn')}
         </button>
       ) : (
         <div className="space-y-6 mt-4">
-          {connection.status === 'active' && connection.partner_details ? (
-            <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                {connection.partner_details.imageUrl ? (
-                  <img src={connection.partner_details.imageUrl} alt="Partner Avatar" className="w-12 h-12 rounded-full border-2 border-white/20" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-primary-light" />
-                  </div>
-                )}
-                <div>
-                  <p className="text-white font-semibold text-lg">
-                    {connection.partner_details.firstName || 'Connected'} {connection.partner_details.lastName || 'Partner'}
-                  </p>
-                  {connection.partner_details.email && (
-                    <p className="text-white/60 text-sm">{connection.partner_details.email}</p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20 shrink-0">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <p className="font-medium text-green-400 text-sm">Active</p>
+          <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
+            <div>
+              <p className="text-sm text-white/50 mb-1">{t('status')}</p>
+              <div className="flex items-center gap-2">
+                <div className={`w-2.5 h-2.5 rounded-full ${connection.status === 'active' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></div>
+                <p className="font-medium text-white capitalize">{connection.status}</p>
               </div>
             </div>
-          ) : (
-            <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/50 mb-1">Status</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse"></div>
-                  <p className="font-medium text-white capitalize">{connection.status}</p>
-                </div>
-              </div>
-              
-              <div className="text-right">
-                <p className="text-sm text-white/50 mb-1">Pairing Code</p>
-                <button onClick={copyCode} className="flex items-center gap-2 font-mono text-lg bg-black/20 px-3 py-1 rounded-lg hover:bg-black/40 transition-colors text-white">
-                  {connection.pairing_code}
-                  {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-white/50" />}
-                </button>
-              </div>
+            
+            <div className="text-right">
+              <p className="text-sm text-white/50 mb-1">{t('pairingCode')}</p>
+              <button onClick={copyCode} className="flex items-center gap-2 font-mono text-lg bg-black/20 px-3 py-1 rounded-lg hover:bg-black/40 transition-colors text-white">
+                {connection.pairing_code}
+                {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-white/50" />}
+              </button>
             </div>
           )}
 
           {connection.status === 'active' && connection.partner_permissions && connection.partner_permissions[0] && (
             <div className="space-y-4 bg-white/5 border border-white/10 p-5 rounded-xl">
-              <h3 className="font-medium text-white mb-2">Privacy Controls</h3>
+              <h3 className="font-medium text-white mb-2">{t('privacyControls')}</h3>
               
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white font-medium">Show Mood</p>
-                  <p className="text-white/50 text-sm">Allow partner to see your logged mood</p>
+                  <p className="text-white font-medium">{t('showMood')}</p>
+                  <p className="text-white/50 text-sm">{t('showMoodDesc')}</p>
                 </div>
                 <Switch.Root 
                   checked={connection.partner_permissions[0].show_mood}
@@ -180,8 +156,8 @@ export default function PartnerSharing() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white font-medium">Show Symptoms</p>
-                  <p className="text-white/50 text-sm">Allow partner to see logged symptoms</p>
+                  <p className="text-white font-medium">{t('showSymptoms')}</p>
+                  <p className="text-white/50 text-sm">{t('showSymptomsDesc')}</p>
                 </div>
                 <Switch.Root 
                   checked={connection.partner_permissions[0].show_symptoms}
@@ -194,8 +170,8 @@ export default function PartnerSharing() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white font-medium">Show Fertile Window</p>
-                  <p className="text-white/50 text-sm">Allow partner to see fertile predictions</p>
+                  <p className="text-white font-medium">{t('showFertile')}</p>
+                  <p className="text-white/50 text-sm">{t('showFertileDesc')}</p>
                 </div>
                 <Switch.Root 
                   checked={connection.partner_permissions[0].show_fertile_window}
@@ -214,7 +190,7 @@ export default function PartnerSharing() {
               className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors text-sm font-medium"
             >
               <Trash2 className="w-4 h-4" />
-              Disconnect Partner
+              {t('disconnect')}
             </button>
           </div>
         </div>

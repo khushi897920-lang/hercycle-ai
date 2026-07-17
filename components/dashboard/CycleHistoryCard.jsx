@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import CycleHistoryFilters from './CycleHistoryFilters';
 import CycleHistoryItem from './CycleHistoryItem';
 
 export default function CycleHistoryCard({ cycleData }) {
+  const t = useTranslations('CycleHistory');
   const [filter, setFilter] = useState('All');
   
   const cycles = cycleData?.cycles || [];
@@ -21,8 +23,8 @@ export default function CycleHistoryCard({ cycleData }) {
   return (
     <div className="panel glass" style={{ display: 'flex', flexDirection: 'column', height: '420px', overflow: 'hidden' }}>
       <div style={{ marginBottom: '16px' }}>
-        <h3 style={{ margin: '0 0 4px 0', fontSize: '1.2rem', color: '#fff', fontWeight: 600 }}>Cycle History</h3>
-        <div style={{ opacity: 0.7, fontSize: '0.9rem', color: '#fff' }}>{cycles.length} recorded cycles</div>
+        <h3 style={{ margin: '0 0 4px 0', fontSize: '1.2rem', color: '#fff', fontWeight: 600 }}>{t('title')}</h3>
+        <div style={{ opacity: 0.7, fontSize: '0.9rem', color: '#fff' }}>{cycles.length} {t('recorded')}</div>
       </div>
       
       <CycleHistoryFilters currentFilter={filter} onFilterChange={setFilter} />
@@ -46,7 +48,7 @@ export default function CycleHistoryCard({ cycleData }) {
           </div>
         ))}
         {cycles.length === 0 && (
-          <div style={{ opacity: 0.5, fontSize: '0.9rem', color: '#fff' }}>No cycle history available yet.</div>
+          <div style={{ opacity: 0.5, fontSize: '0.9rem', color: '#fff' }}>{t('noHistory')}</div>
         )}
       </div>
     </div>

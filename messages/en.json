@@ -132,7 +132,8 @@
       "symptomTitle": "Symptom Frequency",
       "symptomEmpty": "No daily logs yet. Log your symptoms on the Track page or dashboard.",
       "moodTitle": "😊 Mood Distribution",
-      "moodEmpty": "Log your mood daily to see your mood distribution here."
+      "moodEmpty": "Log your mood daily to see your mood distribution here.",
+      "exportCsv": "Export Cycles CSV"
     },
     "track": {
       "title": "Cycle Tracker",
@@ -216,5 +217,79 @@
     "cat_general-discussion_name": "General Discussion",
     "cat_general-discussion_desc": "Talk about anything else related to women's health.",
     "reply": "Reply"
+  },
+  "PartnerSharing": {
+    "title": "Partner Sharing",
+    "desc": "Share your cycle insights with a partner. You control exactly what they can see.",
+    "generateBtn": "Generate Pairing Code",
+    "generating": "Generating...",
+    "status": "Status",
+    "pairingCode": "Pairing Code",
+    "privacyControls": "Privacy Controls",
+    "showMood": "Show Mood",
+    "showMoodDesc": "Allow partner to see your logged mood",
+    "showSymptoms": "Show Symptoms",
+    "showSymptomsDesc": "Allow partner to see logged symptoms",
+    "showFertile": "Show Fertile Window",
+    "showFertileDesc": "Allow partner to see fertile predictions",
+    "disconnect": "Disconnect Partner",
+    "disconnectConfirm": "Are you sure you want to disconnect this partner? They will lose access immediately.",
+    "copied": "Code copied to clipboard"
+  },
+  "PrivacyData": {
+    "title": "Privacy & Data",
+    "exportTitle": "Export Your Data",
+    "exportDesc": "Download a copy of all your health data, including cycle logs and predictions, in JSON and CSV formats.",
+    "exportBtn": "Export My Data",
+    "exporting": "Exporting...",
+    "dangerZone": "Danger Zone",
+    "deleteTitle": "Delete Account",
+    "deleteDesc": "Permanently delete your account and all associated data from our servers. This will immediately trigger a hard wipe of your cycles, logs, and profile. This action is irreversible.",
+    "deleteBtn": "Delete My Account",
+    "deleting": "Deleting Account...",
+    "deleteConfirm": "WARNING: This will permanently delete your account, including all cycle logs, predictions, and profile data. This action CANNOT be undone. Are you sure you want to proceed?"
+  },
+  "CycleEducation": {
+    "eyebrow": "Cycle education",
+    "title": "Discover your current cycle phase",
+    "desc": "Log the start date of your latest period to receive phase-based educational information and self-care guidance."
+  },
+  "WeightTracker": {
+    "title": "Weight Tracker",
+    "desc": "Record weight and waist measurements to understand gradual changes over time.",
+    "date": "Date",
+    "weight": "Weight (kg)",
+    "waist": "Waist (cm)",
+    "height": "Height (cm)",
+    "optional": "Optional",
+    "bmi": "BMI",
+    "saveBtn": "Save measurement",
+    "saving": "Saving…",
+    "disclaimer": "BMI is a general screening measure and is not a diagnosis. Health changes should be discussed with a qualified healthcare professional.",
+    "trendTitle": "Weight and waist trend",
+    "trendDesc": "Measurements are shown in chronological order.",
+    "noMeasurements": "No measurements yet. Add the first entry from the Track page.",
+    "overall": "overall",
+    "loading": "Loading measurements…"
+  },
+  "CycleHistory": {
+    "title": "Cycle History",
+    "recorded": "recorded cycles",
+    "noHistory": "No cycle history available yet."
+  },
+  "CervicalDischarge": {
+    "title": "Cervical Discharge",
+    "desc": "Track today's cervical discharge",
+    "todaysEntry": "Today's Entry",
+    "recentEntries": "Recent Entries",
+    "notRecorded": "Not recorded yet.",
+    "noDischarge": "No Discharge",
+    "sticky": "Sticky",
+    "creamy": "Creamy",
+    "watery": "Watery",
+    "eggWhite": "Egg-white",
+    "disclaimer": "Your selection will be saved with today's Daily Log.",
+    "noRecent": "No recent entries found.",
+    "insightDisclaimer": "Educational information only. This is not medical advice."
   }
 }

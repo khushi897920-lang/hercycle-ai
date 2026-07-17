@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Activity, Ruler, Scale, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useTranslations } from 'next-intl'
 
 const cardStyle = {
   background: 'rgba(255,255,255,0.08)',
@@ -35,6 +36,7 @@ function bmiLabel(bmi) {
 }
 
 export default function WeightTracker({ onSaved }) {
+  const t = useTranslations('WeightTracker')
   const [form, setForm] = useState({
     recorded_date: todayISO(),
     weight_kg: '',
@@ -106,12 +108,12 @@ export default function WeightTracker({ onSaved }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
         <Scale size={24} color="#e91e8c" />
         <h2 id="weight-tracker-title" style={{ margin: 0, fontSize: '1.2rem' }}>
-          Weight Tracker
+          {t('title')}
         </h2>
       </div>
 
       <p style={{ color: 'rgba(255,255,255,0.68)', marginTop: 0, marginBottom: 20 }}>
-        Record weight and waist measurements to understand gradual changes over time.
+        {t('desc')}
       </p>
 
       <form onSubmit={handleSubmit}>
@@ -121,7 +123,7 @@ export default function WeightTracker({ onSaved }) {
           gap: 14,
         }}>
           <label>
-            <span style={{ display: 'block', marginBottom: 6 }}>Date</span>
+            <span style={{ display: 'block', marginBottom: 6 }}>{t('date')}</span>
             <input
               type="date"
               value={form.recorded_date}
@@ -134,7 +136,7 @@ export default function WeightTracker({ onSaved }) {
 
           <label>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <Scale size={15} /> Weight (kg)
+              <Scale size={15} /> {t('weight')}
             </span>
             <input
               type="number"
@@ -151,7 +153,7 @@ export default function WeightTracker({ onSaved }) {
 
           <label>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <Ruler size={15} /> Waist (cm)
+              <Ruler size={15} /> {t('waist')}
             </span>
             <input
               type="number"
@@ -160,14 +162,14 @@ export default function WeightTracker({ onSaved }) {
               step="0.1"
               value={form.waist_cm}
               onChange={e => setField('waist_cm', e.target.value)}
-              placeholder="Optional"
+              placeholder={t('optional')}
               style={fieldStyle}
             />
           </label>
 
           <label>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <Ruler size={15} /> Height (cm)
+              <Ruler size={15} /> {t('height')}
             </span>
             <input
               type="number"
@@ -199,7 +201,7 @@ export default function WeightTracker({ onSaved }) {
           }}>
             <Activity size={18} color="#e91e8c" />
             <span>
-              BMI: <strong style={{ color: '#fff' }}>{bmi ?? '—'}</strong>
+              {t('bmi')}: <strong style={{ color: '#fff' }}>{bmi ?? '—'}</strong>
               {bmi ? ` · ${bmiLabel(bmi)}` : ''}
             </span>
           </div>
@@ -222,7 +224,7 @@ export default function WeightTracker({ onSaved }) {
             }}
           >
             <Save size={17} />
-            {saving ? 'Saving…' : 'Save measurement'}
+            {saving ? t('saving') : t('saveBtn')}
           </button>
         </div>
       </form>
@@ -234,8 +236,7 @@ export default function WeightTracker({ onSaved }) {
         marginBottom: 0,
         marginTop: 16,
       }}>
-        BMI is a general screening measure and is not a diagnosis. Health changes should
-        be discussed with a qualified healthcare professional.
+        {t('disclaimer')}
       </p>
     </section>
   )

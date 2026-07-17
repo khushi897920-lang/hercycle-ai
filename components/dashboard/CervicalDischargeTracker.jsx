@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useOffline } from '@/lib/OfflineContext';
+import { useTranslations } from 'next-intl';
 
 const dischargeOptions = [
   { id: 'none', label: 'No Discharge', insight: 'No discharge is also a normal variation during some phases of the menstrual cycle.' },
@@ -10,9 +11,10 @@ const dischargeOptions = [
 ];
 
 export default function CervicalDischargeTracker({ selectedDischarge, setSelectedDischarge, saveTrigger }) {
+  const t = useTranslations('CervicalDischarge');
   const { offlineClient } = useOffline();
   const [savedDischarge, setSavedDischarge] = useState(null);
-  const [activeTab, setActiveTab] = useState("Today's Entry");
+  const [activeTab, setActiveTab] = useState("todaysEntry");
   const [recentEntries, setRecentEntries] = useState([]);
 
   useEffect(() => {
@@ -43,13 +45,24 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
   const activeOption = dischargeOptions.find(opt => opt.id === selectedDischarge);
   const savedOption = dischargeOptions.find(opt => opt.id === savedDischarge);
 
-  const tabs = ["Today's Entry", "Recent Entries"];
+  const tabs = ["todaysEntry", "recentEntries"];
+
+  const getOptionLabel = (id) => {
+    switch (id) {
+      case 'none': return t('noDischarge');
+      case 'sticky': return t('sticky');
+      case 'creamy': return t('creamy');
+      case 'watery': return t('watery');
+      case 'egg-white': return t('eggWhite');
+      default: return id;
+    }
+  };
 
   return (
     <div className="panel glass" style={{ display: 'flex', flexDirection: 'column', height: '420px', overflow: 'hidden' }}>
       <div style={{ marginBottom: '16px' }}>
-        <h3 style={{ margin: '0 0 4px 0', fontSize: '1.2rem', color: '#fff', fontWeight: 600 }}>Cervical Discharge</h3>
-        <div style={{ opacity: 0.7, fontSize: '0.9rem', color: '#fff' }}>Track today's cervical discharge</div>
+        <h3 style={{ margin: '0 0 4px 0', fontSize: '1.2rem', color: '#fff', fontWeight: 600 }}>{t('title')}</h3>
+        <div style={{ opacity: 0.7, fontSize: '0.9rem', color: '#fff' }}>{t('desc')}</div>
       </div>
 
       {/* Tabs / Filters */}
@@ -62,7 +75,7 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
             onClick={() => setActiveTab(tab)}
             style={{ padding: '6px 16px', fontSize: '0.9rem' }}
           >
-            {tab}
+            {t(tab)}
           </button>
         ))}
       </div>
@@ -80,7 +93,7 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
         }}
         className="custom-scrollbar"
       >
-        {activeTab === "Today's Entry" ? (
+        {activeTab === "todaysEntry" ? (
           <>
             {/* Saved Status */}
             <div style={{
@@ -89,13 +102,13 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
               borderRadius: '12px',
               border: '1px solid rgba(255, 255, 255, 0.1)',
             }}>
-              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', margin: '0 0 4px 0' }}>Today's Entry</p>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', margin: '0 0 4px 0' }}>{t('todaysEntry')}</p>
               {savedOption ? (
                 <p style={{ color: '#fff', fontSize: '1rem', margin: 0, fontWeight: 500 }}>
-                  <span style={{ marginRight: '8px' }}>🟢</span>{savedOption.label}
+                  <span style={{ marginRight: '8px' }}>🟢</span>{getOptionLabel(savedOption.id)}
                 </p>
               ) : (
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', margin: 0 }}>Not recorded yet.</p>
+                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', margin: 0 }}>{t('notRecorded')}</p>
               )}
             </div>
 
@@ -116,7 +129,7 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
                     fontWeight: selectedDischarge === option.id ? '500' : '400',
                   }}
                 >
-                  {option.label}
+                  {getOptionLabel(option.id)}
                 </button>
               ))}
             </div>
@@ -132,7 +145,7 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
                   {activeOption.insight}
                 </p>
                 <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.8rem', margin: 0, fontStyle: 'italic' }}>
-                  Educational information only. This is not medical advice.
+                  {t('insightDisclaimer')}
                 </p>
               </div>
             )}
@@ -157,14 +170,14 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
                       {new Date(log.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                     <span style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 500 }}>
-                      {opt ? opt.label : log.cervical_discharge}
+                      {opt ? getOptionLabel(opt.id) : log.cervical_discharge}
                     </span>
                   </div>
                 );
               })
             ) : (
               <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', margin: '16px 0', textAlign: 'center' }}>
-                No recent entries found.
+                {t('noRecent')}
               </p>
             )}
           </div>
@@ -172,7 +185,7 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
       </div>
 
       <div style={{ marginTop: '16px' }}>
-        {activeTab === "Today's Entry" && (
+        {activeTab === "todaysEntry" && (
           <p style={{
             color: 'rgba(255, 255, 255, 0.7)',
             fontSize: '0.85rem',
@@ -181,7 +194,7 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
             alignItems: 'center',
             gap: '6px'
           }}>
-            <span>ℹ️</span> Your selection will be saved with today's Daily Log.
+            <span>ℹ️</span> {t('disclaimer')}
           </p>
         )}
       </div>

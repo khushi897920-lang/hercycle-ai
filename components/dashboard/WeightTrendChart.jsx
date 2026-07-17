@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Activity, Scale } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import {
   CartesianGrid,
   Legend,
@@ -30,6 +31,7 @@ function formatDate(value) {
 }
 
 export default function WeightTrendChart({ refreshKey = 0 }) {
+  const t = useTranslations('WeightTracker')
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -92,11 +94,11 @@ export default function WeightTrendChart({ refreshKey = 0 }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             <Scale size={22} color="#e91e8c" />
             <h3 id="weight-trend-title" style={{ margin: 0, fontSize: '1.05rem' }}>
-              Weight and waist trend
+              {t('trendTitle')}
             </h3>
           </div>
           <p style={{ color: 'rgba(255,255,255,0.62)', margin: '6px 0 0' }}>
-            Measurements are shown in chronological order.
+            {t('trendDesc')}
           </p>
         </div>
 
@@ -108,7 +110,7 @@ export default function WeightTrendChart({ refreshKey = 0 }) {
             <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: '0.82rem' }}>
               BMI {latest.bmi}
               {weightChange !== null && chartData.length > 1
-                ? ` · ${weightChange > 0 ? '+' : ''}${weightChange} kg overall`
+                ? ` · ${weightChange > 0 ? '+' : ''}${weightChange} kg ${t('overall')}`
                 : ''}
             </span>
           </div>
@@ -116,7 +118,7 @@ export default function WeightTrendChart({ refreshKey = 0 }) {
       </div>
 
       {loading ? (
-        <p style={{ color: 'rgba(255,255,255,0.65)' }}>Loading measurements…</p>
+        <p style={{ color: 'rgba(255,255,255,0.65)' }}>{t('loading')}</p>
       ) : chartData.length === 0 ? (
         <div style={{
           minHeight: 180,
@@ -128,7 +130,7 @@ export default function WeightTrendChart({ refreshKey = 0 }) {
           <div>
             <Activity size={30} style={{ marginBottom: 8 }} />
             <p style={{ margin: 0 }}>
-              No measurements yet. Add the first entry from the Track page.
+              {t('noMeasurements')}
             </p>
           </div>
         </div>
@@ -165,7 +167,7 @@ export default function WeightTrendChart({ refreshKey = 0 }) {
                 yAxisId="weight"
                 type="monotone"
                 dataKey="weight"
-                name="Weight (kg)"
+                name={t('weight')}
                 stroke="#e8527e"
                 strokeWidth={3}
                 activeDot={{ r: 6 }}
@@ -174,7 +176,7 @@ export default function WeightTrendChart({ refreshKey = 0 }) {
                 yAxisId="waist"
                 type="monotone"
                 dataKey="waist"
-                name="Waist (cm)"
+                name={t('waist')}
                 stroke="#a98bff"
                 strokeWidth={2}
                 connectNulls

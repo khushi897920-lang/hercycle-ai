@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 
 import { getCyclePhaseContent } from '@/lib/cyclePhaseContent'
+import { useTranslations } from 'next-intl'
 
 const ICONS = {
   droplets: Droplets,
@@ -41,6 +42,8 @@ export default function CyclePhaseCard({
   hasData = true,
   className = '',
 }) {
+  const t = useTranslations('CycleEducation')
+
   if (!hasData || !phaseKey) {
     return (
       <section className={`cycle-phase-card cycle-phase-empty ${className}`}>
@@ -48,11 +51,10 @@ export default function CyclePhaseCard({
           <Sparkles size={28} />
         </div>
         <div>
-          <p className="phase-eyebrow">Cycle education</p>
-          <h3>Discover your current cycle phase</h3>
+          <p className="phase-eyebrow">{t('eyebrow')}</p>
+          <h3>{t('title')}</h3>
           <p>
-            Log the start date of your latest period to receive phase-based
-            educational information and self-care guidance.
+            {t('desc')}
           </p>
         </div>
         <style jsx>{styles}</style>
