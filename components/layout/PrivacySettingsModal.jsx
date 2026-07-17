@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import * as Switch from '@radix-ui/react-switch'
 import toast from 'react-hot-toast'
-import { Download, AlertTriangle, Trash2, X, Shield } from 'lucide-react'
+import { Download } from 'lucide-react'
 
 export default function PrivacySettingsContent() {
   const { getToken } = useAuth()
