@@ -5,11 +5,12 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { useUser, UserButton } from '@clerk/nextjs'
 import { useOffline } from '@/lib/OfflineContext'
-import { User as ProfileIcon, Bell as BellIcon, Shield as ShieldIcon, HelpCircle as HelpIcon } from 'lucide-react'
+import { User as ProfileIcon, Bell as BellIcon, Shield as ShieldIcon, HelpCircle as HelpIcon, Languages } from 'lucide-react'
 import PrivacySettingsContent from './PrivacySettingsModal'
 import HealthProfileSettings from './HealthProfileSettings'
 import NotificationSettings from './NotificationSettings'
 import SupportSettings from './SupportSettings'
+import LanguageSettings from '../settings/LanguageSettings'
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -199,6 +200,9 @@ export default function Navbar() {
             }
           }}
         >
+          <UserButton.UserProfilePage label="Language" url="language" labelIcon={<Languages className="w-4 h-4" />}>
+            <LanguageSettings />
+          </UserButton.UserProfilePage>
           <UserButton.UserProfilePage label="Data & Privacy" url="data-privacy" labelIcon={<ShieldIcon className="w-4 h-4" />}>
             <PrivacySettingsContent />
           </UserButton.UserProfilePage>
