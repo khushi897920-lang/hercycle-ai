@@ -11,10 +11,10 @@ import { Heart, Activity, Calendar, FileText, Droplets, Clock, Smile, RefreshCw 
 
 // Phase config: color accents and emoji per phase
 const PHASE_CONFIG = {
-  Menstrual:  { emoji: '🩸', color: 'bg-red-500/20',    textColor: 'text-red-400',    label: 'Menstrual' },
+  Menstrual: { emoji: '🩸', color: 'bg-red-500/20', textColor: 'text-red-400', label: 'Menstrual' },
   Follicular: { emoji: '🌱', color: 'bg-emerald-500/20', textColor: 'text-emerald-400', label: 'Follicular' },
-  Ovulation:  { emoji: '🌸', color: 'bg-pink-500/20',   textColor: 'text-pink-400',   label: 'Ovulation' },
-  Luteal:     { emoji: '🌙', color: 'bg-purple-500/20',  textColor: 'text-purple-400',  label: 'Luteal' },
+  Ovulation: { emoji: '🌸', color: 'bg-pink-500/20', textColor: 'text-pink-400', label: 'Ovulation' },
+  Luteal: { emoji: '🌙', color: 'bg-purple-500/20', textColor: 'text-purple-400', label: 'Luteal' },
 }
 
 function timeAgo(dateStr) {
@@ -34,7 +34,7 @@ export default function PartnerPage() {
   const { isLoaded, isSignedIn } = useAuth()
   const { user } = useUser()
   const locale = useLocale()
-  
+
   const [insights, setInsights] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -84,7 +84,7 @@ export default function PartnerPage() {
 
   const handleAcceptCode = async (e) => {
     e.preventDefault()
-    if (!code || code.length < 6) return
+    if (!code || code.length < 12) return
     setAccepting(true)
     try {
       await acceptPairingCode(code)
@@ -144,18 +144,24 @@ export default function PartnerPage() {
               Enter the pairing code shared by your partner to view their cycle insights.
             </p>
             <form onSubmit={handleAcceptCode} className="space-y-4">
-              <input 
-                type="text" 
-                placeholder="Enter 6-character code"
+              <input
+                type="text"
+                placeholder="Enter 12-character code"
                 value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                onChange={(e) => {
+                  const value = e.target.value
+                    .toUpperCase()
+                    .replace(/[^0-9A-F]/g, '');
+
+                  setCode(value);
+                }}
                 className="w-full bg-white/5 border border-white/10 text-white placeholder-white/40 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-center font-mono text-lg uppercase tracking-widest"
-                maxLength={6}
+                maxLength={12}
                 required
               />
-              <button 
+              <button
                 type="submit"
-                disabled={accepting || code.length < 6}
+                disabled={accepting || code.length < 12}
                 className="w-full bg-primary hover:bg-primary-dark text-white font-medium py-3 rounded-xl transition-colors disabled:opacity-50"
               >
                 {accepting ? 'Connecting...' : 'Connect'}
@@ -174,7 +180,7 @@ export default function PartnerPage() {
   return (
     <div className="page flex flex-col min-h-screen">
       <Navbar />
-      
+
       <div className="flex-1 w-full max-w-3xl mx-auto px-4 py-8 pb-24 flex flex-col items-center">
         {/* Header */}
         <div className="mb-8 text-center">
