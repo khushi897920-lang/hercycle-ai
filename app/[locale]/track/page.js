@@ -8,6 +8,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import CycleCalendar from '@/components/dashboard/CycleCalendar'
 import DailyLogPanel from '@/components/dashboard/DailyLogPanel'
+import DayLogDrawer from '@/components/dashboard/DayLogDrawer'
 import { useOffline } from '@/lib/OfflineContext'
 import { useTranslations, useLocale } from 'next-intl'
 import WeightTracker from '@/components/dashboard/WeightTracker'
@@ -67,7 +68,7 @@ function buildCalendarDays(year, month, periodDays, ovulationDays, predictedDays
     else if (predictedDays?.has(iso)) type = 'predicted'
     else if (ovulationDays?.has(iso)) type = 'ovulation'
     if (isToday && type === 'normal') type = 'today'
-    days.push({ type, label: i, isToday })
+    days.push({ type, label: i, isToday, iso })
   }
   return days
 }
@@ -87,6 +88,14 @@ export default function TrackPage() {
   const [selectedMood, setSelectedMood] = useState(null)
   const [selectedFlow, setSelectedFlow] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [selectedDate, setSelectedDate] = useState(null)
+
+  const handleDayClick = (iso) => {
+    setSelectedDate(iso)
+    setDrawerOpen(true)
+  }
 
   const fetchCycleData = async () => {
     try {
@@ -251,7 +260,7 @@ export default function TrackPage() {
             )}
           </div>
 
-          <div style={{ marginTop: '1.5rem' }}>
+          <div style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
             <WeightTracker />
           </div>
 
@@ -278,6 +287,7 @@ export default function TrackPage() {
               averageCycleLength={cycleData?.averageCycleLength || 28}
               daysUntilNext={daysUntilNext}
               activeLang="EN"
+              onDayClick={handleDayClick}
             />
           </div>
 
@@ -308,6 +318,19 @@ export default function TrackPage() {
 
         <Footer />
       </div>
+
+      <DayLogDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        selectedDate={selectedDate}
+        cycleData={cycleData}
+        onSaved={() => {
+          fetchCycleData();
+          if (selectedDate === new Date().toISOString().split('T')[0]) {
+            fetchTodayLog();
+          }
+        }}
+      />
     </>
   )
 }

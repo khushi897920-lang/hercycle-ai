@@ -2980,3 +2980,33 @@ nav ul li a:focus-visible,
 .cl-rootBox div:has(> a[href*='clerk.com']) { display: none !important; }
 .cl-rootBox div[style*='bottom: 0'] { display: none !important; }
 
+/* ──── DAY LOG DRAWER ──── */
+.day-log-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 999;
+}
+
+.day-log-drawer-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 1.5rem;
+  z-index: 1000;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+

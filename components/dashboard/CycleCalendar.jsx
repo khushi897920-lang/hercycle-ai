@@ -33,7 +33,8 @@ export default function CycleCalendar({
   onPrevMonth,
   onNextMonth,
   averageCycleLength,
-  daysUntilNext
+  daysUntilNext,
+  onDayClick
 }) {
   const t = useTranslations('cycle')
   const locale = useLocale()
@@ -59,7 +60,7 @@ export default function CycleCalendar({
       else if (predictedDays?.has(iso))         type = 'predicted'
       else if (ovulationDays?.has(iso))         type = 'ovulation'
       if (isToday && type === 'normal')         type = 'today'
-      days.push({ type, label: i, isToday })
+      days.push({ type, label: i, isToday, iso })
     }
     calendarDays = days
   }
@@ -75,23 +76,35 @@ export default function CycleCalendar({
       </div>
 
       <div className="mini-cal">
-        {(calendarDays || []).map((day, i) => (
-          <div
-            key={i}
-            className={[
-              'cal-d',
-              day.type === 'header'    ? 'header'    : '',
-              day.type === 'empty'     ? 'empty'     : '',
-              day.type === 'period'    ? 'period'    : '',
-              day.type === 'predicted' ? 'predicted' : '',
-              day.type === 'ovulation' ? 'ovulation' : '',
-              day.type === 'today'     ? 'today'     : '',
-              day.isToday && day.type !== 'today' ? 'today-ring' : '',
-            ].join(' ').trim()}
-          >
-            {day.label}
-          </div>
-        ))}
+        {(calendarDays || []).map((day, i) => {
+          const isClickable = day.type !== 'header' && day.type !== 'empty';
+          return (
+            <div
+              key={i}
+              className={[
+                'cal-d',
+                day.type === 'header'    ? 'header'    : '',
+                day.type === 'empty'     ? 'empty'     : '',
+                day.type === 'period'    ? 'period'    : '',
+                day.type === 'predicted' ? 'predicted' : '',
+                day.type === 'ovulation' ? 'ovulation' : '',
+                day.type === 'today'     ? 'today'     : '',
+                day.isToday && day.type !== 'today' ? 'today-ring' : '',
+              ].join(' ').trim()}
+              onClick={(e) => {
+                if (isClickable && onDayClick && day.iso) {
+                  e.stopPropagation();
+                  onDayClick(day.iso);
+                }
+              }}
+              style={{
+                cursor: (isClickable && onDayClick) ? 'pointer' : undefined
+              }}
+            >
+              {day.label}
+            </div>
+          )
+        })}
       </div>
 
       <div className="cal-legend">
