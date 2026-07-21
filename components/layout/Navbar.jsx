@@ -3,9 +3,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
-import { useUser, UserButton } from '@clerk/nextjs'
+import { useUser, UserButton, useClerk } from '@clerk/nextjs'
 import { useOffline } from '@/lib/OfflineContext'
-import { User as ProfileIcon, Bell as BellIcon, Shield as ShieldIcon, HelpCircle as HelpIcon, Languages, Users as UsersIcon } from 'lucide-react'
+import { User as ProfileIcon, Bell as BellIcon, Shield as ShieldIcon, HelpCircle as HelpIcon, Languages, Users as UsersIcon, LogOut, X } from 'lucide-react'
 import PrivacySettingsContent from './PrivacySettingsModal'
 import HealthProfileSettings from './HealthProfileSettings'
 import NotificationSettings from './NotificationSettings'
@@ -13,13 +13,37 @@ import SupportSettings from './SupportSettings'
 import LanguageSettings from '../settings/LanguageSettings'
 import PartnerSharing from '../settings/PartnerSharing'
 
+function PartnerLogoutContent() {
+  const { signOut } = useClerk()
+  return (
+    <div className="p-8 text-center space-y-4 max-w-sm mx-auto">
+      <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto mb-2 border border-red-500/30">
+        <LogOut className="w-6 h-6" />
+      </div>
+      <h3 className="text-xl font-bold text-white">Log out of HerCycle?</h3>
+      <p className="text-white/60 text-sm leading-relaxed">
+        Are you sure you want to sign out of your partner companion account?
+      </p>
+      <button
+        onClick={() => signOut()}
+        className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white py-3 rounded-2xl font-semibold transition-all shadow-lg text-sm flex items-center justify-center gap-2"
+      >
+        <LogOut className="w-4 h-4" />
+        <span>Confirm Log Out</span>
+      </button>
+    </div>
+  )
+}
+
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
   const t = useTranslations('Navbar')
   const locale = useLocale()
   const router = useRouter()
   const pathname = usePathname()
   const { user } = useUser()
+  const { signOut } = useClerk()
   const { isOffline, pendingSyncCount, isSyncing } = useOffline()
 
   const role = user?.publicMetadata?.role
@@ -201,26 +225,72 @@ export default function Navbar() {
             }
           }}
         >
-          <UserButton.UserProfilePage label="Language" url="language" labelIcon={<Languages className="w-4 h-4" />}>
-            <LanguageSettings />
-          </UserButton.UserProfilePage>
-          <UserButton.UserProfilePage label="Partner Sharing" url="partner-sharing" labelIcon={<UsersIcon className="w-4 h-4" />}>
-            <PartnerSharing />
-          </UserButton.UserProfilePage>
-          <UserButton.UserProfilePage label="Data & Privacy" url="data-privacy" labelIcon={<ShieldIcon className="w-4 h-4" />}>
-            <PrivacySettingsContent />
-          </UserButton.UserProfilePage>
-          <UserButton.UserProfilePage label="Health Profile" url="health-profile" labelIcon={<ProfileIcon className="w-4 h-4" />}>
-            <HealthProfileSettings />
-          </UserButton.UserProfilePage>
-          <UserButton.UserProfilePage label="Notifications" url="notifications" labelIcon={<BellIcon className="w-4 h-4" />}>
+          <UserButton.MenuItems>
+            <UserButton.Action
+              label="Notification"
+              labelIcon={<BellIcon className="w-4 h-4 text-rose-400" />}
+              open="notifications"
+            />
+          </UserButton.MenuItems>
+
+          {!isPartner && (
+            <UserButton.UserProfilePage label="Language" url="language" labelIcon={<Languages className="w-4 h-4" />}>
+              <LanguageSettings />
+            </UserButton.UserProfilePage>
+          )}
+
+          {!isPartner && (
+            <UserButton.UserProfilePage label="Partner Sharing" url="partner-sharing" labelIcon={<UsersIcon className="w-4 h-4" />}>
+              <PartnerSharing />
+            </UserButton.UserProfilePage>
+          )}
+
+          {!isPartner && (
+            <UserButton.UserProfilePage label="Data & Privacy" url="data-privacy" labelIcon={<ShieldIcon className="w-4 h-4" />}>
+              <PrivacySettingsContent />
+            </UserButton.UserProfilePage>
+          )}
+
+          {!isPartner && (
+            <UserButton.UserProfilePage label="Health Profile" url="health-profile" labelIcon={<ProfileIcon className="w-4 h-4" />}>
+              <HealthProfileSettings />
+            </UserButton.UserProfilePage>
+          )}
+
+          <UserButton.UserProfilePage label="Notification" url="notifications" labelIcon={<BellIcon className="w-4 h-4" />}>
             <NotificationSettings />
           </UserButton.UserProfilePage>
-          <UserButton.UserProfilePage label="Help & Support" url="support" labelIcon={<HelpIcon className="w-4 h-4" />}>
-            <SupportSettings />
-          </UserButton.UserProfilePage>
+
+          {!isPartner && (
+            <UserButton.UserProfilePage label="Help & Support" url="support" labelIcon={<HelpIcon className="w-4 h-4" />}>
+              <SupportSettings />
+            </UserButton.UserProfilePage>
+          )}
+
+          {isPartner && (
+            <UserButton.UserProfilePage label="Logout" url="logout" labelIcon={<LogOut className="w-4 h-4 text-red-400" />}>
+              <PartnerLogoutContent />
+            </UserButton.UserProfilePage>
+          )}
         </UserButton>
       </div>
+
+      {/* Perfectly Centered High-Contrast Notification Modal Popup */}
+      {isNotificationModalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+          <div className="relative w-full max-w-xl max-h-[85vh] my-auto overflow-y-auto bg-slate-950 border border-white/20 rounded-3xl shadow-2xl p-4 sm:p-6 text-left">
+            <button
+              onClick={() => setIsNotificationModalOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-full text-white/70 hover:text-white bg-white/10 hover:bg-white/20 transition-colors z-50"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <NotificationSettings />
+          </div>
+        </div>
+      )}
     </nav>
   )
 }

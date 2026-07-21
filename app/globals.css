@@ -12,11 +12,44 @@
 }
 
 html,
-body {
+body,
+*,
+*::before,
+*::after {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
+/* Universal scrollbar hiding across all elements (Chrome, Edge, Safari, Opera) */
+*::-webkit-scrollbar,
+*::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner,
+::-webkit-scrollbar,
+::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-track {
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
+  background: transparent !important;
+  opacity: 0 !important;
+}
+
+/* Scrollbar none utility classes */
+.scrollbar-none,
+.scrollbar-thin {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+.scrollbar-none::-webkit-scrollbar,
+.scrollbar-thin::-webkit-scrollbar {
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
 }
 
 input,
@@ -3009,4 +3042,50 @@ nav ul li a:focus-visible,
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+
+/* ──── MOOD DISTRIBUTION GRID ──── */
+.mood-distribution-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* ──── RESPONSIVE MOBILE AUTO-ALIGNMENT REFINEMENTS ──── */
+@media (max-width: 768px) {
+  .dual-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    width: 100% !important;
+    margin-bottom: 32px !important;
+  }
+
+  .dual-row > * {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .half-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    width: 100% !important;
+    margin-top: 24px !important;
+    margin-bottom: 32px !important;
+  }
+
+  .grid-3 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    width: 100% !important;
+  }
+
+  .mood-distribution-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+}
+
 

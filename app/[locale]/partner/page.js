@@ -7,7 +7,13 @@ import { useLocale } from 'next-intl'
 import { getSharedInsights, acceptPairingCode } from '@/lib/actions/partner'
 import toast from 'react-hot-toast'
 import Navbar from '@/components/layout/Navbar'
-import { Heart, Activity, Calendar, FileText, Droplets, Clock, Smile, RefreshCw } from 'lucide-react'
+import PhaseCareTipsCard from '@/components/partner/PhaseCareTipsCard'
+import EnergyBatteryGauge from '@/components/partner/EnergyBatteryGauge'
+import CuteLetterModal from '@/components/partner/CuteLetterModal'
+import PartnerChatBox from '@/components/partner/PartnerChatBox'
+import AIPartnerCoach from '@/components/partner/AIPartnerCoach'
+import CareQuestsCard from '@/components/partner/CareQuestsCard'
+import { Heart, Activity, Calendar, FileText, Droplets, Clock, Smile, RefreshCw, Sparkles, Mail } from 'lucide-react'
 
 // Phase config: color accents and emoji per phase
 const PHASE_CONFIG = {
@@ -41,6 +47,7 @@ export default function PartnerPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [code, setCode] = useState('')
   const [accepting, setAccepting] = useState(false)
+  const [isLetterModalOpen, setIsLetterModalOpen] = useState(false)
 
   useEffect(() => {
     if (!isLoaded || !user) return
@@ -75,10 +82,10 @@ export default function PartnerPage() {
     }
   }, [])
 
-  // Auto-refresh every 60 seconds
+  // Auto-refresh every 15 seconds for live chat stream
   useEffect(() => {
     if (!insights?.connected) return
-    const interval = setInterval(() => fetchInsights(true), 60000)
+    const interval = setInterval(() => fetchInsights(true), 15000)
     return () => clearInterval(interval)
   }, [insights?.connected, fetchInsights])
 
@@ -184,7 +191,7 @@ export default function PartnerPage() {
       <div className="flex-1 w-full max-w-3xl mx-auto px-4 py-8 pb-24 flex flex-col items-center">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white mb-1">Shared Insights</h1>
+          <h1 className="text-3xl font-bold text-white mb-1">Partner Companion View 💕</h1>
           <div className="flex items-center justify-center gap-2 text-white/50 text-sm">
             {insights.lastLoggedAt && (
               <>
@@ -214,8 +221,23 @@ export default function PartnerPage() {
           </div>
         ) : (
           <div className="flex flex-wrap justify-center gap-4 w-full">
+            {/* Daily Care Quests */}
+            <CareQuestsCard />
 
-            {/* Card 1: Current Phase (always shown) */}
+            {/* PMS / Sensitivity Alert Banner (if active) */}
+            {insights.pmsAlert?.active && (
+              <div className="w-full bg-gradient-to-r from-purple-900/40 via-indigo-900/40 to-pink-900/40 border border-purple-400/30 p-5 rounded-3xl shadow-xl text-white">
+                <div className="flex items-center gap-2.5 font-semibold text-purple-200 mb-1">
+                  <Sparkles className="w-5 h-5 text-purple-300" />
+                  <span>{insights.pmsAlert.title}</span>
+                </div>
+                <p className="text-sm text-white/80 leading-relaxed">
+                  {insights.pmsAlert.message}
+                </p>
+              </div>
+            )}
+
+            {/* Card 1: Current Phase & Biological Context */}
             <div className="glass p-6 rounded-3xl relative overflow-hidden w-full md:w-[calc(50%-0.5rem)] max-w-md">
               <div className="flex items-center gap-3 mb-4">
                 <div className={`w-10 h-10 rounded-full ${phaseConfig.color} flex items-center justify-center`}>
@@ -236,7 +258,17 @@ export default function PartnerPage() {
               )}
             </div>
 
-            {/* Card 2: Flow Intensity (shown during menstrual phase) */}
+            {/* Card 2: Energy Battery Gauge */}
+            {insights.permissions.show_energy_battery && insights.energyBattery && (
+              <EnergyBatteryGauge energyBattery={insights.energyBattery} />
+            )}
+
+            {/* Card 3: Actionable Care Tips */}
+            {insights.permissions.show_care_tips && insights.careTips?.length > 0 && (
+              <PhaseCareTipsCard careTips={insights.careTips} phaseContext={insights.phaseContext} />
+            )}
+
+            {/* Card 4: Flow Intensity (during Menstrual phase) */}
             {insights.phase === 'Menstrual' && insights.flow && (
               <div className="glass p-6 rounded-3xl relative overflow-hidden w-full md:w-[calc(50%-0.5rem)] max-w-md">
                 <div className="flex items-center gap-3 mb-4">
@@ -249,7 +281,7 @@ export default function PartnerPage() {
               </div>
             )}
 
-            {/* Card 3: Fertile Window (permission-controlled) */}
+            {/* Card 5: Fertile Window */}
             {insights.permissions.show_fertile_window && insights.fertileWindow && (
               <div className="glass p-6 rounded-3xl relative overflow-hidden w-full md:w-[calc(50%-0.5rem)] max-w-md">
                 <div className="flex items-center gap-3 mb-4">
@@ -265,7 +297,7 @@ export default function PartnerPage() {
               </div>
             )}
 
-            {/* Card 4: Today's Mood (permission-controlled) */}
+            {/* Card 6: Today's Mood */}
             {insights.permissions.show_mood && (
               <div className="glass p-6 rounded-3xl relative overflow-hidden w-full md:w-[calc(50%-0.5rem)] max-w-md">
                 <div className="flex items-center gap-3 mb-4">
@@ -282,7 +314,7 @@ export default function PartnerPage() {
               </div>
             )}
 
-            {/* Card 5: Today's Symptoms (permission-controlled) */}
+            {/* Card 7: Today's Symptoms */}
             {insights.permissions.show_symptoms && (
               <div className="glass p-6 rounded-3xl relative overflow-hidden w-full md:w-[calc(50%-0.5rem)] max-w-md">
                 <div className="flex items-center gap-3 mb-4">
@@ -305,9 +337,33 @@ export default function PartnerPage() {
               </div>
             )}
 
+            {/* Card 8: Complete Partner Love Chat Section */}
+            <div className="w-full max-w-md md:max-w-none">
+              <PartnerChatBox
+                nudges={insights.recentNudges || []}
+                currentUserId={insights.currentUserId}
+                onRefresh={() => fetchInsights(true)}
+                title="Partner Support & Love Chat 💌"
+              />
+            </div>
+
           </div>
         )}
       </div>
+
+      {/* Floating AI Partner Coach Chatbot */}
+      <AIPartnerCoach
+        phase={insights.phase}
+        cycleDay={insights.cycleDay}
+        symptoms={insights.symptoms || []}
+      />
+
+      {/* Cute Love Letter Modal */}
+      <CuteLetterModal
+        isOpen={isLetterModalOpen}
+        onClose={() => setIsLetterModalOpen(false)}
+        onSent={() => fetchInsights(true)}
+      />
     </div>
   )
 }

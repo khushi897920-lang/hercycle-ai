@@ -72,6 +72,7 @@
         "tailwindcss-animate": "^1.0.7",
         "uuid": "^14.0.1",
         "vaul": "^1.1.2",
+        "web-push": "^3.6.7",
         "zod": "^3.25.67",
         "zustand": "^5.0.14"
     },

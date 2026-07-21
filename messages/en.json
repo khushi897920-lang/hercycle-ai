@@ -233,6 +233,10 @@
     "showSymptomsDesc": "Allow partner to see logged symptoms",
     "showFertile": "Show Fertile Window",
     "showFertileDesc": "Allow partner to see fertile predictions",
+    "showCareTips": "Show Care Recommendations",
+    "showCareTipsDesc": "Allow partner to see tailored tips on how to support you today",
+    "showEnergyBattery": "Show Energy & Vibe Battery",
+    "showEnergyBatteryDesc": "Allow partner to see an estimated stamina level for the day",
     "disconnect": "Disconnect Partner",
     "disconnectConfirm": "Are you sure you want to disconnect this partner? They will lose access immediately.",
     "copied": "Code copied to clipboard"

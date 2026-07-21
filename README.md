@@ -82,13 +82,17 @@
 |---------|-------------|
 | 🗓️ **Smart Cycle Calendar** | Visual month-view calendar with color-coded period days, ovulation windows, and predicted future cycles |
 | 🤖 **AI Health Assistant** | Powered by **Google Gemini 2.0 Flash** with automatic **Groq LLaMA 3.1** fallback — always online |
+| 💌 **Partner Companion 2.0** | Dedicated partner dashboard with real-time love notes, floating glass AI chatbot, care quest checklists, and phase-by-phase care guides |
+| 💬 **WhatsApp Read Receipts** | Real-time single gray tick (`✓`) when sent and sky-blue double tick (`✓✓`) when read by partner |
+| 📲 **Web Push & Device System Alerts** | WhatsApp & Instagram style background notifications via Service Worker (`sw.js`) and `web-push` server gateway |
+| 📱 **Progressive Web App (PWA)** | 1-tap "Add to Home Screen" standalone app experience on iOS Safari and Android Chrome (`public/manifest.json`) |
 | 📝 **Daily Symptom Logging** | Log symptoms, mood, and flow intensity with smart upsert — edit any day, any time |
 | 🔮 **Cycle Prediction** | Statistical prediction engine with confidence score based on personal cycle history |
 | 🩺 **PCOD Risk Assessment** | Automated risk scoring (LOW / MEDIUM / HIGH) based on cycle regularity and symptom patterns |
 | 📄 **Doctor Report PDF Export** | Generate a professional PDF health report to share with your doctor |
 | 🌐 **Bilingual Support** | Full Hindi (हिंदी) and English language toggle throughout the app |
-| 🔐 **Secure Auth** | Email/password + Google OAuth via Supabase Auth with middleware route protection |
-| 🌙 **Beautiful UI** | Glassmorphism design with pink-purple gradient, smooth animations, and mobile-responsive layout |
+| 🔐 **Secure Auth** | Clerk authentication (@clerk/nextjs) with UserButton profile dropdown & role-based route protection |
+| 🌙 **Beautiful UI** | Glassmorphic aesthetics, auto-aligned mobile responsiveness, and vibrant micro-animations |
 
 ---
 

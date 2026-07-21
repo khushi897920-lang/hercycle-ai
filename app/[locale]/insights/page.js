@@ -355,7 +355,7 @@ export default function InsightsPage() {
               </p>
             ) : (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+                <div className="mood-distribution-grid">
                   {moodData.map(({ emoji, label, pct }) => (
                     <div key={label} className="mood-summary-card interactive-card" style={{
                       textAlign: 'center', padding: '1rem 0.5rem',
