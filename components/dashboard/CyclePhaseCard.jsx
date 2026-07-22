@@ -130,16 +130,24 @@ export default function CyclePhaseCard({
 
 const styles = `
   .cycle-phase-card {
-    position: relative;
-    overflow: hidden;
-    padding: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.075);
-    box-shadow: 0 16px 40px rgba(24, 8, 35, 0.18);
-    backdrop-filter: blur(16px);
-    color: #fff;
-  }
+  position: relative;
+  overflow: hidden;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.075);
+  box-shadow: 0 16px 40px rgba(24, 8, 35, 0.18);
+  backdrop-filter: blur(16px);
+  color: #fff;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  will-change: transform;
+}
+
+.cycle-phase-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 22px 52px rgba(24, 8, 35, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.24);
+}
   .phase-card-header, .phase-title-wrap, .phase-info-heading {
     display: flex;
     align-items: center;
