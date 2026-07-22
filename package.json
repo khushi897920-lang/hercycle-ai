@@ -59,7 +59,7 @@
         "jspdf": "^4.2.1",
         "jspdf-autotable": "^5.0.7",
         "lucide-react": "^0.516.0",
-        "mongodb": "^6.6.0",
+        "mongodb": "^7.5.0",
         "next": "^16.2.3",
         "next-intl": "^4.13.1",
         "next-rate-limit": "^0.0.3",
