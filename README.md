@@ -609,8 +609,9 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 <br/>
 
-*Made with* 💕 *in India 🇮🇳*
+*Made with*  💕  *in India 🇮🇳*
 
 *© 2026 Khushi Singh · MIT License*
 
 </div>
+
