@@ -134,7 +134,7 @@ export default function PartnerSharing() {
                 {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-white/50" />}
               </button>
             </div>
-          )}
+          </div>
 
           {connection.status === 'active' && connection.partner_permissions && connection.partner_permissions[0] && (
             <div className="space-y-4 bg-white/5 border border-white/10 p-5 rounded-xl">
