@@ -7,16 +7,18 @@ import { z } from 'zod'
 
 const cyclePostSchema = z.object({
   id: z.string().uuid('Must be a valid UUID').optional(),
-  start_date: z.string().min(1, 'Missing start date'),
+  start_date: z.string().optional(),
   end_date: z.string().nullable().optional(),
-  cycle_length: z.number().int().optional()
+  cycle_length: z.number().int().optional(),
+  encrypted_data: z.any().optional()
 })
 
 const cyclePatchSchema = z.object({
   id: z.string().uuid('Must be a valid UUID'),
   start_date: z.string().optional(),
   end_date: z.string().nullable().optional(),
-  cycle_length: z.number().int().optional()
+  cycle_length: z.number().int().optional(),
+  encrypted_data: z.any().optional()
 })
 
 export async function GET(request) {
@@ -98,14 +100,15 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Bad Request', details: result.error.errors }, { status: 400 })
     }
 
-    const { id, start_date, end_date, cycle_length } = result.data
+    const { id, start_date, end_date, cycle_length, encrypted_data } = result.data
 
     const supabaseAdmin = getSupabaseAdmin()
     const insertObj = {
       user_id: userId,
-      start_date,
+      start_date: start_date || null,
       end_date: end_date || null,
       cycle_length: cycle_length || 28,
+      encrypted_data: encrypted_data || null,
       created_at: new Date().toISOString(),
     }
     if (id) {
@@ -163,13 +166,14 @@ export async function PATCH(request) {
       return NextResponse.json({ success: false, error: 'Bad Request', details: result.error.errors }, { status: 400 })
     }
 
-    const { id, start_date, end_date, cycle_length } = result.data
+    const { id, start_date, end_date, cycle_length, encrypted_data } = result.data
 
     const supabaseAdmin = getSupabaseAdmin()
     const updateObj = {}
     if (start_date !== undefined) updateObj.start_date = start_date
     if (end_date !== undefined) updateObj.end_date = end_date
     if (cycle_length !== undefined) updateObj.cycle_length = cycle_length
+    if (encrypted_data !== undefined) updateObj.encrypted_data = encrypted_data
 
     const { error } = await supabaseAdmin
       .from('cycles')
