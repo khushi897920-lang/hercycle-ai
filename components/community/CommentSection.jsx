@@ -124,9 +124,21 @@ export default function CommentSection({ postId, initialComments = [] }) {
     return (
       <div className="flex gap-3 p-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 last:border-0">
         <div className="flex flex-col items-center gap-1">
-          <button onClick={() => handleVote(1)} className={`text-slate-400 hover:text-pink-500 ${userVote === 1 ? 'text-pink-500' : ''}`}><ArrowUp size={16} /></button>
+          <button
+            onClick={() => handleVote(1)}
+            className={`text-slate-400 hover:text-pink-500 ${userVote === 1 ? 'text-pink-500' : ''}`}
+            aria-label="Upvote comment"
+          >
+            <ArrowUp size={16} />
+          </button>
           <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{upvotes}</span>
-          <button onClick={() => handleVote(-1)} className={`text-slate-400 hover:text-blue-500 ${userVote === -1 ? 'text-blue-500' : ''}`}><ArrowDown size={16} /></button>
+          <button
+            onClick={() => handleVote(-1)}
+            className={`text-slate-400 hover:text-blue-500 ${userVote === -1 ? 'text-blue-500' : ''}`}
+            aria-label="Downvote comment"
+          >
+            <ArrowDown size={16} />
+          </button>
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
