@@ -14,7 +14,7 @@ import Footer from '@/components/layout/Footer'
 import { useOffline } from '@/lib/OfflineContext'
 import { useTranslations } from 'next-intl'
 import WeightTrendChart from '@/components/dashboard/WeightTrendChart'
-
+import { toYMD } from '@/lib/utils'
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const PINK = '#e8527e'
 const MAUVE = '#9d3f7a'
@@ -199,7 +199,7 @@ export default function InsightsPage() {
     if (!cycles.length) return
     const header = 'start_date,end_date,cycle_length'
     const rows = cycles.map(c =>
-      `${c.start_date || ''},${c.end_date || ''},${c.cycle_length || ''}`
+      `${toYMD(c.start_date) || ''},${toYMD(c.end_date) || ''},${c.cycle_length || ''}`
     )
     const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
