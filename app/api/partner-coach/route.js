@@ -45,7 +45,14 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { phase = 'Follicular', cycleDay = 1, symptoms = [], query = '' } = await req.json()
+    let parsedBody;
+    try {
+      parsedBody = await req.json();
+    } catch (parseError) {
+      console.warn(`Malformed JSON payload in partner-coach: ${parseError.message}`);
+      return NextResponse.json({ reply: "I'm here to help you support her! Try asking about cramp relief, food ideas, or mood support." }, { status: 400 });
+    }
+    const { phase = 'Follicular', cycleDay = 1, symptoms = [], query = '' } = parsedBody
 
     // 1. Initial Briefing request (no query)
     if (!query || !query.trim()) {

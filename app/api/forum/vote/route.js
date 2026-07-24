@@ -11,7 +11,13 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      console.warn(`Malformed JSON payload in forum vote: ${parseError.message}`);
+      return NextResponse.json({ error: 'Bad Request: Invalid JSON payload' }, { status: 400 });
+    }
     const { itemType, itemId, voteValue } = body;
 
     if (!itemType || !itemId || !voteValue) {

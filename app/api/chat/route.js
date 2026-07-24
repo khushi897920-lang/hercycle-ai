@@ -148,8 +148,16 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 2. Input Validation (Zod)
-    const json = await request.json()
+    // 2. Parse JSON body with error handling for malformed payloads
+    let json;
+    try {
+      json = await request.json();
+    } catch (parseError) {
+      logger.warn(`Malformed JSON payload in AI Chat API: ${parseError.message}`);
+      return NextResponse.json({ success: false, error: 'Bad Request: Invalid JSON payload' }, { status: 400 });
+    }
+
+    // 3. Input Validation (Zod)
     const result = chatPayloadSchema.safeParse(json)
     if (!result.success) {
       logger.warn(`Invalid request payload on AI Chat API: ${result.error.message}`);

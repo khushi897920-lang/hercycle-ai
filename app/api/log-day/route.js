@@ -88,7 +88,13 @@ export async function POST(request) {
 
     await ensureUserExists(userId)
 
-    const json = await request.json()
+    let json;
+    try {
+      json = await request.json();
+    } catch (parseError) {
+      logger.warn(`Malformed JSON payload in log-day POST: ${parseError.message}`);
+      return NextResponse.json({ success: false, message: 'Bad Request: Invalid JSON payload' }, { status: 400 });
+    }
     const result = logPostSchema.safeParse(json)
     if (!result.success) {
       logger.warn(`Malformed daily log upsert payload from user ${userId}: ${result.error.message}`);

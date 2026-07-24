@@ -87,7 +87,13 @@ export async function POST(request) {
     await ensureUserExists(userId)
 
     // Payload Validation
-    const json = await request.json()
+    let json;
+    try {
+      json = await request.json();
+    } catch (parseError) {
+      logger.warn(`Malformed JSON payload in cycles POST: ${parseError.message}`);
+      return NextResponse.json({ success: false, error: 'Bad Request: Invalid JSON payload' }, { status: 400 });
+    }
     const result = cyclePostSchema.safeParse(json)
     if (!result.success) {
       logger.warn(`Malformed cycle insertion payload from user ${userId}: ${result.error.message}`);
@@ -147,7 +153,13 @@ export async function PATCH(request) {
     await ensureUserExists(userId)
 
     // Payload Validation
-    const json = await request.json()
+    let json;
+    try {
+      json = await request.json();
+    } catch (parseError) {
+      logger.warn(`Malformed JSON payload in cycles PATCH: ${parseError.message}`);
+      return NextResponse.json({ success: false, error: 'Bad Request: Invalid JSON payload' }, { status: 400 });
+    }
     const result = cyclePatchSchema.safeParse(json)
     if (!result.success) {
       logger.warn(`Malformed cycle update payload from user ${userId}: ${result.error.message}`);

@@ -88,7 +88,16 @@ export async function POST(request) {
       )
     }
 
-    const json = await request.json()
+    let json;
+    try {
+      json = await request.json();
+    } catch (parseError) {
+      logger.warn(`Malformed JSON payload in weight POST: ${parseError.message}`);
+      return NextResponse.json(
+        { success: false, error: 'Bad Request: Invalid JSON payload' },
+        { status: 400 }
+      );
+    }
     const parsed = weightEntrySchema.safeParse(json)
 
     if (!parsed.success) {

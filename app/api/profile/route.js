@@ -36,7 +36,13 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      logger.warn(`Malformed JSON payload in profile POST: ${parseError.message}`);
+      return NextResponse.json({ success: false, error: 'Bad Request: Invalid JSON payload' }, { status: 400 });
+    }
     const { age, weight_kg, height_cm, known_conditions, cycle_goal } = body
 
     const supabase = getSupabaseAdmin()
