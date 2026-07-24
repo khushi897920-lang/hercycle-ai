@@ -23,5 +23,5 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           COMMENTER: ${{ github.event.comment.user.login }}
         run: |
-          gh issue edit "$ISSUE_NUMBER" --add-assignee "$COMMENTER"
-          gh issue comment "$ISSUE_NUMBER" --body "Hi @$COMMENTER, you have been successfully assigned to this issue! 🎉 Happy coding! 🌸"
+          gh issue edit "$ISSUE_NUMBER" --add-assignee "$COMMENTER" --repo "$GITHUB_REPOSITORY"
+          gh issue comment "$ISSUE_NUMBER" --body "Hi @$COMMENTER, you have been successfully assigned to this issue! 🎉 Happy coding! 🌸" --repo "$GITHUB_REPOSITORY"
