@@ -22,9 +22,62 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   height_cm DECIMAL(5,2),
   known_conditions TEXT[] DEFAULT '{}',
   cycle_goal TEXT,
+  allow_ai_analysis BOOLEAN DEFAULT true,
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view and update their own profile" 
   ON user_profiles FOR ALL USING ((auth.jwt() ->> 'sub') = user_id);
+
+-- 4. Rate Limiter Setup
+CREATE TABLE IF NOT EXISTS rate_limits (
+  identifier TEXT PRIMARY KEY,
+  request_count INTEGER DEFAULT 1,
+  last_request TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE OR REPLACE FUNCTION enforce_rate_limit(p_identifier TEXT, p_limit INTEGER, p_interval INTEGER)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_count INTEGER;
+  v_last_request TIMESTAMPTZ;
+  v_allowed BOOLEAN;
+BEGIN
+  -- Select existing record
+  SELECT request_count, last_request INTO v_count, v_last_request
+  FROM rate_limits
+  WHERE identifier = p_identifier
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    -- Insert new record if it doesn't exist
+    INSERT INTO rate_limits (identifier, request_count, last_request)
+    VALUES (p_identifier, 1, now());
+    v_allowed := true;
+  ELSE
+    -- If interval has passed, reset count
+    IF now() - v_last_request > (p_interval || ' milliseconds')::interval THEN
+      UPDATE rate_limits
+      SET request_count = 1, last_request = now()
+      WHERE identifier = p_identifier;
+      v_allowed := true;
+    ELSE
+      -- Interval hasn't passed, check count
+      IF v_count < p_limit THEN
+        UPDATE rate_limits
+        SET request_count = request_count + 1, last_request = now()
+        WHERE identifier = p_identifier;
+        v_allowed := true;
+      ELSE
+        v_allowed := false;
+      END IF;
+    END IF;
+  END IF;
+
+  RETURN jsonb_build_object('allowed', v_allowed);
+END;
+$$;

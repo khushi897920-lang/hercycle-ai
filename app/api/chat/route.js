@@ -20,7 +20,7 @@ const chatPayloadSchema = z.object({
       day: z.number().optional(),
       phase: z.string().max(50).optional()
     }).optional()
-  }).optional()
+  }).nullish()
 })
 
 /**
@@ -171,6 +171,10 @@ export async function POST(request) {
       userProfile = data;
     } catch (profileErr) {
       logger.warn(`Could not fetch user profile for AI context: ${profileErr.message}`);
+    }
+
+    if (userProfile && userProfile.allow_ai_analysis === false) {
+      return NextResponse.json({ success: true, response: 'Privacy mode enabled' });
     }
 
     let systemPrompt = `You are a helpful menstrual health assistant. Provide empathetic, accurate health guidance.`;

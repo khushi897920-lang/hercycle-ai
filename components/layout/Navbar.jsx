@@ -241,7 +241,9 @@ export default function Navbar() {
 
           {!isPartner && (
             <UserButton.UserProfilePage label="Partner Sharing" url="partner-sharing" labelIcon={<UsersIcon className="w-4 h-4" />}>
-              <PartnerSharing />
+              <div className="p-4 sm:p-8 animate-in fade-in duration-300">
+                <PartnerSharing />
+              </div>
             </UserButton.UserProfilePage>
           )}
 

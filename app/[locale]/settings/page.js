@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useClerk, useUser } from '@clerk/nextjs'
 import Navbar from '@/components/layout/Navbar'
 import toast from 'react-hot-toast'
-import { Download, AlertTriangle, Trash2 } from 'lucide-react'
+import { Download, AlertTriangle, Trash2, Shield } from 'lucide-react'
 import PartnerSharing from '@/components/settings/PartnerSharing'
 import NotificationSettings from '@/components/layout/NotificationSettings'
 import { useTranslations } from 'next-intl'
@@ -16,33 +16,7 @@ export default function SettingsPage() {
   const { user } = useUser()
   const { signOut } = useClerk()
   const [isDeleting, setIsDeleting] = useState(false)
-  const [isExporting, setIsExporting] = useState(false)
 
-  const handleExportData = async () => {
-    setIsExporting(true)
-    const toastId = toast.loading('Preparing your data...')
-    try {
-      const res = await fetch('/api/export-data')
-      if (!res.ok) {
-        throw new Error('Failed to export data')
-      }
-      const blob = await res.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'my-hercycle-data.zip'
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      a.remove()
-      toast.success('Data exported successfully!', { id: toastId })
-    } catch (error) {
-      console.error(error)
-      toast.error('Could not export data. Please try again.', { id: toastId })
-    } finally {
-      setIsExporting(false)
-    }
-  }
 
   const handleDeleteAccount = async () => {
     if (!confirm(t('deleteConfirm'))) {
@@ -84,7 +58,7 @@ export default function SettingsPage() {
             <PartnerSharing />
             <hr className="border-white/10 relative z-10" />
 
-            {/* Data Export Section */}
+            {/* Privacy & Data Settings Trigger */}
             <section className="space-y-4 relative z-10">
               <h2 className="text-xl font-semibold text-white">{t('exportTitle')}</h2>
               <p className="text-white/70 text-sm">
