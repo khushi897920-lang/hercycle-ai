@@ -11,6 +11,7 @@ const logPostSchema = z.object({
   mood: z.string().nullable().optional(),
   flow: z.string().nullable().optional(),
   cervical_discharge: z.string().nullable().optional(),
+  encrypted_data: z.any().optional()
 })
 
 // GET /api/log-day?date=... — fetch a single day's log
@@ -94,7 +95,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, message: 'Bad Request', details: result.error.errors }, { status: 400 })
     }
 
-    const { date, symptoms, mood, flow, cervical_discharge } = result.data
+    const { date, symptoms, mood, flow, cervical_discharge, encrypted_data } = result.data
 
     const supabaseAdmin = getSupabaseAdmin()
     const { error } = await supabaseAdmin
@@ -107,6 +108,7 @@ export async function POST(request) {
           mood: mood || null, 
           flow: flow || null, 
           cervical_discharge: cervical_discharge || null, 
+          encrypted_data: encrypted_data || null,
           updated_at: new Date().toISOString() 
         },
         { onConflict: 'user_id,date' }
