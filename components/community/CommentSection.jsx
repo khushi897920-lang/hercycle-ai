@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '@clerk/nextjs';
 import { formatDistanceToNow } from 'date-fns';
+import { enUS, hi } from 'date-fns/locale';
 import { Send, ArrowUp, ArrowDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase-client';
@@ -12,6 +13,8 @@ import { createClient } from '@/lib/supabase-client';
 const supabase = createClient();
 
 export default function CommentSection({ postId, initialComments = [] }) {
+  const locale = useLocale();
+  const dateLocale = locale === 'hi' ? hi : enUS;
   const t = useTranslations('Community');
   const [comments, setComments] = useState(initialComments);
   const [newComment, setNewComment] = useState('');
@@ -21,7 +24,7 @@ export default function CommentSection({ postId, initialComments = [] }) {
   useEffect(() => {
     // Set up Supabase Realtime subscription
     const channel = supabase.channel(`public:forum_comments:post_id=eq.${postId}`);
-    
+
     channel
       .on(
         'postgres_changes',
@@ -57,7 +60,7 @@ export default function CommentSection({ postId, initialComments = [] }) {
       const token = await getToken();
       const res = await fetch('/api/forum/comments', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
@@ -92,30 +95,30 @@ export default function CommentSection({ postId, initialComments = [] }) {
     const [userVote, setUserVote] = useState(0);
 
     const handleVote = async (value) => {
-        const previousVote = userVote;
-        const previousUpvotes = upvotes;
-        let newVote = userVote === value ? 0 : value;
-        let upvoteChange = newVote === 0 ? -previousVote : (previousVote === 0 ? newVote : newVote * 2);
-    
-        setUpvotes(prev => prev + upvoteChange);
-        setUserVote(newVote);
-    
-        try {
-          const token = await getToken();
-          const res = await fetch('/api/forum/vote', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ itemType: 'comment', itemId: comment.id, voteValue: value })
-          });
-          if (!res.ok) throw new Error('Failed to vote');
-        } catch (error) {
-          setUpvotes(previousUpvotes);
-          setUserVote(previousVote);
-          toast.error(t('vote_failed') || 'Vote failed');
-        }
+      const previousVote = userVote;
+      const previousUpvotes = upvotes;
+      let newVote = userVote === value ? 0 : value;
+      let upvoteChange = newVote === 0 ? -previousVote : (previousVote === 0 ? newVote : newVote * 2);
+
+      setUpvotes(prev => prev + upvoteChange);
+      setUserVote(newVote);
+
+      try {
+        const token = await getToken();
+        const res = await fetch('/api/forum/vote', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ itemType: 'comment', itemId: comment.id, voteValue: value })
+        });
+        if (!res.ok) throw new Error('Failed to vote');
+      } catch (error) {
+        setUpvotes(previousUpvotes);
+        setUserVote(previousVote);
+        toast.error(t('vote_failed') || 'Vote failed');
+      }
     };
 
     return (
@@ -129,7 +132,10 @@ export default function CommentSection({ postId, initialComments = [] }) {
           <div className="flex items-center gap-2 mb-1">
             <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">{comment.author_alias}</span>
             <span className="text-xs text-slate-400">•</span>
-            <span className="text-xs text-slate-400">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
+            <span className="text-xs text-slate-400">{formatDistanceToNow(new Date(comment.created_at), {
+              addSuffix: true,
+              locale: dateLocale
+            })}</span>
           </div>
           <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{comment.content}</p>
         </div>
