@@ -2,15 +2,17 @@
 
 import React, { useState } from 'react'
 import { useEncryption } from '@/lib/EncryptionContext'
+import { useUser } from '@clerk/nextjs'
 
 export default function PinModal({ onPinSet }) {
-  const { isKeyReady, setPin } = useEncryption()
+  const { isUnlocked, deriveKey } = useEncryption()
+  const { isLoaded, user } = useUser()
   const [pinInput, setPinInput] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   // If the key is already derived in context, don't show the modal
-  if (isKeyReady) return null;
+  if (isUnlocked) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -18,16 +20,25 @@ export default function PinModal({ onPinSet }) {
       setError('PIN must be exactly 6 digits.')
       return
     }
+    
+    if (!isLoaded) {
+      setError('Loading user profile...')
+      return
+    }
 
     setLoading(true)
     setError('')
-    const success = await setPin(pinInput)
-    setLoading(false)
-
-    if (success) {
-      if (onPinSet) onPinSet()
-    } else {
-      setError('Failed to set PIN. Please try again.')
+    
+    try {
+        // Use user.id as salt, fallback if not available (shouldn't happen in auth'd area)
+        const salt = user?.id || 'default-user-salt'
+        await deriveKey(pinInput, salt)
+        
+        if (onPinSet) onPinSet()
+    } catch (err) {
+        setError('Failed to unlock. Incorrect PIN or error.')
+    } finally {
+        setLoading(false)
     }
   }
 
