@@ -1,6 +1,6 @@
 # ECSOC Issues Backlog
 
-This document lists 50 repository-specific issues ready for **ECSOC** contributors. Maintainers can copy and paste these directly into the GitHub Issue Tracker.
+This document lists 60 repository-specific issues ready for **ECSOC** contributors. Maintainers can copy and paste these directly into the GitHub Issue Tracker.
 
 ---
 
@@ -2273,6 +2273,469 @@ This issue is officially available for **ECSOC** contributors.
 - Do not start working before assignment.
 - Work on only one issue at a time.
 - Mention **Fixes #50** in your Pull Request.
+- Ensure all GitHub Actions checks pass.
+- Ensure the project builds successfully.
+- Follow the project's coding standards.
+- Update documentation if necessary.
+
+Failure to follow these guidelines may result in the Pull Request being closed.
+
+Happy Coding! ❤️
+
+
+---
+
+## Issue #51: Format Date Fields in CSV Export to Prevent Excel Layout Overflow
+* **Difficulty:** good first issue
+* **Labels:** `ECSOC`, `good first issue`, `bug`, `frontend`, `backend`
+
+### 📌 Description
+When exporting the cycle history CSV from the Insights page, the date values under start_date and end_date are exported as long ISO strings or unformatted dates, causing spreadsheet software (like MS Excel) to render them as ### due to column width constraints. They should be exported in a clean, standard date format like YYYY-MM-DD so they fit and display nicely without manual column resizing.
+
+### 🎯 Objective
+Format all date exports to YYYY-MM-DD in the frontend insights CSV handler and the backend ZIP export API.
+
+### ✅ Acceptance Criteria
+- [ ] Dates in the downloaded cycles CSV file are formatted as YYYY-MM-DD instead of ISO strings.
+- [ ] Dates in the export-data zip CSV downloads are formatted as YYYY-MM-DD.
+- [ ] Excel/Google Sheets display the dates cleanly without rendering ###.
+- [ ] No existing functionality is broken
+- [ ] GitHub Actions pass
+
+### 📂 Expected Files
+* [page.js](file:///app/[locale]/insights/page.js)
+* [route.js](file:///app/api/export-data/route.js)
+
+
+---
+
+# 🚀 ECSOC Contribution Guidelines
+
+This issue is officially available for **ECSOC** contributors.
+
+### Before starting:
+
+- Comment on this issue requesting assignment.
+- Wait until a maintainer assigns the issue.
+- Do not start working before assignment.
+- Work on only one issue at a time.
+- Mention **Fixes #51** in your Pull Request.
+- Ensure all GitHub Actions checks pass.
+- Ensure the project builds successfully.
+- Follow the project's coding standards.
+- Update documentation if necessary.
+
+Failure to follow these guidelines may result in the Pull Request being closed.
+
+Happy Coding! ❤️
+
+
+---
+
+## Issue #52: Prevent Self-Care Step Illustration Opacity Glitch on Navigation
+* **Difficulty:** good first issue
+* **Labels:** `ECSOC`, `good first issue`, `bug`, `frontend`
+
+### 📌 Description
+In the Guided Exercise overlay, when transitioning between steps that use the exact same illustration (e.g., from Supine Twist left to Supine Twist right), the image disappears and becomes completely invisible. This happens because the component sets imageLoaded to false on step changes, but the browser does not trigger the onLoad handler if the image source (src) remains the same.
+
+### 🎯 Objective
+Ensure the step illustration remains visible and resets correctly when switching steps.
+
+### ✅ Acceptance Criteria
+- [ ] Navigating forward/backward in exercises renders the step illustrations properly.
+- [ ] Switching between steps with the same image does not hide or fade out the image permanently.
+- [ ] Add a key prop targeting currentStep or pose.image on the <img> element to force re-mounting and trigger onLoad.
+- [ ] No existing functionality is broken
+- [ ] GitHub Actions pass
+
+### 📂 Expected Files
+* [GuidedExercise.jsx](file:///components/self-care/GuidedExercise.jsx)
+
+
+---
+
+# 🚀 ECSOC Contribution Guidelines
+
+This issue is officially available for **ECSOC** contributors.
+
+### Before starting:
+
+- Comment on this issue requesting assignment.
+- Wait until a maintainer assigns the issue.
+- Do not start working before assignment.
+- Work on only one issue at a time.
+- Mention **Fixes #52** in your Pull Request.
+- Ensure all GitHub Actions checks pass.
+- Ensure the project builds successfully.
+- Follow the project's coding standards.
+- Update documentation if necessary.
+
+Failure to follow these guidelines may result in the Pull Request being closed.
+
+Happy Coding! ❤️
+
+
+---
+
+## Issue #53: Implement Notifications Settings Screen and State Persistence
+* **Difficulty:** good first issue
+* **Labels:** `ECSOC`, `good first issue`, `feature`, `frontend`
+
+### 📌 Description
+The 'Notifications' tab in the account settings page currently displays a placeholder message: 'This feature is coming soon!'. Let's implement the UI and state logic for toggling user preferences (e.g., Period Reminders, Ovulation Alerts, Daily Symptom Log Prompts).
+
+### 🎯 Objective
+Build an interactive settings form with switch/toggle components and save preferences to localStorage or profile API.
+
+### ✅ Acceptance Criteria
+- [ ] Render interactive toggle switches for 'Period Reminders', 'Ovulation Alerts', and 'Daily Prompts'.
+- [ ] Toggling options updates local state and saves to localStorage or submits to /api/profile.
+- [ ] UI reflects saved preferences on modal load.
+- [ ] No existing functionality is broken
+- [ ] GitHub Actions pass
+
+### 📂 Expected Files
+* [NotificationSettings.jsx](file:///components/layout/NotificationSettings.jsx)
+
+
+---
+
+# 🚀 ECSOC Contribution Guidelines
+
+This issue is officially available for **ECSOC** contributors.
+
+### Before starting:
+
+- Comment on this issue requesting assignment.
+- Wait until a maintainer assigns the issue.
+- Do not start working before assignment.
+- Work on only one issue at a time.
+- Mention **Fixes #53** in your Pull Request.
+- Ensure all GitHub Actions checks pass.
+- Ensure the project builds successfully.
+- Follow the project's coding standards.
+- Update documentation if necessary.
+
+Failure to follow these guidelines may result in the Pull Request being closed.
+
+Happy Coding! ❤️
+
+
+---
+
+## Issue #54: Localize Relative Time Strings in Anonymous Community Feed
+* **Difficulty:** good first issue
+* **Labels:** `ECSOC`, `good first issue`, `bug`, `frontend`, `localization`
+
+### 📌 Description
+In the anonymous community section, post and comment creation timestamps (e.g., '5 minutes ago') are rendered using formatDistanceToNow from date-fns without a locale parameter. This causes them to show in English even when the user is viewing the Hindi version of the app.
+
+### 🎯 Objective
+Dynamically pass the active locale object from date-fns/locale to all formatDistanceToNow calls.
+
+### ✅ Acceptance Criteria
+- [ ] Relative times (e.g., '3 hours ago' / '3 घंटे पहले') render in Hindi when the active language is Hindi (hi).
+- [ ] Relative times render in English when the active language is English (en).
+- [ ] No existing functionality is broken
+- [ ] GitHub Actions pass
+
+### 📂 Expected Files
+* [PostCard.jsx](file:///components/community/PostCard.jsx)
+* [CommentSection.jsx](file:///components/community/CommentSection.jsx)
+* [page.jsx](file:///app/[locale]/community/post/[postId]/page.jsx)
+
+
+---
+
+# 🚀 ECSOC Contribution Guidelines
+
+This issue is officially available for **ECSOC** contributors.
+
+### Before starting:
+
+- Comment on this issue requesting assignment.
+- Wait until a maintainer assigns the issue.
+- Do not start working before assignment.
+- Work on only one issue at a time.
+- Mention **Fixes #54** in your Pull Request.
+- Ensure all GitHub Actions checks pass.
+- Ensure the project builds successfully.
+- Follow the project's coding standards.
+- Update documentation if necessary.
+
+Failure to follow these guidelines may result in the Pull Request being closed.
+
+Happy Coding! ❤️
+
+
+---
+
+## Issue #55: Implement a Search Bar in the Anonymous Community Forum
+* **Difficulty:** medium
+* **Labels:** `ECSOC`, `medium`, `feature`, `frontend`
+
+### 📌 Description
+Users currently have no way to search for existing discussions or topics in the community section. We should add a search input field at the top of the feed to filter posts.
+
+### 🎯 Objective
+Add a search input component that filters posts in the feed by title or content (either client-side for loaded posts, or by query parameters).
+
+### ✅ Acceptance Criteria
+- [ ] Add a clean, responsive search bar with a search icon at the top of the community feed.
+- [ ] As the user types, filter posts based on whether the search term matches the title or content.
+- [ ] Display a helpful message (e.g., 'No discussions match your search') if no matching posts are found.
+- [ ] No existing functionality is broken
+- [ ] GitHub Actions pass
+
+### 📂 Expected Files
+* [page.jsx](file:///app/[locale]/community/page.jsx)
+
+
+---
+
+# 🚀 ECSOC Contribution Guidelines
+
+This issue is officially available for **ECSOC** contributors.
+
+### Before starting:
+
+- Comment on this issue requesting assignment.
+- Wait until a maintainer assigns the issue.
+- Do not start working before assignment.
+- Work on only one issue at a time.
+- Mention **Fixes #55** in your Pull Request.
+- Ensure all GitHub Actions checks pass.
+- Ensure the project builds successfully.
+- Follow the project's coding standards.
+- Update documentation if necessary.
+
+Failure to follow these guidelines may result in the Pull Request being closed.
+
+Happy Coding! ❤️
+
+
+---
+
+## Issue #56: Fix Font Rendering Gaps in Hindi PDF Report Generation
+* **Difficulty:** medium
+* **Labels:** `ECSOC`, `medium`, `bug`, `frontend`, `pdf`
+
+### 📌 Description
+In lib/generateReport.js, when a doctor report is generated under the Hindi locale (hi), the NotoSansDevanagari font is registered, but the code still hardcodes the helvetica font for headers, table cells, and user labels. This results in empty boxes or broken rendering for any Hindi text or names in the generated PDF.
+
+### 🎯 Objective
+Ensure that if locale === 'hi', all text-rendering commands dynamically use the registered Devanagari font instead of reverting to Helvetica.
+
+### ✅ Acceptance Criteria
+- [ ] Exporting a PDF report in Hindi locale successfully renders Devanagari script for all titles, headers, tables, and variables.
+- [ ] No empty square boxes or missing character warnings in the browser console.
+- [ ] No existing functionality is broken
+- [ ] GitHub Actions pass
+
+### 📂 Expected Files
+* [generateReport.js](file:///lib/generateReport.js)
+
+
+---
+
+# 🚀 ECSOC Contribution Guidelines
+
+This issue is officially available for **ECSOC** contributors.
+
+### Before starting:
+
+- Comment on this issue requesting assignment.
+- Wait until a maintainer assigns the issue.
+- Do not start working before assignment.
+- Work on only one issue at a time.
+- Mention **Fixes #56** in your Pull Request.
+- Ensure all GitHub Actions checks pass.
+- Ensure the project builds successfully.
+- Follow the project's coding standards.
+- Update documentation if necessary.
+
+Failure to follow these guidelines may result in the Pull Request being closed.
+
+Happy Coding! ❤️
+
+
+---
+
+## Issue #57: Localize Cervical Discharge Tracker Insight Messages
+* **Difficulty:** medium
+* **Labels:** `ECSOC`, `medium`, `bug`, `frontend`, `localization`
+
+### 📌 Description
+In the daily log panel, selecting different cervical discharge options displays educational insight summaries. Currently, these messages (e.g., 'Sticky discharge is commonly observed after menstruation.') are hardcoded in English, which disrupts Hindi localization.
+
+### 🎯 Objective
+Move these insight strings to the localization JSON files and load them dynamically.
+
+### ✅ Acceptance Criteria
+- [ ] Insights display in Hindi when the active language is Hindi (hi).
+- [ ] Insights display in English when the active language is English (en).
+- [ ] No existing functionality is broken
+- [ ] GitHub Actions pass
+
+### 📂 Expected Files
+* [CervicalDischargeTracker.jsx](file:///components/dashboard/CervicalDischargeTracker.jsx)
+* [en.json](file:///messages/en.json)
+* [hi.json](file:///messages/hi.json)
+
+
+---
+
+# 🚀 ECSOC Contribution Guidelines
+
+This issue is officially available for **ECSOC** contributors.
+
+### Before starting:
+
+- Comment on this issue requesting assignment.
+- Wait until a maintainer assigns the issue.
+- Do not start working before assignment.
+- Work on only one issue at a time.
+- Mention **Fixes #57** in your Pull Request.
+- Ensure all GitHub Actions checks pass.
+- Ensure the project builds successfully.
+- Follow the project's coding standards.
+- Update documentation if necessary.
+
+Failure to follow these guidelines may result in the Pull Request being closed.
+
+Happy Coding! ❤️
+
+
+---
+
+## Issue #58: Implement End-to-End Encryption (E2EE) with PIN Key Derivation
+* **Difficulty:** advanced
+* **Labels:** `ECSOC`, `advanced`, `security`, `frontend`, `backend`
+
+### 📌 Description
+The foundation for E2EE is set up in PinModal.jsx and the DB schema, but the core client-side context that derives keys and encrypts data is missing. We need to implement lib/EncryptionContext.jsx.
+
+### 🎯 Objective
+Create an Encryption Provider that handles PIN-based PBKDF2 key derivation and encrypts cycles/logs client-side before sending to Supabase.
+
+### ✅ Acceptance Criteria
+- [ ] Implement lib/EncryptionContext.jsx using the Web Crypto API.
+- [ ] Cycles and symptom data are encrypted locally and stored in the encrypted_data database columns.
+- [ ] PIN entry successfully decrypts the data locally for UI rendering.
+- [ ] No existing functionality is broken
+- [ ] GitHub Actions pass
+
+### 📂 Expected Files
+* [EncryptionContext.jsx](file:///lib/EncryptionContext.jsx)
+* [PinModal.jsx](file:///components/layout/PinModal.jsx)
+* [layout.js](file:///app/[locale]/layout.js)
+
+
+---
+
+# 🚀 ECSOC Contribution Guidelines
+
+This issue is officially available for **ECSOC** contributors.
+
+### Before starting:
+
+- Comment on this issue requesting assignment.
+- Wait until a maintainer assigns the issue.
+- Do not start working before assignment.
+- Work on only one issue at a time.
+- Mention **Fixes #58** in your Pull Request.
+- Ensure all GitHub Actions checks pass.
+- Ensure the project builds successfully.
+- Follow the project's coding standards.
+- Update documentation if necessary.
+
+Failure to follow these guidelines may result in the Pull Request being closed.
+
+Happy Coding! ❤️
+
+
+---
+
+## Issue #59: Create and Implement Service Worker for Complete Offline PWA Experience
+* **Difficulty:** advanced
+* **Labels:** `ECSOC`, `advanced`, `performance`, `pwa`, `frontend`
+
+### 📌 Description
+A Service Worker registration exists in the OfflineProvider context, but the service worker script file /public/sw.js is completely missing.
+
+### 🎯 Objective
+Implement sw.js in the public directory to handle offline asset caching and network fallback policies.
+
+### ✅ Acceptance Criteria
+- [ ] Create /public/sw.js to implement Cache-First for static assets and Network-First/Stale-While-Revalidate for pages.
+- [ ] App is installable as a PWA and works completely offline (reading from IndexedDB caches).
+- [ ] No existing functionality is broken
+- [ ] GitHub Actions pass
+
+### 📂 Expected Files
+* [sw.js](file:///public/sw.js)
+
+
+---
+
+# 🚀 ECSOC Contribution Guidelines
+
+This issue is officially available for **ECSOC** contributors.
+
+### Before starting:
+
+- Comment on this issue requesting assignment.
+- Wait until a maintainer assigns the issue.
+- Do not start working before assignment.
+- Work on only one issue at a time.
+- Mention **Fixes #59** in your Pull Request.
+- Ensure all GitHub Actions checks pass.
+- Ensure the project builds successfully.
+- Follow the project's coding standards.
+- Update documentation if necessary.
+
+Failure to follow these guidelines may result in the Pull Request being closed.
+
+Happy Coding! ❤️
+
+
+---
+
+## Issue #60: Make Cycle Calendar Interactive: Log and Edit Periods directly from Calendar Days
+* **Difficulty:** advanced
+* **Labels:** `ECSOC`, `advanced`, `ux`, `frontend`
+
+### 📌 Description
+The calendar on the track page is currently read-only. Clicking on days does not trigger any action, requiring users to log everything through the side panel.
+
+### 🎯 Objective
+Support clicking calendar cells to open a quick symptom/flow editor or toggle period dates directly.
+
+### ✅ Acceptance Criteria
+- [ ] Clicking on a calendar cell opens a bottom drawer/modal showing logs for that date.
+- [ ] Users can toggle period starts/ends directly on the calendar grid, triggering state updates and saving changes.
+- [ ] No existing functionality is broken
+- [ ] GitHub Actions pass
+
+### 📂 Expected Files
+* [CycleCalendar.jsx](file:///components/dashboard/CycleCalendar.jsx)
+* [page.js](file:///app/[locale]/track/page.js)
+
+
+---
+
+# 🚀 ECSOC Contribution Guidelines
+
+This issue is officially available for **ECSOC** contributors.
+
+### Before starting:
+
+- Comment on this issue requesting assignment.
+- Wait until a maintainer assigns the issue.
+- Do not start working before assignment.
+- Work on only one issue at a time.
+- Mention **Fixes #60** in your Pull Request.
 - Ensure all GitHub Actions checks pass.
 - Ensure the project builds successfully.
 - Follow the project's coding standards.

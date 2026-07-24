@@ -13,7 +13,8 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import HeroSection from '@/components/dashboard/HeroSection'
 import CycleCalendar from '@/components/dashboard/CycleCalendar'
-import FeaturesSection from '@/components/dashboard/FeaturesSection'
+import PartnerLoveBanner from '@/components/dashboard/PartnerLoveBanner'
+import VibeCheckin from '@/components/dashboard/VibeCheckin'
 import PCODRiskCard from '@/components/dashboard/PCODRiskCard'
 import ChatAssistant from '@/components/dashboard/ChatAssistant'
 import DailyLogPanel from '@/components/dashboard/DailyLogPanel'
@@ -471,7 +472,8 @@ const phaseInfo = calculateCyclePhase({
         />
         </div>
 
-        <FeaturesSection activeLang={activeLang} />
+        <VibeCheckin />
+        <PartnerLoveBanner />
 
         <h2 className="sec-head" id="pcod-risk-section">{tHeadings('insights')}</h2>
         <div className="dual-row">

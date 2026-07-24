@@ -7,6 +7,7 @@ import Navbar from '@/components/layout/Navbar'
 import toast from 'react-hot-toast'
 import { Download, AlertTriangle, Trash2, Shield } from 'lucide-react'
 import PartnerSharing from '@/components/settings/PartnerSharing'
+import NotificationSettings from '@/components/layout/NotificationSettings'
 import { useTranslations } from 'next-intl'
 
 export default function SettingsPage() {
@@ -41,9 +42,14 @@ export default function SettingsPage() {
     <div className="page flex flex-col min-h-screen">
       <Navbar />
 
-      <div className="flex-1 flex flex-col justify-center items-center w-full max-w-2xl mx-auto px-4 pb-20">
-        <div className="w-full">
-          <h1 className="text-3xl font-bold text-white mb-8 text-center sm:text-left">{t('title')}</h1>
+      <div className="flex-1 flex flex-col justify-center items-center w-full max-w-2xl mx-auto px-4 pb-20 pt-6">
+        <div className="w-full space-y-6">
+          <h1 className="text-3xl font-bold text-white mb-6 text-center sm:text-left">{t('title')}</h1>
+
+          {/* Notification Settings Section */}
+          <div className="glass rounded-3xl p-2 sm:p-4 shadow-2xl">
+            <NotificationSettings />
+          </div>
 
           <div className="glass p-6 sm:p-8 rounded-3xl space-y-8 shadow-2xl relative overflow-hidden">
             {/* Subtle glow behind the card */}
@@ -98,3 +104,4 @@ export default function SettingsPage() {
     </div>
   )
 }
+

@@ -684,6 +684,141 @@ const issues = [
       "ESLint runs successfully on build check",
       "Lint failures block merging in pull requests"
     ]
+  },
+  {
+    num: 51,
+    title: "Format Date Fields in CSV Export to Prevent Excel Layout Overflow",
+    difficulty: "good first issue",
+    labels: ["ECSOC", "good first issue", "bug", "frontend", "backend"],
+    desc: "When exporting the cycle history CSV from the Insights page, the date values under start_date and end_date are exported as long ISO strings or unformatted dates, causing spreadsheet software (like MS Excel) to render them as ### due to column width constraints. They should be exported in a clean, standard date format like YYYY-MM-DD so they fit and display nicely without manual column resizing.",
+    obj: "Format all date exports to YYYY-MM-DD in the frontend insights CSV handler and the backend ZIP export API.",
+    files: ["app/[locale]/insights/page.js", "app/api/export-data/route.js"],
+    criteria: [
+      "Dates in the downloaded cycles CSV file are formatted as YYYY-MM-DD instead of ISO strings.",
+      "Dates in the export-data zip CSV downloads are formatted as YYYY-MM-DD.",
+      "Excel/Google Sheets display the dates cleanly without rendering ###."
+    ]
+  },
+  {
+    num: 52,
+    title: "Prevent Self-Care Step Illustration Opacity Glitch on Navigation",
+    difficulty: "good first issue",
+    labels: ["ECSOC", "good first issue", "bug", "frontend"],
+    desc: "In the Guided Exercise overlay, when transitioning between steps that use the exact same illustration (e.g., from Supine Twist left to Supine Twist right), the image disappears and becomes completely invisible. This happens because the component sets imageLoaded to false on step changes, but the browser does not trigger the onLoad handler if the image source (src) remains the same.",
+    obj: "Ensure the step illustration remains visible and resets correctly when switching steps.",
+    files: ["components/self-care/GuidedExercise.jsx"],
+    criteria: [
+      "Navigating forward/backward in exercises renders the step illustrations properly.",
+      "Switching between steps with the same image does not hide or fade out the image permanently.",
+      "Add a key prop targeting currentStep or pose.image on the <img> element to force re-mounting and trigger onLoad."
+    ]
+  },
+  {
+    num: 53,
+    title: "Implement Notifications Settings Screen and State Persistence",
+    difficulty: "good first issue",
+    labels: ["ECSOC", "good first issue", "feature", "frontend"],
+    desc: "The 'Notifications' tab in the account settings page currently displays a placeholder message: 'This feature is coming soon!'. Let's implement the UI and state logic for toggling user preferences (e.g., Period Reminders, Ovulation Alerts, Daily Symptom Log Prompts).",
+    obj: "Build an interactive settings form with switch/toggle components and save preferences to localStorage or profile API.",
+    files: ["components/layout/NotificationSettings.jsx"],
+    criteria: [
+      "Render interactive toggle switches for 'Period Reminders', 'Ovulation Alerts', and 'Daily Prompts'.",
+      "Toggling options updates local state and saves to localStorage or submits to /api/profile.",
+      "UI reflects saved preferences on modal load."
+    ]
+  },
+  {
+    num: 54,
+    title: "Localize Relative Time Strings in Anonymous Community Feed",
+    difficulty: "good first issue",
+    labels: ["ECSOC", "good first issue", "bug", "frontend", "localization"],
+    desc: "In the anonymous community section, post and comment creation timestamps (e.g., '5 minutes ago') are rendered using formatDistanceToNow from date-fns without a locale parameter. This causes them to show in English even when the user is viewing the Hindi version of the app.",
+    obj: "Dynamically pass the active locale object from date-fns/locale to all formatDistanceToNow calls.",
+    files: ["components/community/PostCard.jsx", "components/community/CommentSection.jsx", "app/[locale]/community/post/[postId]/page.jsx"],
+    criteria: [
+      "Relative times (e.g., '3 hours ago' / '3 घंटे पहले') render in Hindi when the active language is Hindi (hi).",
+      "Relative times render in English when the active language is English (en)."
+    ]
+  },
+  {
+    num: 55,
+    title: "Implement a Search Bar in the Anonymous Community Forum",
+    difficulty: "medium",
+    labels: ["ECSOC", "medium", "feature", "frontend"],
+    desc: "Users currently have no way to search for existing discussions or topics in the community section. We should add a search input field at the top of the feed to filter posts.",
+    obj: "Add a search input component that filters posts in the feed by title or content (either client-side for loaded posts, or by query parameters).",
+    files: ["app/[locale]/community/page.jsx"],
+    criteria: [
+      "Add a clean, responsive search bar with a search icon at the top of the community feed.",
+      "As the user types, filter posts based on whether the search term matches the title or content.",
+      "Display a helpful message (e.g., 'No discussions match your search') if no matching posts are found."
+    ]
+  },
+  {
+    num: 56,
+    title: "Fix Font Rendering Gaps in Hindi PDF Report Generation",
+    difficulty: "medium",
+    labels: ["ECSOC", "medium", "bug", "frontend", "pdf"],
+    desc: "In lib/generateReport.js, when a doctor report is generated under the Hindi locale (hi), the NotoSansDevanagari font is registered, but the code still hardcodes the helvetica font for headers, table cells, and user labels. This results in empty boxes or broken rendering for any Hindi text or names in the generated PDF.",
+    obj: "Ensure that if locale === 'hi', all text-rendering commands dynamically use the registered Devanagari font instead of reverting to Helvetica.",
+    files: ["lib/generateReport.js"],
+    criteria: [
+      "Exporting a PDF report in Hindi locale successfully renders Devanagari script for all titles, headers, tables, and variables.",
+      "No empty square boxes or missing character warnings in the browser console."
+    ]
+  },
+  {
+    num: 57,
+    title: "Localize Cervical Discharge Tracker Insight Messages",
+    difficulty: "medium",
+    labels: ["ECSOC", "medium", "bug", "frontend", "localization"],
+    desc: "In the daily log panel, selecting different cervical discharge options displays educational insight summaries. Currently, these messages (e.g., 'Sticky discharge is commonly observed after menstruation.') are hardcoded in English, which disrupts Hindi localization.",
+    obj: "Move these insight strings to the localization JSON files and load them dynamically.",
+    files: ["components/dashboard/CervicalDischargeTracker.jsx", "messages/en.json", "messages/hi.json"],
+    criteria: [
+      "Insights display in Hindi when the active language is Hindi (hi).",
+      "Insights display in English when the active language is English (en)."
+    ]
+  },
+  {
+    num: 58,
+    title: "Implement End-to-End Encryption (E2EE) with PIN Key Derivation",
+    difficulty: "advanced",
+    labels: ["ECSOC", "advanced", "security", "frontend", "backend"],
+    desc: "The foundation for E2EE is set up in PinModal.jsx and the DB schema, but the core client-side context that derives keys and encrypts data is missing. We need to implement lib/EncryptionContext.jsx.",
+    obj: "Create an Encryption Provider that handles PIN-based PBKDF2 key derivation and encrypts cycles/logs client-side before sending to Supabase.",
+    files: ["lib/EncryptionContext.jsx", "components/layout/PinModal.jsx", "app/[locale]/layout.js"],
+    criteria: [
+      "Implement lib/EncryptionContext.jsx using the Web Crypto API.",
+      "Cycles and symptom data are encrypted locally and stored in the encrypted_data database columns.",
+      "PIN entry successfully decrypts the data locally for UI rendering."
+    ]
+  },
+  {
+    num: 59,
+    title: "Create and Implement Service Worker for Complete Offline PWA Experience",
+    difficulty: "advanced",
+    labels: ["ECSOC", "advanced", "performance", "pwa", "frontend"],
+    desc: "A Service Worker registration exists in the OfflineProvider context, but the service worker script file /public/sw.js is completely missing.",
+    obj: "Implement sw.js in the public directory to handle offline asset caching and network fallback policies.",
+    files: ["public/sw.js"],
+    criteria: [
+      "Create /public/sw.js to implement Cache-First for static assets and Network-First/Stale-While-Revalidate for pages.",
+      "App is installable as a PWA and works completely offline (reading from IndexedDB caches)."
+    ]
+  },
+  {
+    num: 60,
+    title: "Make Cycle Calendar Interactive: Log and Edit Periods directly from Calendar Days",
+    difficulty: "advanced",
+    labels: ["ECSOC", "advanced", "ux", "frontend"],
+    desc: "The calendar on the track page is currently read-only. Clicking on days does not trigger any action, requiring users to log everything through the side panel.",
+    obj: "Support clicking calendar cells to open a quick symptom/flow editor or toggle period dates directly.",
+    files: ["components/dashboard/CycleCalendar.jsx", "app/[locale]/track/page.js"],
+    criteria: [
+      "Clicking on a calendar cell opens a bottom drawer/modal showing logs for that date.",
+      "Users can toggle period starts/ends directly on the calendar grid, triggering state updates and saving changes."
+    ]
   }
 ];
 
@@ -713,7 +848,7 @@ Happy Coding! ❤️
 
 let mdContent = `# ECSOC Issues Backlog
 
-This document lists 50 repository-specific issues ready for **ECSOC** contributors. Maintainers can copy and paste these directly into the GitHub Issue Tracker.
+This document lists 60 repository-specific issues ready for **ECSOC** contributors. Maintainers can copy and paste these directly into the GitHub Issue Tracker.
 
 ---
 
@@ -747,4 +882,4 @@ ${guidelineText.replace('<issue_number>', issue.num)}
 
 const outputPath = path.resolve(__dirname, '../docs/ECSOC_ISSUES.md');
 fs.writeFileSync(outputPath, mdContent);
-console.log(`Successfully generated 50 issues in: docs/ECSOC_ISSUES.md`);
+console.log(`Successfully generated ${issues.length} issues in: docs/ECSOC_ISSUES.md`);

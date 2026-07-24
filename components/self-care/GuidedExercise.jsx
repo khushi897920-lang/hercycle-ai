@@ -66,7 +66,7 @@ export default function GuidedExercise({ exercise, onFinish }) {
         <CheckCircle2 className="w-20 h-20 text-green-400 mb-6" />
         <h2 className="text-3xl font-bold text-white mb-4">{t('sessionComplete')}</h2>
         <p className="text-white/70 mb-8">{t('greatJob')}</p>
-        <button 
+        <button
           onClick={onFinish}
           className="bg-white text-[#e8527e] px-8 py-3 rounded-full font-semibold shadow-lg hover:bg-white/90 transition-colors"
         >
@@ -84,22 +84,24 @@ export default function GuidedExercise({ exercise, onFinish }) {
         {!imageLoaded && (
           <div className="absolute inset-0 bg-white/5 animate-pulse"></div>
         )}
-        <img 
-          src={pose.image} 
+        <img
+          key={currentStep}
+          src={pose.image}
           alt={pose.title}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
           onLoad={() => setImageLoaded(true)}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80"></div>
-        
+
         <div className="absolute top-0 left-0 w-full h-1.5 bg-white/20">
-          <div 
+          <div
             className="h-full bg-[#e8527e] transition-all duration-1000 ease-linear"
             style={{ width: `${progress}%` }}
           ></div>
         </div>
-        
-        <button 
+
+        <button
           onClick={onFinish}
           className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white hover:bg-black/60 transition-colors"
         >
@@ -122,7 +124,7 @@ export default function GuidedExercise({ exercise, onFinish }) {
       </div>
 
       <div className="p-6 bg-white/5 flex items-center justify-between">
-        <button 
+        <button
           onClick={handlePrev}
           disabled={currentStep === 0}
           className="p-3 rounded-full hover:bg-white/10 text-white disabled:opacity-30 transition-colors"
@@ -130,7 +132,7 @@ export default function GuidedExercise({ exercise, onFinish }) {
           <ChevronLeft className="w-8 h-8" />
         </button>
 
-        <button 
+        <button
           onClick={togglePlay}
           className="w-16 h-16 rounded-full bg-[#e8527e] hover:bg-pink-400 flex items-center justify-center shadow-lg transition-transform active:scale-95 text-white"
         >
@@ -141,7 +143,7 @@ export default function GuidedExercise({ exercise, onFinish }) {
           )}
         </button>
 
-        <button 
+        <button
           onClick={handleNext}
           className="p-3 rounded-full hover:bg-white/10 text-white transition-colors"
         >

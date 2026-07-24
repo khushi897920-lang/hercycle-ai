@@ -181,6 +181,34 @@ export default function PartnerSharing() {
                   <Switch.Thumb className="block w-5 h-5 bg-white rounded-full transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[22px]" />
                 </Switch.Root>
               </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white font-medium">Show Actionable Care Recommendations</p>
+                  <p className="text-white/50 text-sm">Allow partner to see tailored tips on how to support you today</p>
+                </div>
+                <Switch.Root 
+                  checked={connection.partner_permissions[0].show_care_tips !== false}
+                  onCheckedChange={(v) => togglePermission('show_care_tips', v)}
+                  className="w-11 h-6 bg-black/40 rounded-full relative data-[state=checked]:bg-primary outline-none cursor-pointer"
+                >
+                  <Switch.Thumb className="block w-5 h-5 bg-white rounded-full transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[22px]" />
+                </Switch.Root>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white font-medium">Show Energy & Vibe Battery</p>
+                  <p className="text-white/50 text-sm">Allow partner to see an estimated stamina level for the day</p>
+                </div>
+                <Switch.Root 
+                  checked={connection.partner_permissions[0].show_energy_battery !== false}
+                  onCheckedChange={(v) => togglePermission('show_energy_battery', v)}
+                  className="w-11 h-6 bg-black/40 rounded-full relative data-[state=checked]:bg-primary outline-none cursor-pointer"
+                >
+                  <Switch.Thumb className="block w-5 h-5 bg-white rounded-full transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[22px]" />
+                </Switch.Root>
+              </div>
             </div>
           )}
 

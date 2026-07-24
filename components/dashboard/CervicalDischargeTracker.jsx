@@ -3,11 +3,11 @@ import { useOffline } from '@/lib/OfflineContext';
 import { useTranslations } from 'next-intl';
 
 const dischargeOptions = [
-  { id: 'none', label: 'No Discharge', insight: 'No discharge is also a normal variation during some phases of the menstrual cycle.' },
-  { id: 'sticky', label: 'Sticky', insight: 'Sticky discharge is commonly observed after menstruation.' },
-  { id: 'creamy', label: 'Creamy', insight: 'Creamy discharge is often seen before ovulation.' },
-  { id: 'watery', label: 'Watery', insight: 'Watery discharge commonly occurs around the fertile window.' },
-  { id: 'egg-white', label: 'Egg-white', insight: 'Egg-white discharge is commonly associated with peak fertility.' }
+  { id: 'none' },
+  { id: 'sticky' },
+  { id: 'creamy' },
+  { id: 'watery' },
+  { id: 'egg-white' }
 ];
 
 export default function CervicalDischargeTracker({ selectedDischarge, setSelectedDischarge, saveTrigger }) {
@@ -142,7 +142,7 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
                 border: '1px solid rgba(255, 255, 255, 0.1)'
               }}>
                 <p style={{ color: '#fff', fontSize: '0.95rem', margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                  {activeOption.insight}
+                  {t(`insights.${activeOption.id}`)}
                 </p>
                 <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.8rem', margin: 0, fontStyle: 'italic' }}>
                   {t('insightDisclaimer')}
