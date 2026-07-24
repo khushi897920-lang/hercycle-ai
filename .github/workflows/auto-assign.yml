@@ -1,0 +1,27 @@
+name: Auto Assign Issue
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+
+jobs:
+  auto-assign:
+    runs-on: ubuntu-latest
+    # Only run when a comment starts with "/claim" or "/assign" (case-insensitive checks)
+    if: >-
+      startsWith(github.event.comment.body, '/claim') || 
+      startsWith(github.event.comment.body, '/assign') ||
+      startsWith(github.event.comment.body, '/Claim') ||
+      startsWith(github.event.comment.body, '/Assign')
+    steps:
+      - name: Assign commenter to the issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+        run: |
+          gh issue edit "$ISSUE_NUMBER" --add-assignee "$COMMENTER"
+          gh issue comment "$ISSUE_NUMBER" --body "Hi @$COMMENTER, you have been successfully assigned to this issue! 🎉 Happy coding! 🌸"
