@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
 
 function getIntensity(count) {
   if (!count) return 'rgba(255,255,255,0.10)'
@@ -12,7 +13,7 @@ export default function HeatmapCalendar() {
   const [counts, setCounts] = useState(null)
 
   useEffect(() => {
-    fetch('/api/challenges/heatmap').then((r) => r.json()).then((json) => json.success && setCounts(json.data.counts))
+    fetchWithTimeout('/api/challenges/heatmap').then((r) => r.json()).then((json) => json.success && setCounts(json.data.counts)).catch(console.error)
   }, [])
 
   if (!counts) return null

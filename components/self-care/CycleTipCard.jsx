@@ -8,15 +8,15 @@ export default function CycleTipCard({ phaseKey }) {
   const t = useTranslations('SelfCare');
 
   // If no cycle information is available or invalid phase, do not render the card.
-  if (!phaseKey || !['menstrual', 'follicular', 'ovulation', 'luteal'].includes(phaseKey)) {
-    return null;
-  }
+  // Fall back to a general wellness tip when no cycle phase can be determined yet
+  const activePhase = ['menstrual', 'follicular', 'ovulation', 'luteal'].includes(phaseKey)
+    ? phaseKey
+    : 'general';
 
-  // Get translations for the active phase
-  const phaseTitle = t(`cycleTips.${phaseKey}.title`);
-  const tip1 = t(`cycleTips.${phaseKey}.tip1`);
-  const tip2 = t(`cycleTips.${phaseKey}.tip2`);
-  const tip3 = t(`cycleTips.${phaseKey}.tip3`);
+  const phaseTitle = t(`cycleTips.${activePhase}.title`);
+  const tip1 = t(`cycleTips.${activePhase}.tip1`);
+  const tip2 = t(`cycleTips.${activePhase}.tip2`);
+  const tip3 = t(`cycleTips.${activePhase}.tip3`);
 
   return (
     <section className="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 space-y-6">

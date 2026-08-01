@@ -57,7 +57,10 @@
     "confidence": "Prediction Confidence",
     "avgCycle": "Avg Cycle (days)",
     "cyclesRecorded": "Cycles Recorded",
-    "basedOn": "Based on your {avg}-day average cycle."
+    "basedOn": "Based on your {avg}-day average cycle.",
+    "emptyState": "Log your first cycle to see predictions",
+    "staleState": "We haven't seen a period logged in a while, so we can't predict your next cycle yet. Log your most recent period to get predictions again.",
+    "staleNote": "Estimated from your {avg}-day average, but {missed} expected cycle(s) haven't been logged — accuracy is reduced."
   },
   "features": {
     "title": "Core Features",
@@ -151,7 +154,7 @@
     }
   },
   "footer": {
-    "copyright": "© 2025 HerCycle AI. Built with 💕 for women's health tech."
+    "copyright": "© 2025 <logo>HerCycle AI</logo>. Built with 💕 for women's health tech."
   },
   "symptoms": {
     "Cramps": "Cramps",
@@ -370,6 +373,12 @@
         "tip1": "Prioritize quality sleep.",
         "tip2": "Gentle stretching may reduce tension.",
         "tip3": "Magnesium-rich foods may help."
+      },
+      "general": {
+        "title": "🌷 General Wellness",
+        "tip1": "Track your cycle to unlock personalized tips.",
+        "tip2": "Stay hydrated and get enough rest.",
+        "tip3": "Gentle movement supports your body every day."
       }
     }
   },

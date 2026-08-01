@@ -164,3 +164,16 @@ ALTER TABLE public.partner_connections
   ADD CONSTRAINT partner_connections_partner_user_id_fkey
   FOREIGN KEY (partner_user_id) REFERENCES public.users(id)
   ON DELETE CASCADE;
+
+-- =====================================================
+-- Clerk Webhook Audit Table
+-- Prevent duplicate processing of webhook retries
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS public.clerk_webhook_audit (
+    event_id TEXT PRIMARY KEY,
+    event_type TEXT NOT NULL,
+    processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.clerk_webhook_audit ENABLE ROW LEVEL SECURITY;

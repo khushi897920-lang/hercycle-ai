@@ -28,6 +28,8 @@ import PcosSymptomProfileCard from '@/components/dashboard/PcosSymptomProfileCar
 import PcosSymptomProfileModal from '@/components/dashboard/PcosSymptomProfileModal'
 import { useOffline } from '@/lib/OfflineContext'
 import { useLocale, useTranslations } from 'next-intl'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
+import { isEncryptionFailure } from '@/lib/encryption-policy'
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
@@ -41,41 +43,31 @@ function deriveDateSets(cycleData) {
   const periodDays    = new Set()  // 'YYYY-MM-DD' strings
   const ovulationDays = new Set()
   const predictedDays = new Set()
-  const today         = new Date().toISOString().split('T')[0]
+  const today         = getTodayISO()
 
   const cycles = cycleData?.cycles || []
-  const toISO  = (d) => d.toISOString().split('T')[0]
 
   cycles.forEach(cycle => {
     const startStr = cycle.start_date
     const endStr   = cycle.end_date
     if (!startStr) return
 
-    const start = new Date(startStr)
-    const end = new Date(endStr || startStr)
-    
-    // Period days
-    for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
-      periodDays.add(toISO(d))
-    }
+    // Period days — eachDayISO walks the local calendar, so a period never
+    // gains or loses a day depending on the viewer's timezone.
+    eachDayISO(startStr, endStr || startStr).forEach(day => periodDays.add(day))
 
     // Ovulation window: days 11-15 after period start
     for(let i = 11; i <= 15; i++){
-      const d = new Date(start)
-      d.setDate(d.getDate() + i)
-      ovulationDays.add(toISO(d))
+      const day = addDaysISO(startStr, i)
+      if (day) ovulationDays.add(day)
     }
   })
 
   // Predicted: days -1 to +5 around nextPeriodDate
   if (cycleData?.nextPeriodDate) {
-    const pred = new Date(cycleData.nextPeriodDate)
-    if (!isNaN(pred)) {
-      for(let i = -1; i <= 5; i++){
-        const d = new Date(pred)
-        d.setDate(d.getDate() + i)
-        predictedDays.add(toISO(d))
-      }
+    for(let i = -1; i <= 5; i++){
+      const day = addDaysISO(cycleData.nextPeriodDate, i)
+      if (day) predictedDays.add(day)
     }
   }
 
@@ -250,7 +242,7 @@ const HerCycleApp = () => {
     setIsTyping(true)
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetchWithTimeout('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -278,7 +270,7 @@ const HerCycleApp = () => {
   const handleSaveLog = async () => {
     try {
       const logData = {
-        date: new Date().toISOString().split('T')[0],
+        date: getTodayISO(),
         symptoms: selectedSymptoms,
         mood: selectedMood,
         flow: selectedFlow,
@@ -297,6 +289,9 @@ const HerCycleApp = () => {
         setSelectedDischarge(null)
         setSaveTrigger(prev => prev + 1)
         fetchCycleData()
+      } else if (isEncryptionFailure(data)) {
+        // Fail-closed: nothing was sent, so the form is left intact for retry.
+        toast.error(`🔒 ${data.error}`)
       } else {
         toast.error('❌ Failed to save')
       }

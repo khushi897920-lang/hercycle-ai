@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import * as Switch from '@radix-ui/react-switch'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
 import toast from 'react-hot-toast'
 import { Download } from 'lucide-react'
 
@@ -13,7 +14,7 @@ export default function PrivacySettingsContent() {
   const [isUpdating, setIsUpdating] = useState(false)
 
   useEffect(() => {
-    fetch('/api/profile')
+    fetchWithTimeout('/api/profile')
       .then(res => res.json())
       .then(data => {
         if (data.success && data.profile) {
@@ -36,7 +37,7 @@ export default function PrivacySettingsContent() {
     setIsUpdating(true)
     const toastId = toast.loading('Updating privacy settings...')
     try {
-      const res = await fetch('/api/profile', {
+      const res = await fetchWithTimeout('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ allow_ai_analysis: checked })
@@ -56,7 +57,7 @@ export default function PrivacySettingsContent() {
     const toastId = toast.loading('Preparing your data...')
     try {
       const token = await getToken()
-      const res = await fetch('/api/user/export', {
+      const res = await fetchWithTimeout('/api/user/export', {
         headers: {
           Authorization: `Bearer ${token}`
         }

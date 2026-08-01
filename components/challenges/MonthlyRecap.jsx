@@ -1,12 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { MONTHLY_BADGES, getMonthLabel } from '@/lib/challenges-data'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
 
 export default function MonthlyRecap() {
   const [recap, setRecap] = useState(null)
 
   useEffect(() => {
-    fetch('/api/challenges/monthly-recap').then((r) => r.json()).then((json) => json.success && setRecap(json.data))
+    fetchWithTimeout('/api/challenges/monthly-recap').then((r) => r.json()).then((json) => json.success && setRecap(json.data)).catch(console.error)
   }, [])
 
   if (!recap) return null

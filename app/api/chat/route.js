@@ -67,6 +67,7 @@ async function callGemini(message, systemPrompt) {
   return result.response.text();
 }
 
+
 /**
  * Fallback AI Call: Groq API (llama3-8b-8192)
  */
@@ -107,7 +108,7 @@ async function callGroq(message, systemPrompt) {
 async function getAIResponse(message, systemPrompt) {
   try {
     // 1. Try Gemini first (with timeout)
-    const responseText = await withTimeout(callGemini(message, systemPrompt), TIMEOUT_MS);
+    const responseText = await callGeminiWithRetry(message, systemPrompt);
     return responseText;
   } catch (error) {
     logger.warn(`Gemini API failed (${error.message}). Switching to Groq fallback...`);
@@ -119,6 +120,33 @@ async function getAIResponse(message, systemPrompt) {
     } catch (fallbackError) {
       logger.error('Both Gemini and Groq APIs failed.', fallbackError.message);
       throw new Error('All AI service proxies failed.');
+    }
+  }
+}
+
+async function callGeminiWithRetry(message, systemPrompt) {
+  try {
+    return await withTimeout(callGemini(message, systemPrompt), TIMEOUT_MS);
+  } catch (error) {
+
+    const errorMessage = error?.message || '';
+
+    const shouldRetry =
+      error.message.includes('timed out') ||
+      error.message.includes('503') ||
+      error.message.includes('429');
+
+    if (!shouldRetry) {
+      throw error;
+    }
+
+    logger.warn(`Gemini API attempt 1 failed (${error.message}). Retrying once...`);
+
+    try {
+      return await withTimeout(callGemini(message, systemPrompt), TIMEOUT_MS);
+    } catch (retryError) {
+      logger.warn(`Gemini retry failed (${retryError.message}).`);
+      throw retryError;
     }
   }
 }

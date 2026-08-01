@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import fetchWithTimeout from '@/lib/fetch-with-timeout';
 
 const faqs = [
   { question: "How is PCOD risk calculated?", answer: "Our AI model analyzes your symptoms, menstrual cycle data, and lifestyle factors to estimate your risk. It is not a substitute for professional medical advice." },
@@ -29,7 +30,7 @@ export default function HelpModal({ isOpen, onClose }) {
     setError('');
     
     try {
-      const res = await fetch('/api/feedback', {
+      const res = await fetchWithTimeout('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message, type })

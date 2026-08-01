@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import ChallengeCard from './ChallengeCard'
 import { CHALLENGES } from '@/lib/challenges-data'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
 
 export default function StretchChallenge({ initialProgress, target, onUpdate }) {
   const [progress, setProgress] = useState(initialProgress)
@@ -18,7 +19,7 @@ export default function StretchChallenge({ initialProgress, target, onUpdate }) 
   useEffect(() => {
     if (progress >= target && running) {
       setRunning(false)
-      fetch('/api/challenges/progress', {
+      fetchWithTimeout('/api/challenges/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ challenge_type: 'stretch', increment: target }),

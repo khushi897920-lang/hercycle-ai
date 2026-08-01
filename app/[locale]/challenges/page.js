@@ -13,6 +13,7 @@ import IronMealChallenge from '@/components/challenges/IronMealChallenge'
 import SleepChallenge from '@/components/challenges/SleepChallenge'
 import MonthlyRecap from '@/components/challenges/MonthlyRecap'
 import HeatmapCalendar from '@/components/challenges/HeatmapCalendar'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
 
 
 export default function ChallengesPage() {
@@ -21,12 +22,12 @@ export default function ChallengesPage() {
   const [newBadge, setNewBadge] = useState(null)
 
   useEffect(() => {
-    fetch('/api/challenges').then((r) => r.json()).then((json) => json.success && setData(json.data))
+    fetchWithTimeout('/api/challenges').then((r) => r.json()).then((json) => json.success && setData(json.data)).catch(console.error)
   }, [])
 
   const handleUpdate = (result) => {
     if (result.newBadges?.length) setNewBadge(result.newBadges[0])
-    fetch('/api/challenges').then((r) => r.json()).then((json) => json.success && setData(json.data))
+    fetchWithTimeout('/api/challenges').then((r) => r.json()).then((json) => json.success && setData(json.data)).catch(console.error)
   }
 
   const getProgress = (type) => data?.progress.find((p) => p.challenge_type === type)?.progress_value || 0

@@ -1,11 +1,12 @@
 'use client'
 import ChallengeCard from './ChallengeCard'
 import { CHALLENGES } from '@/lib/challenges-data'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
 
 export default function SleepChallenge({ initialProgress, target, onUpdate }) {
   const completed = initialProgress >= target
   const logSleep = async () => {
-    const res = await fetch('/api/challenges/progress', {
+    const res = await fetchWithTimeout('/api/challenges/progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ challenge_type: 'sleep', increment: 1 }),

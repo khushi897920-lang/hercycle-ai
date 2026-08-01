@@ -93,7 +93,7 @@ export default function CommunityFeed({ locale, initialCategories = [], initialP
                 <div className="font-medium text-slate-800 dark:text-slate-200">
                   {t(`cat_${category.slug}_name`) || category.name}
                 </div>
-                <div className="text-xs text-slate-500 truncate">
+                <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                   {t(`cat_${category.slug}_desc`) || category.description}
                 </div>
               </Link>

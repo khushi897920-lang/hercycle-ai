@@ -308,7 +308,24 @@ export default function InsightsPage() {
             }}>
               <BarChart2 size={28} color="white" strokeWidth={1.5} />
             </div>
-            <h1 style={{ margin: 0, fontSize: '2rem' }}>{t('title')}</h1>
+            <h1 style={{ margin: 0, fontSize: '2rem', flex: 1 }}>{t('title')}</h1>
+            
+            {!loading && (
+              <div style={{
+                background: 'rgba(233,30,140,0.15)',
+                border: `1px solid ${PINK}55`,
+                padding: '6px 14px',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}>
+                <RefreshCw size={16} color={PINK} />
+                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ffb3d9' }}>
+                  {t('avgCycle')}: {avgCycle}d
+                </span>
+              </div>
+            )}
           </div>
           <p style={{ color: TEXT_FAINT, marginBottom: '2rem' }}>
             {t('subtitle')}

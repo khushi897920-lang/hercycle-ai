@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { MessageCircle, X } from 'lucide-react'
 import ChatAssistant from '@/components/dashboard/ChatAssistant'
 import { useOffline } from '@/lib/OfflineContext'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
 
 export default function ChatFAB() {
   const pathname = usePathname()
@@ -95,7 +96,7 @@ export default function ChatFAB() {
     setIsTyping(true)
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetchWithTimeout('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMessage, language: locale, context: cycleData }),

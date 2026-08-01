@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Switch from '@radix-ui/react-switch'
 import { Download, AlertTriangle, X, Shield } from 'lucide-react'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
 import toast from 'react-hot-toast'
 
 export default function PrivacyModal({ trigger, initialProfile, onDeleteAccount }) {
@@ -14,7 +15,7 @@ export default function PrivacyModal({ trigger, initialProfile, onDeleteAccount 
       setAllowAI(initialProfile?.allow_ai_analysis ?? true)
     } else {
       // Fetch profile
-      fetch('/api/profile')
+      fetchWithTimeout('/api/profile')
         .then(res => res.json())
         .then(data => {
           if (data.success && data.profile) {
@@ -30,7 +31,7 @@ export default function PrivacyModal({ trigger, initialProfile, onDeleteAccount 
     setIsUpdating(true)
     const toastId = toast.loading('Updating privacy settings...')
     try {
-      const res = await fetch('/api/profile', {
+      const res = await fetchWithTimeout('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ allow_ai_analysis: checked })
@@ -49,7 +50,7 @@ export default function PrivacyModal({ trigger, initialProfile, onDeleteAccount 
     setIsExporting(true)
     const toastId = toast.loading('Preparing your data...')
     try {
-      const res = await fetch('/api/user/export')
+      const res = await fetchWithTimeout('/api/user/export')
       if (!res.ok) {
         throw new Error('Failed to export data')
       }

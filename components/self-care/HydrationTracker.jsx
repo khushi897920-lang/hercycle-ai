@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus, Minus, Droplet } from 'lucide-react';
+import { getTodayISO } from '@/lib/date-utils';
 
 const DAILY_TARGET = 8;
 const STORAGE_KEY = 'hercycle_water_intake';
 
 function getTodayString() {
-  const today = new Date();
-  return today.toISOString().split('T')[0];
+  return getTodayISO();
 }
 
 export default function HydrationTracker({ phaseKey }) {

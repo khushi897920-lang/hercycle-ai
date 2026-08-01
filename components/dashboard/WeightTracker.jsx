@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Activity, Ruler, Scale, Save } from 'lucide-react'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
 import toast from 'react-hot-toast'
 import { useTranslations } from 'next-intl'
+import { getTodayISO } from '@/lib/date-utils'
 
 const cardStyle = {
   background: 'rgba(255,255,255,0.08)',
@@ -24,7 +26,7 @@ const fieldStyle = {
 }
 
 function todayISO() {
-  return new Date().toISOString().split('T')[0]
+  return getTodayISO()
 }
 
 function bmiLabel(bmi) {
@@ -72,7 +74,7 @@ export default function WeightTracker({ onSaved }) {
     setSaving(true)
 
     try {
-      const response = await fetch('/api/weight', {
+      const response = await fetchWithTimeout('/api/weight', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

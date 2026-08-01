@@ -2,18 +2,101 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react'
-import { initDB, getAllFromStore, putIntoStore, deleteFromStore, queueSyncRequest } from './db'
+import { getAllFromStore, putIntoStore, deleteFromStore, queueSyncRequest, replaceAll } from './db'
 import { predictNextPeriod, calculatePCODRisk } from './api-helpers'
 import { useEncryption } from './EncryptionContext'
+import {
+  DEAD_LETTER_STORE,
+  classifyResponse,
+  describeQueueItem,
+  isDue,
+  orderForDrain,
+  planNextAttempt,
+} from './sync-queue'
+import fetchWithTimeout from './fetch-with-timeout'
 import toast from 'react-hot-toast'
 
 const OfflineContext = createContext({
   isOffline: false,
   pendingSyncCount: 0,
+  failedSyncItems: [],
   isSyncing: false,
   syncData: async () => { },
+  retryFailedSync: async () => { },
+  discardFailedSync: async () => { },
   offlineClient: {}
 })
+
+/**
+ * Resolves every record's `encrypted_data` into plain fields.
+ *
+ * This MUST complete before any IndexedDB write transaction is opened. An
+ * IndexedDB transaction auto-commits as soon as control returns to the event
+ * loop with no request pending, and `crypto.subtle.decrypt` settles in a later
+ * task — so decrypting *inside* a write loop killed the transaction and made
+ * every subsequent `put` throw `TransactionInactiveError`.
+ *
+ * A record that cannot be decrypted is kept in its original form rather than
+ * dropped, so a single bad row never costs the user the rest of their history.
+ *
+ * @param {any[]} records
+ * @param {(payload: any) => Promise<any>} decrypt
+ * @param {string} label used only for logging
+ * @returns {Promise<any[]>}
+ */
+async function decryptRecords(records, decrypt, label) {
+  if (!Array.isArray(records)) return []
+
+  const resolved = []
+  for (const record of records) {
+    if (!record) continue
+    if (!record.encrypted_data) {
+      resolved.push(record)
+      continue
+    }
+    try {
+      const decryptedFields = await decrypt(record.encrypted_data)
+      resolved.push({ ...record, ...decryptedFields })
+    } catch (e) {
+      console.error(`Failed to decrypt ${label}`, e)
+      resolved.push(record)
+    }
+  }
+  return resolved
+}
+
+/**
+ * Replaces a cache store's contents, treating a cache write failure as
+ * non-fatal: the caller already holds fresh server data and should return it
+ * even if the local mirror could not be refreshed.
+ *
+ * @param {string} storeName
+ * @param {any[]} records
+ * @returns {Promise<void>}
+ */
+async function cacheRecords(storeName, records) {
+  try {
+    await replaceAll(storeName, records)
+  } catch (e) {
+    console.error(`Failed to refresh the ${storeName} offline cache`, e)
+  }
+}
+
+/**
+ * Newest period first. Uses plain YYYY-MM-DD string ordering, which is exact
+ * for ISO dates and needs no Date construction.
+ *
+ * @param {any[]} cycles
+ * @returns {any[]} a new array; the input is not mutated
+ */
+function sortByStartDateDesc(cycles) {
+  return [...(cycles || [])].sort((a, b) => {
+    const left = String(a?.start_date || '')
+    const right = String(b?.start_date || '')
+    if (left === right) return 0
+    return left < right ? 1 : -1
+  })
+}
 
 // Helper to generate robust UUIDs client-side
 const generateUUID = () => {
@@ -31,10 +114,13 @@ export function OfflineProvider({ children }) {
   const [isOffline, setIsOffline] = useState(false)
   const [pendingSyncCount, setPendingSyncCount] = useState(0)
   const [isSyncing, setIsSyncing] = useState(false)
+  // Operations that will not be retried again, kept so the user can review,
+  // retry or discard them instead of losing them silently.
+  const [failedSyncItems, setFailedSyncItems] = useState([])
 
   const isSyncingRef = useRef(false)
 
-  const { encrypt, decrypt, isUnlocked } = useEncryption()
+  const { encrypt, decrypt, isUnlocked, isEncryptionEnabled } = useEncryption()
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
@@ -68,7 +154,65 @@ export function OfflineProvider({ children }) {
     } catch (e) {
       console.error('Failed to update sync count:', e);
     }
+
+    try {
+      const failed = await getAllFromStore(DEAD_LETTER_STORE);
+      setFailedSyncItems(failed.map(item => ({ ...item, description: describeQueueItem(item) })));
+    } catch (e) {
+      console.error('Failed to read dead-lettered sync operations:', e);
+    }
   }
+
+  /**
+   * Puts a dead-lettered operation back on the queue for another try — the
+   * manual recovery path the old code had no equivalent of.
+   */
+  const retryFailedSync = async (deadLetterId) => {
+    try {
+      const failed = await getAllFromStore(DEAD_LETTER_STORE);
+      const candidates = deadLetterId === undefined
+        ? failed
+        : failed.filter(item => item.id === deadLetterId);
+
+      for (const item of candidates) {
+        // Requeue as a fresh operation: drop the dead-letter bookkeeping and
+        // reset the attempt counter so it is retried immediately.
+        await queueSyncRequest(item.url, item.method, item.body);
+        await deleteFromStore(DEAD_LETTER_STORE, item.id);
+      }
+    } catch (e) {
+      console.error('Failed to requeue a dead-lettered operation:', e);
+    } finally {
+      await updateSyncCount();
+    }
+    syncData();
+  }
+
+  /** Permanently discards a dead-lettered operation at the user's request. */
+  const discardFailedSync = async (deadLetterId) => {
+    try {
+      await deleteFromStore(DEAD_LETTER_STORE, deadLetterId);
+    } catch (e) {
+      console.error('Failed to discard a dead-lettered operation:', e);
+    } finally {
+      await updateSyncCount();
+    }
+  }
+
+  /**
+   * Moves an operation out of the retry queue and into the dead-letter store,
+   * so it stays visible to the user instead of being silently dropped or
+   * retried forever.
+   */
+  const deadLetter = async (item, reason) => {
+    const { id, ...rest } = item;
+    try {
+      await putIntoStore(DEAD_LETTER_STORE, { ...rest, reason, deadLetteredAt: Date.now() });
+    } catch (e) {
+      console.error('Failed to record a dead-lettered sync operation:', e);
+    }
+    await deleteFromStore('sync_queue', id);
+  };
 
   const syncData = async () => {
     if (!navigator.onLine || isSyncingRef.current) return;
@@ -83,24 +227,65 @@ export function OfflineProvider({ children }) {
       isSyncingRef.current = true;
       setIsSyncing(true);
 
-      const sortedQueue = [...queue].sort((a, b) => a.id - b.id);
+      const now = Date.now();
+      let gaveUpCount = 0;
 
-      for (const item of sortedQueue) {
+      for (const item of orderForDrain(queue, now)) {
+        // Not due yet — its backoff has not elapsed. Skip to the next item
+        // rather than abandoning the whole queue.
+        if (!isDue(item, now)) continue;
+
+        let response = null;
+        let errorMessage = null;
+
         try {
-          const res = await fetch(item.url, {
+          response = await fetchWithTimeout(item.url, {
             method: item.method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(item.body)
           });
-
-          if (res.ok || res.status === 400 || res.status === 401 || res.status === 403 || res.status === 422) {
-            await deleteFromStore('sync_queue', item.id);
-          } else {
-            break;
-          }
         } catch (fetchErr) {
+          errorMessage = fetchErr?.message || 'Network request failed';
+        }
+
+        const classification = classifyResponse(response);
+        const plan = planNextAttempt({
+          item,
+          classification,
+          now: Date.now(),
+          errorMessage: errorMessage || (response ? `Server responded ${response.status}` : null)
+        });
+
+        if (plan.action === 'remove') {
+          await deleteFromStore('sync_queue', item.id);
+          continue;
+        }
+
+        if (plan.action === 'pause') {
+          // The session expired. Stop draining so the rest of the queue is not
+          // burned against a dead session — but keep every item, including this
+          // one. The old code DELETED on 401, destroying queued health logs.
+          console.warn('Sync paused: authentication required. Queued changes are preserved.');
           break;
         }
+
+        if (plan.action === 'dead-letter') {
+          await deadLetter(plan.item, plan.reason);
+          gaveUpCount += 1;
+          continue;
+        }
+
+        // Transient: record the attempt and its backoff, then move on to the
+        // next item. A failing operation no longer blocks its siblings.
+        await putIntoStore('sync_queue', plan.item);
+      }
+
+      if (gaveUpCount > 0) {
+        toast.error(
+          gaveUpCount === 1
+            ? '⚠️ 1 offline change could not be saved and needs your attention.'
+            : `⚠️ ${gaveUpCount} offline changes could not be saved and need your attention.`
+        );
       }
     } catch (e) {
       console.error('Error in background sync:', e);
@@ -157,36 +342,23 @@ export function OfflineProvider({ children }) {
       const isOnline = navigator.onLine;
       if (isOnline) {
         try {
-          const res = await fetch('/api/cycles');
+          const res = await fetchWithTimeout('/api/cycles');
           const data = await res.json();
           if (data.success) {
-            const db = await initDB();
-            const tx = db.transaction('cycles', 'readwrite');
-            const store = tx.objectStore('cycles');
-            await store.clear();
+            // Decrypt everything FIRST. Awaiting inside a readwrite transaction
+            // auto-commits it, after which every remaining put throws
+            // TransactionInactiveError — which used to leave the store cleared
+            // but never repopulated.
+            const cycles = await decryptRecords(data.data.cycles, decrypt, 'cycle');
 
-            for (const c of data.data.cycles) {
-              if (c.encrypted_data) {
-                try {
-                  const decryptedFields = await decrypt(c.encrypted_data);
-                  const fullyDecrypted = { ...c, ...decryptedFields };
-                  await store.put(fullyDecrypted);
-                  data.data.cycles[data.data.cycles.indexOf(c)] = fullyDecrypted;
-                } catch (e) {
-                  console.error('Failed to decrypt cycle', e);
-                  await store.put(c);
-                }
-              } else {
-                await store.put(c);
-              }
-            }
+            // One atomic clear+repopulate, no interleaved awaits.
+            await cacheRecords('cycles', cycles);
 
-            const sortedCycles = [...data.data.cycles].sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
-            const prediction = predictNextPeriod(sortedCycles);
+            const prediction = predictNextPeriod(sortByStartDateDesc(cycles));
             return {
               success: true,
               data: {
-                cycles: data.data.cycles,
+                cycles,
                 nextPeriodDate: prediction.nextPeriodDate,
                 confidence: prediction.confidence,
                 averageCycleLength: prediction.averageCycleLength
@@ -199,7 +371,7 @@ export function OfflineProvider({ children }) {
       }
 
       const cachedCycles = await getAllFromStore('cycles');
-      const sortedCycles = [...cachedCycles].sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+      const sortedCycles = sortByStartDateDesc(cachedCycles);
       const prediction = predictNextPeriod(sortedCycles);
 
       return {
@@ -217,7 +389,7 @@ export function OfflineProvider({ children }) {
       const isOnline = navigator.onLine;
       if (isOnline) {
         try {
-          const res = await fetch(`/api/log-day?date=${date}`);
+          const res = await fetchWithTimeout(`/api/log-day?date=${date}`);
           if (res.ok) {
             const data = await res.json();
             if (data.success && data.data) {
@@ -249,29 +421,15 @@ export function OfflineProvider({ children }) {
       const isOnline = navigator.onLine;
       if (isOnline) {
         try {
-          const res = await fetch('/api/log-day/all');
+          const res = await fetchWithTimeout('/api/log-day/all');
           if (res.ok) {
             const data = await res.json();
             if (data.success && data.data) {
-              const db = await initDB();
-              const tx = db.transaction('daily_logs', 'readwrite');
-              const store = tx.objectStore('daily_logs');
-              await store.clear();
-              const decryptedLogs = [];
-              for (const log of data.data) {
-                let decryptedLog = log;
-                if (log.encrypted_data) {
-                  try {
-                    const decryptedFields = await decrypt(log.encrypted_data);
-                    decryptedLog = { ...log, ...decryptedFields };
-                  } catch (e) {
-                    console.error('Failed to decrypt log in fetchAll', e);
-                  }
-                }
-                decryptedLogs.push(decryptedLog);
-                await store.put(decryptedLog);
-              }
-              data.data = decryptedLogs;
+              // Same ordering rule as fetchCycles: decrypt fully, then write in
+              // a single transaction that never yields.
+              const logs = await decryptRecords(data.data, decrypt, 'daily log');
+              await cacheRecords('daily_logs', logs);
+              data.data = logs;
             }
             return data;
           }
@@ -289,7 +447,7 @@ export function OfflineProvider({ children }) {
       const isOnline = navigator.onLine;
       if (isOnline) {
         try {
-          const res = await fetch('/api/pcod-risk');
+          const res = await fetchWithTimeout('/api/pcod-risk');
           if (res.ok) {
             const data = await res.json();
             if (data.success) {
@@ -332,29 +490,32 @@ export function OfflineProvider({ children }) {
         ...log,
         updated_at: new Date().toISOString()
       };
-      await putIntoStore('daily_logs', localLog);
 
-      let payload = { ...localLog };
+      // Seal BEFORE touching local storage. If encryption is required but
+      // unavailable the write is refused outright, so the device is not left
+      // holding an entry that can never be synced.
+      let payload;
       try {
-        const encrypted = await encrypt({
-          symptoms: payload.symptoms,
-          mood: payload.mood,
-          flow: payload.flow,
-          cervical_discharge: payload.cervical_discharge
-        });
-        payload.encrypted_data = encrypted;
-        delete payload.symptoms;
-        delete payload.mood;
-        delete payload.flow;
-        delete payload.cervical_discharge;
+        ({ payload } = await sealPayload({
+          payload: localLog,
+          fields: SENSITIVE_DAILY_LOG_FIELDS,
+          encrypt,
+          required: isEncryptionEnabled,
+          unlocked: isUnlocked
+        }));
       } catch (e) {
-        console.error('Failed to encrypt daily log', e);
+        const failure = toEncryptionFailure(e);
+        if (!failure) throw e;
+        notifyEncryptionLocked(failure.reason);
+        return failure;
       }
+
+      await putIntoStore('daily_logs', localLog);
 
       const isOnline = navigator.onLine;
       if (isOnline) {
         try {
-          const res = await fetch('/api/log-day', {
+          const res = await fetchWithTimeout('/api/log-day', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -380,27 +541,29 @@ export function OfflineProvider({ children }) {
         id: cycle.id || generateUUID(),
         created_at: new Date().toISOString()
       };
-      await putIntoStore('cycles', clientCycle);
 
-      let payload = { ...clientCycle };
+      let payload;
       try {
-        const encrypted = await encrypt({
-          start_date: payload.start_date,
-          end_date: payload.end_date,
-          cycle_length: payload.cycle_length
-        });
-        payload.encrypted_data = encrypted;
-        delete payload.start_date;
-        delete payload.end_date;
-        delete payload.cycle_length;
+        ({ payload } = await sealPayload({
+          payload: clientCycle,
+          fields: SENSITIVE_CYCLE_FIELDS,
+          encrypt,
+          required: isEncryptionEnabled,
+          unlocked: isUnlocked
+        }));
       } catch (e) {
-        console.error('Failed to encrypt cycle', e);
+        const failure = toEncryptionFailure(e);
+        if (!failure) throw e;
+        notifyEncryptionLocked(failure.reason);
+        return failure;
       }
+
+      await putIntoStore('cycles', clientCycle);
 
       const isOnline = navigator.onLine;
       if (isOnline) {
         try {
-          const res = await fetch('/api/cycles', {
+          const res = await fetchWithTimeout('/api/cycles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -423,31 +586,51 @@ export function OfflineProvider({ children }) {
     endPeriod: async (id, end_date) => {
       const cachedCycles = await getAllFromStore('cycles');
       const cycle = cachedCycles.find(c => c.id === id);
-      if (cycle) {
-        cycle.end_date = end_date;
-        await putIntoStore('cycles', cycle);
+
+      const updatedCycle = cycle ? { ...cycle, end_date } : null;
+
+      // Without the cached cycle there is nothing to encrypt, so an E2EE device
+      // cannot seal this update — refuse rather than PATCH a plaintext date.
+      if (!updatedCycle && isEncryptionEnabled) {
+        notifyEncryptionLocked('encryption-locked');
+        return {
+          success: false,
+          reason: 'encryption-locked',
+          error: 'This period is not available on this device, so it could not be ended securely.'
+        };
+      }
+
+      let payload;
+      try {
+        const sealed = await sealPayload({
+          payload: updatedCycle || { id, end_date },
+          fields: SENSITIVE_CYCLE_FIELDS,
+          encrypt,
+          required: isEncryptionEnabled,
+          unlocked: isUnlocked
+        });
+        // PATCH only needs the row id plus whichever representation applies —
+        // the sealed blob, or the plaintext end_date when E2EE is off. Keeping
+        // this explicit avoids widening the request body.
+        payload = sealed.encrypted
+          ? { id, encrypted_data: sealed.payload.encrypted_data }
+          : { id, end_date };
+      } catch (e) {
+        const failure = toEncryptionFailure(e);
+        if (!failure) throw e;
+        notifyEncryptionLocked(failure.reason);
+        return failure;
+      }
+
+      if (updatedCycle) {
+        await putIntoStore('cycles', updatedCycle);
       }
 
       const isOnline = navigator.onLine;
-      let payload = { id, end_date };
-
-      if (cycle) {
-        try {
-          const encrypted = await encrypt({
-            start_date: cycle.start_date,
-            end_date: cycle.end_date,
-            cycle_length: cycle.cycle_length
-          });
-          payload.encrypted_data = encrypted;
-          delete payload.end_date;
-        } catch (e) {
-          console.error('Failed to encrypt cycle ending', e);
-        }
-      }
 
       if (isOnline) {
         try {
-          const res = await fetch('/api/cycles', {
+          const res = await fetchWithTimeout('/api/cycles', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -467,10 +650,20 @@ export function OfflineProvider({ children }) {
       return { success: true, offline: true };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [encrypt, decrypt, isUnlocked]) // stable reference — methods close over navigator/fetch, not React state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [encrypt, decrypt, isUnlocked, isEncryptionEnabled]) // rebuilt when the encryption state changes; otherwise stable
 
   return (
-    <OfflineContext.Provider value={{ isOffline, pendingSyncCount, isSyncing, syncData, offlineClient }}>
+    <OfflineContext.Provider value={{
+      isOffline,
+      pendingSyncCount,
+      failedSyncItems,
+      isSyncing,
+      syncData,
+      retryFailedSync,
+      discardFailedSync,
+      offlineClient
+    }}>
       {children}
     </OfflineContext.Provider>
   )

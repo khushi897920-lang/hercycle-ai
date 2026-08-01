@@ -53,17 +53,16 @@ export async function GET(request) {
 
     const { data: logs, error: logsError } = await supabaseAdmin
       .from('daily_logs')
-      .select('symptoms')
+      .select('date, symptoms')
       .eq('user_id', userId)
       .order('date', { ascending: false })
-      .limit(30)
+      .limit(90)
 
     if (logsError) {
       logger.error(`Database error fetching logs for user ${userId} PCOD risk:`, logsError.message);
     }
 
-    const allSymptoms = logs?.flatMap(log => log.symptoms || []) || []
-    const risk = calculatePCODRisk(cycles || [], allSymptoms)
+    const risk = calculatePCODRisk(cycles || [], logs || [])
 
     pcodRiskCache.set(cacheKey, risk);
 
