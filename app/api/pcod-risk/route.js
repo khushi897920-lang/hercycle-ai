@@ -4,6 +4,8 @@ import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { aiLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
+import { pcodRiskCache } from '@/lib/cache'
+
 
 export async function GET(request) {
   // ============ RATE LIMITING ============
@@ -30,6 +32,13 @@ export async function GET(request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
+    const cacheKey = `pcod-risk:${userId}`;
+    const cachedRisk = pcodRiskCache.get(cacheKey);
+    if (cachedRisk !== undefined) {
+      logger.info(`Cache hit for PCOD risk assessment for user ${userId}`);
+      return NextResponse.json({ success: true, data: cachedRisk })
+    }
+
     const supabaseAdmin = getSupabaseAdmin()
     const { data: cycles, error: cyclesError } = await supabaseAdmin
       .from('cycles')
@@ -44,17 +53,18 @@ export async function GET(request) {
 
     const { data: logs, error: logsError } = await supabaseAdmin
       .from('daily_logs')
-      .select('symptoms')
+      .select('date, symptoms')
       .eq('user_id', userId)
       .order('date', { ascending: false })
-      .limit(30)
+      .limit(90)
 
     if (logsError) {
       logger.error(`Database error fetching logs for user ${userId} PCOD risk:`, logsError.message);
     }
 
-    const allSymptoms = logs?.flatMap(log => log.symptoms || []) || []
-    const risk = calculatePCODRisk(cycles || [], allSymptoms)
+    const risk = calculatePCODRisk(cycles || [], logs || [])
+
+    pcodRiskCache.set(cacheKey, risk);
 
     logger.info(`Successfully calculated PCOD risk assessment for user ${userId}`);
     return NextResponse.json({ success: true, data: risk })

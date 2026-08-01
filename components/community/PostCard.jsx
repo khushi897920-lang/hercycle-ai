@@ -7,6 +7,7 @@ import { useAuth } from '@clerk/nextjs';
 import { formatDistanceToNow } from 'date-fns';
 import { enUS, hi } from 'date-fns/locale';
 import { ArrowUp, ArrowDown, MessageSquare } from 'lucide-react';
+import fetchWithTimeout from '@/lib/fetch-with-timeout';
 import toast from 'react-hot-toast';
 
 export default function PostCard({ post, locale }) {
@@ -45,7 +46,7 @@ export default function PostCard({ post, locale }) {
 
     try {
       const token = await getToken();
-      const res = await fetch('/api/forum/vote', {
+      const res = await fetchWithTimeout('/api/forum/vote', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +118,7 @@ export default function PostCard({ post, locale }) {
           </p>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5 text-slate-500 text-sm">
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-sm">
               <MessageSquare size={16} />
               <span>{t('reply') || 'Reply'}</span>
             </div>

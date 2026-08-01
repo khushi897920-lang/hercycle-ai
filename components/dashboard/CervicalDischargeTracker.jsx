@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOffline } from '@/lib/OfflineContext';
 import { useTranslations } from 'next-intl';
+import { getTodayISO } from '@/lib/date-utils';
 
 const dischargeOptions = [
   { id: 'none' },
@@ -19,7 +20,7 @@ export default function CervicalDischargeTracker({ selectedDischarge, setSelecte
 
   useEffect(() => {
     const fetchLog = async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayISO();
       const res = await offlineClient.fetchTodayLog(today);
       if (res.success && res.data && res.data.cervical_discharge) {
         setSavedDischarge(res.data.cervical_discharge);

@@ -4,7 +4,13 @@ export default function Footer() {
   const t = useTranslations('footer')
   return (
     <footer>
-      {t('copyright')}
+      {t.rich('copyright', {
+        logo: (chunks) => (
+          <span className="footer-logo" style={{ cursor: 'pointer' }}>
+            {chunks}
+          </span>
+        )
+      })}
     </footer>
   );
 }

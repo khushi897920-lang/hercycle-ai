@@ -20,7 +20,7 @@ const chatPayloadSchema = z.object({
       day: z.number().optional(),
       phase: z.string().max(50).optional()
     }).optional()
-  }).optional()
+  }).nullish()
 })
 
 /**
@@ -67,6 +67,7 @@ async function callGemini(message, systemPrompt) {
   return result.response.text();
 }
 
+
 /**
  * Fallback AI Call: Groq API (llama3-8b-8192)
  */
@@ -107,7 +108,7 @@ async function callGroq(message, systemPrompt) {
 async function getAIResponse(message, systemPrompt) {
   try {
     // 1. Try Gemini first (with timeout)
-    const responseText = await withTimeout(callGemini(message, systemPrompt), TIMEOUT_MS);
+    const responseText = await callGeminiWithRetry(message, systemPrompt);
     return responseText;
   } catch (error) {
     logger.warn(`Gemini API failed (${error.message}). Switching to Groq fallback...`);
@@ -119,6 +120,33 @@ async function getAIResponse(message, systemPrompt) {
     } catch (fallbackError) {
       logger.error('Both Gemini and Groq APIs failed.', fallbackError.message);
       throw new Error('All AI service proxies failed.');
+    }
+  }
+}
+
+async function callGeminiWithRetry(message, systemPrompt) {
+  try {
+    return await withTimeout(callGemini(message, systemPrompt), TIMEOUT_MS);
+  } catch (error) {
+
+    const errorMessage = error?.message || '';
+
+    const shouldRetry =
+      error.message.includes('timed out') ||
+      error.message.includes('503') ||
+      error.message.includes('429');
+
+    if (!shouldRetry) {
+      throw error;
+    }
+
+    logger.warn(`Gemini API attempt 1 failed (${error.message}). Retrying once...`);
+
+    try {
+      return await withTimeout(callGemini(message, systemPrompt), TIMEOUT_MS);
+    } catch (retryError) {
+      logger.warn(`Gemini retry failed (${retryError.message}).`);
+      throw retryError;
     }
   }
 }
@@ -167,6 +195,17 @@ export async function POST(request) {
     const { message, context } = result.data
     language = result.data.language || 'en'
 
+    if (!message || message.trim().length === 0) {
+      return NextResponse.json(
+        {
+          error: "Message content cannot be empty",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     // 3. Fetch User Health Profile for Context Injection
     let userProfile = null;
     try {
@@ -181,14 +220,29 @@ export async function POST(request) {
       logger.warn(`Could not fetch user profile for AI context: ${profileErr.message}`);
     }
 
+    if (userProfile && userProfile.allow_ai_analysis === false) {
+      return NextResponse.json({ success: true, response: 'Privacy mode enabled' });
+    }
+
     let systemPrompt = `You are a helpful menstrual health assistant. Provide empathetic, accurate health guidance.`;
+
+    // Sanitize helper to prevent prompt injection
+    const sanitizeForPrompt = (str, maxLen = 200) => {
+      if (!str) return '';
+      return String(str)
+        .replace(/[\[\]"'`\\]/g, '')  // Remove prompt control characters
+        .replace(/\n/g, ' ')
+        .slice(0, maxLen);
+    };
 
     // 4. Inject Profile Context
     if (userProfile) {
       const conditions = userProfile.known_conditions || [];
-      const ageStr = userProfile.age ? `${userProfile.age} yrs old` : 'unknown age';
-      const weightStr = userProfile.weight_kg ? `${userProfile.weight_kg}kg` : 'unknown weight';
-      const conditionsStr = conditions.length > 0 ? conditions.join(', ') : 'none';
+      const ageStr = userProfile.age ? sanitizeForPrompt(`${userProfile.age} yrs old`) : 'unknown age';
+      const weightStr = userProfile.weight_kg ? sanitizeForPrompt(`${userProfile.weight_kg}kg`) : 'unknown weight';
+      const conditionsStr = conditions.length > 0 
+        ? conditions.map(c => sanitizeForPrompt(c)).join(', ') 
+        : 'none';
       
       systemPrompt += `\n[CONTEXT: User is ${ageStr}, weighs ${weightStr}, conditions: ${conditionsStr}]. Use this context to personalize your response, but do not explicitly repeat their data back to them unless necessary.`;
     }

@@ -41,6 +41,7 @@ export async function POST(request) {
 
   // 5. Handle user.deleted event (idempotency is guaranteed by cascading delete query filters)
   const eventType = evt.type
+  const eventId = svix_id
   logger.info(`Received Clerk webhook event: ${eventType}`);
 
   if (eventType === 'user.created') {
@@ -73,6 +74,25 @@ export async function POST(request) {
 
     try {
       const supabaseAdmin = getSupabaseAdmin()
+
+      // Prevent duplicate processing of retried Clerk webhooks
+const { data: existingEvent } = await supabaseAdmin
+  .from('clerk_webhook_audit')
+  .select('event_id')
+  .eq('event_id', eventId)
+  .maybeSingle();
+
+if (existingEvent) {
+  logger.warn(
+    `Duplicate Clerk webhook ignored. Event ID: ${eventId}`
+  );
+
+  return NextResponse.json({
+    success: true,
+    duplicate: true,
+    message: 'Webhook already processed'
+  });
+}
       
       logger.info(`Webhook user.deleted: Purging database records for user ${clerkUserId}`);
       
@@ -86,6 +106,21 @@ export async function POST(request) {
         logger.error(`Webhook: failed to delete user ${clerkUserId}:`, error.message);
         throw new Error(error.message);
       }
+
+      const { error: auditError } = await supabaseAdmin
+  .from('clerk_webhook_audit')
+  .insert({
+    event_id: eventId,
+    event_type: eventType
+  });
+
+if (auditError) {
+  logger.error(
+    `Webhook: failed to record audit event ${eventId}:`,
+    auditError.message
+  );
+  throw new Error(auditError.message);
+}
 
       logger.info(`Webhook user.deleted: Successfully purged all database records for user ${clerkUserId}`);
       return NextResponse.json({ success: true, message: 'User data purged successfully' })

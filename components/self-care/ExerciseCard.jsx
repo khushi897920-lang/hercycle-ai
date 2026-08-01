@@ -1,22 +1,34 @@
 import React from 'react';
 import Link from 'next/link';
-import { Play } from 'lucide-react';
+import { Play, Heart } from 'lucide-react';
 import { useLocale } from 'next-intl';
 
-export default function ExerciseCard({ exercise }) {
+export default function ExerciseCard({ exercise, isFavorite, onToggleFavorite }) {
   const locale = useLocale();
   return (
-    <Link 
+    <Link
       href={`/${locale}/self-care/${exercise.id}`}
       className="snap-start shrink-0 relative overflow-hidden rounded-3xl w-[280px] h-[200px] group block"
     >
-      <img 
-        src={exercise.image} 
-        alt={exercise.title} 
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggleFavorite?.(exercise.id);
+        }}
+        aria-label={isFavorite ? `Remove ${exercise.title} from favorites` : `Add ${exercise.title} to favorites`}
+        className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center hover:bg-black/50 transition-colors"
+      >
+        <Heart className={`w-5 h-5 transition-colors ${isFavorite ? 'text-pink-500 fill-pink-500' : 'text-white'}`} />
+      </button>
+      <img
+        src={exercise.image}
+        alt={exercise.title}
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
-      
+
       <div className="absolute inset-0 p-5 flex flex-col justify-between">
         <h3 className="text-white font-bold text-xl max-w-[85%] leading-tight drop-shadow-md">
           {exercise.title}

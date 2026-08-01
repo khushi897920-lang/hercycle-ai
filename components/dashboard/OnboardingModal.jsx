@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useAuth } from '@clerk/nextjs'
 import toast from 'react-hot-toast'
 import { createClient } from "@/lib/supabase-client";
+import { addDaysISO, getTodayISO, toISODate } from "@/lib/date-utils";
 
 export default function OnboardingModal({ onComplete, onSkip }) {
   const { userId } = useAuth()
@@ -28,13 +29,9 @@ export default function OnboardingModal({ onComplete, onSkip }) {
         return
       }
 
-      const startDate = new Date(lastPeriodDate)
-      const endDate = new Date(startDate)
-      endDate.setDate(endDate.getDate() + periodLength - 1)
-
-      // MUST be YYYY-MM-DD
-      const periodStart = startDate.toISOString().split('T')[0]
-      const periodEnd = endDate.toISOString().split('T')[0]
+      // MUST be YYYY-MM-DD, in the user's local calendar
+      const periodStart = toISODate(lastPeriodDate)
+      const periodEnd = addDaysISO(lastPeriodDate, periodLength - 1)
 
       const { data, error } = await supabase
         .from('cycles')
@@ -51,7 +48,7 @@ export default function OnboardingModal({ onComplete, onSkip }) {
         const errMsg = error?.message || error?.details || error?.hint || JSON.stringify(error) || 'Unknown error'
         console.error('Insert error details:', {
           message: error?.message,
-          details: error?.details, 
+          details: error?.details,
           hint: error?.hint,
           code: error?.code,
           full: error
@@ -77,11 +74,21 @@ export default function OnboardingModal({ onComplete, onSkip }) {
   }
 
   // Today's date as max for input
-  const today = new Date().toISOString().split('T')[0]
+  const today = getTodayISO()
 
   return (
-    <div className="onboard-overlay" role="dialog" aria-modal="true">
-      <div className="onboard-card">
+    <div
+      className="onboard-overlay"
+      role="dialog"
+      aria-modal="true"
+      style={{ cursor: 'pointer' }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleSkip()
+        }
+      }}
+    >
+      <div className="onboard-card" onClick={(e) => e.stopPropagation()} style={{ cursor: 'default' }}>
         {/* Decorative top */}
         <div className="onboard-header-art">
           <span className="onboard-emoji">🌸</span>

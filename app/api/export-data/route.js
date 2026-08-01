@@ -1,7 +1,7 @@
 import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logger } from '@/lib/logger'
-import { toYMD } from '@/lib/utils'
+import { formatDateForCSV } from '@/lib/utils'
 const archiver = require('archiver')
 
 export const dynamic = 'force-dynamic'
@@ -84,17 +84,17 @@ export async function GET(request) {
         // Format date fields before CSV generation (keep JSON exports as full ISO values)
         const cyclesForCsv = cycles.map(c => ({
           ...c,
-          start_date: toYMD(c.start_date),
-          end_date: toYMD(c.end_date),
+          start_date: formatDateForCSV(c.start_date),
+          end_date: formatDateForCSV(c.end_date),
         }))
         const dailyLogsForCsv = dailyLogs.map(l => ({
           ...l,
-          date: toYMD(l.date),
+          date: formatDateForCSV(l.date),
         }))
 
         // Append CSV files
-        archive.append(generateCsv(cycles), { name: 'cycles.csv' })
-        archive.append(generateCsv(dailyLogs), { name: 'daily_logs.csv' })
+        archive.append(generateCsv(cyclesForCsv), { name: 'cycles.csv' })
+        archive.append(generateCsv(dailyLogsForCsv), { name: 'daily_logs.csv' })
 
         // Finalize the archive (this triggers 'end')
         archive.finalize()
