@@ -1,10 +1,5 @@
-import { useTranslations } from 'next-intl'
-
-export default function FeaturesSection() {
-  const t = useTranslations('features')
-  
   return (
-    <>
+    <div className="pb-12 md:pb-16">
       <h2 className="sec-head">{t('title')}</h2>
       <div className="grid-3">
         <div className="feat-card glass-dim">
@@ -26,6 +21,5 @@ export default function FeaturesSection() {
           <span className="feat-arrow">→</span>
         </div>
       </div>
-    </>
+    </div>
   );
-}

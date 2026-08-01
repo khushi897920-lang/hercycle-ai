@@ -1,4 +1,5 @@
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 const moods = [
   { emoji: '😊', label: 'Happy' },
   { emoji: '😐', label: 'Okay' },
@@ -28,6 +29,23 @@ export default function DailyLogPanel({
   const t = useTranslations('log')
   const tSymp = useTranslations('symptoms')
   const tFlow = useTranslations('flow')
+
+  const [customInput, setCustomInput] = useState('')
+
+  const handleAddCustom = (e) => {
+    e.preventDefault()
+    const trimmed = customInput.trim()
+    if (!trimmed) return
+    if (!selectedSymptoms.includes(trimmed)) {
+      toggleSymptom(trimmed)
+    }
+    setCustomInput('')
+  }
+
+  const baseSymptoms = ['Cramps', 'Headache', 'Bloating', 'Fatigue', 'Acne', 'Nausea']
+  const customSymptoms = selectedSymptoms.filter(s => !baseSymptoms.includes(s))
+  const allDisplaySymptoms = [...baseSymptoms, ...customSymptoms]
+
   return (
     <>
       {/* Symptoms Panel */}
@@ -39,8 +57,10 @@ export default function DailyLogPanel({
         </div>
 
         <div className="symp-grid">
-          {['Cramps', 'Headache', 'Bloating', 'Fatigue', 'Acne', 'Nausea'].map(symptom => {
+          {allDisplaySymptoms.map(symptom => {
             const active = selectedSymptoms.includes(symptom)
+            const isCustom = !baseSymptoms.includes(symptom)
+            const icon = symptomIcons[symptom] || "📌"
 
             return (
               <button
@@ -50,14 +70,51 @@ export default function DailyLogPanel({
                 onClick={() => toggleSymptom(symptom)}
               >
                 <span className="chip-icon">
-                  {symptomIcons[symptom]}
+                  {icon}
                 </span>
 
-                <span>{tSymp(symptom)}</span>
+                <span>{isCustom ? symptom : tSymp(symptom)}</span>
               </button>
             )
           })}
         </div>
+
+        <form onSubmit={handleAddCustom} style={{ display: 'flex', gap: '8px', marginTop: '12px', marginBottom: '8px' }}>
+          <input 
+            type="text" 
+            placeholder="Add custom symptom..." 
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            style={{
+              flex: 1,
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '50px',
+              padding: '8px 16px',
+              color: '#fff',
+              fontSize: '0.85rem',
+              outline: 'none'
+            }}
+          />
+          <button 
+            type="submit"
+            style={{
+              background: 'rgba(232, 82, 126, 0.25)',
+              border: '1px solid rgba(232, 82, 126, 0.4)',
+              borderRadius: '50px',
+              padding: '8px 16px',
+              color: '#fff',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => e.target.style.background = 'rgba(232, 82, 126, 0.4)'}
+            onMouseOut={(e) => e.target.style.background = 'rgba(232, 82, 126, 0.25)'}
+          >
+            Add
+          </button>
+        </form>
 
         <div className="panel-divider" />
 

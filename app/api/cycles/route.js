@@ -4,22 +4,80 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { crudLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
+import { eventBus } from '@/lib/events'
 
-const cyclePostSchema = z.object({
-  id: z.string().uuid('Must be a valid UUID').optional(),
-  start_date: z.string().optional(),
-  end_date: z.string().nullable().optional(),
-  cycle_length: z.number().int().optional(),
-  encrypted_data: z.any().optional()
-})
+/**
+ * ISO date string must be a valid calendar date and must not be in the future.
+ */
+const isoDateNotInFuture = z
+  .string()
+  .min(1, 'Date is required')
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+  .refine(
+    (d) => !isNaN(Date.parse(d)),
+    { message: 'Must be a valid calendar date' }
+  )
+  .refine(
+    (d) => new Date(d) <= new Date(),
+    { message: 'Date cannot be in the future' }
+  );
 
-const cyclePatchSchema = z.object({
-  id: z.string().uuid('Must be a valid UUID'),
-  start_date: z.string().optional(),
-  end_date: z.string().nullable().optional(),
-  cycle_length: z.number().int().optional(),
-  encrypted_data: z.any().optional()
-})
+/**
+ * Physiologically valid cycle length: 15–90 days covers all clinical edge cases
+ * (Polymenorrhea threshold: 21 days; longest documented cycles: ~90 days).
+ */
+const validCycleLength = z
+  .number({ invalid_type_error: 'cycle_length must be a number' })
+  .int('cycle_length must be a whole number')
+  .min(15, 'cycle_length must be at least 15 days')
+  .max(90, 'cycle_length must be no more than 90 days');
+
+const cyclePostSchema = z
+  .object({
+    id: z.string().uuid('Must be a valid UUID').optional(),
+    start_date: isoDateNotInFuture,
+    end_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'end_date must be in YYYY-MM-DD format')
+      .nullable()
+      .optional(),
+    cycle_length: validCycleLength.optional(),
+    encrypted_data: z.any().optional()
+  })
+  .refine(
+    (data) => {
+      if (data.end_date && data.start_date) {
+        return new Date(data.end_date) >= new Date(data.start_date);
+      }
+      return true;
+    },
+    { message: 'end_date must be on or after start_date', path: ['end_date'] }
+  );
+
+const cyclePatchSchema = z
+  .object({
+    id: z.string().uuid('Must be a valid UUID'),
+    start_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'start_date must be in YYYY-MM-DD format')
+      .optional(),
+    end_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'end_date must be in YYYY-MM-DD format')
+      .nullable()
+      .optional(),
+    cycle_length: validCycleLength.optional(),
+    encrypted_data: z.any().optional()
+  })
+  .refine(
+    (data) => {
+      if (data.end_date && data.start_date) {
+        return new Date(data.end_date) >= new Date(data.start_date);
+      }
+      return true;
+    },
+    { message: 'end_date must be on or after start_date', path: ['end_date'] }
+  );
 
 export async function GET(request) {
   // ============ RATE LIMITING ============
@@ -123,6 +181,10 @@ export async function POST(request) {
     }
 
     logger.info(`Successfully added new period cycle for user ${userId}`);
+    
+    // Emit event for cycle update
+    eventBus.emit('cycles:updated', { userId });
+
     return NextResponse.json({ success: true })
   } catch (error) {
     logger.error('Error starting period cycle:', error.message || error);
@@ -187,6 +249,10 @@ export async function PATCH(request) {
     }
 
     logger.info(`Successfully updated period cycle ${id} for user ${userId}`);
+    
+    // Emit event for cycle update
+    eventBus.emit('cycles:updated', { userId });
+
     return NextResponse.json({ success: true })
   } catch (error) {
     logger.error('Error ending period cycle:', error.message || error);

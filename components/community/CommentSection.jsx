@@ -6,6 +6,7 @@ import { useAuth } from '@clerk/nextjs';
 import { formatDistanceToNow } from 'date-fns';
 import { enUS, hi } from 'date-fns/locale';
 import { Send, ArrowUp, ArrowDown } from 'lucide-react';
+import fetchWithTimeout from '@/lib/fetch-with-timeout';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase-client';
 
@@ -58,7 +59,7 @@ export default function CommentSection({ postId, initialComments = [] }) {
     setIsSubmitting(true);
     try {
       const token = await getToken();
-      const res = await fetch('/api/forum/comments', {
+      const res = await fetchWithTimeout('/api/forum/comments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,7 +106,7 @@ export default function CommentSection({ postId, initialComments = [] }) {
 
       try {
         const token = await getToken();
-        const res = await fetch('/api/forum/vote', {
+        const res = await fetchWithTimeout('/api/forum/vote', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -175,6 +176,7 @@ export default function CommentSection({ postId, initialComments = [] }) {
           type="submit"
           disabled={isSubmitting || !newComment.trim()}
           className="absolute bottom-4 right-4 p-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          aria-label={t('submit_comment') || 'Submit comment'}
         >
           <Send size={18} />
         </button>

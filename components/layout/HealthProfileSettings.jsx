@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
 
 const CONDITIONS_OPTIONS = [
   'PCOS',
@@ -30,7 +31,7 @@ export default function HealthProfileSettings() {
   const fetchProfile = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/profile')
+      const res = await fetchWithTimeout('/api/profile')
       const data = await res.json()
       if (data.success && data.profile) {
         setFormData({
@@ -83,7 +84,7 @@ export default function HealthProfileSettings() {
         cycle_goal: formData.cycle_goal
       }
 
-      const res = await fetch('/api/profile', {
+      const res = await fetchWithTimeout('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

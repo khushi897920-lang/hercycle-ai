@@ -1,11 +1,11 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { useUser, UserButton, useClerk } from '@clerk/nextjs'
 import { useOffline } from '@/lib/OfflineContext'
-import { User as ProfileIcon, Bell as BellIcon, Shield as ShieldIcon, HelpCircle as HelpIcon, Languages, Users as UsersIcon, LogOut, X } from 'lucide-react'
+import { User as ProfileIcon, Bell as BellIcon, Shield as ShieldIcon, HelpCircle as HelpIcon, Languages, Users as UsersIcon, LogOut, X, Sun, Moon, Trophy } from 'lucide-react'
 import PrivacySettingsContent from './PrivacySettingsModal'
 import HealthProfileSettings from './HealthProfileSettings'
 import NotificationSettings from './NotificationSettings'
@@ -46,15 +46,50 @@ export default function Navbar() {
   const { signOut } = useClerk()
   const { isOffline, pendingSyncCount, isSyncing } = useOffline()
 
+  const [mounted, setMounted] = useState(false)
+  const [theme, setTheme] = useState('light')
+
+  useEffect(() => {
+    setMounted(true)
+    const savedTheme = localStorage.getItem('theme')
+    if (savedTheme) {
+      setTheme(savedTheme)
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    } else {
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      if (systemPrefersDark) {
+        setTheme('dark')
+        document.documentElement.classList.add('dark')
+      } else {
+        setTheme('light')
+        document.documentElement.classList.remove('dark')
+      }
+    }
+  }, [])
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(nextTheme)
+    localStorage.setItem('theme', nextTheme)
+    if (nextTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }
+
   const role = user?.publicMetadata?.role
   const isPartner = role === 'partner'
 
   const NAV_ITEMS = isPartner ? [] : [
     { key: 'dashboard', label: t('dashboard'), href: `/${locale}` },
-    { key: 'track',     label: t('track'),     href: `/${locale}/track` },
-    { key: 'insights',  label: t('insights'),  href: `/${locale}/insights` },
-    { key: 'community', label: t('community'), href: `/${locale}/community` },
-    { key: 'self-care', label: t('selfCare'),  href: `/${locale}/self-care` },
+    { key: 'track', label: t('track'), href: `/${locale}/track` },
+    { key: 'insights', label: t('insights'), href: `/${locale}/insights` },
+    { key: 'self-care', label: t('selfCare'), href: `/${locale}/self-care` },
   ]
 
   const handleLogToday = () => {
@@ -80,12 +115,16 @@ export default function Navbar() {
       {/* Top Row (Mobile) / Left Side (Desktop) */}
       <div className="flex justify-between items-center w-full md:w-auto">
         <div className="logo text-lg sm:text-2xl flex items-center gap-2">
-          <span>
+          <Link
+            href={`/${locale}`}
+            aria-label="HerCycle AI — Go to Dashboard"
+            style={{ cursor: 'pointer' }}
+          >
             <span className="logo-her">Her</span>
             <span className="logo-cycle">Cycle</span>
             <span className="logo-dot"> AI</span>
             🌸
-          </span>
+          </Link>
           {isOffline && (
             <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-red-500/20 text-red-300 border border-red-500/30 whitespace-nowrap animate-pulse">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
@@ -108,16 +147,16 @@ export default function Navbar() {
             </span>
           )}
         </div>
-        
+
         {/* Hamburger Icon */}
         {NAV_ITEMS.length > 0 && (
-          <button 
+          <button
             className="nav-menu-btn md:hidden text-white/80 hover:text-white p-1"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle Menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {mobileMenuOpen 
+              {mobileMenuOpen
                 ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               }
@@ -163,6 +202,20 @@ export default function Navbar() {
             {t('logToday')}
           </button>
         )}
+
+        <button
+          onClick={toggleTheme}
+          className="p-2 sm:p-2.5 rounded-full hover:bg-white/10 text-white/80 hover:text-white transition-all duration-200 shrink-0 border border-white/10 flex items-center justify-center bg-white/5 shadow-sm"
+          aria-label="Toggle dark mode"
+        >
+          {!mounted ? (
+            <div className="w-5 h-5 sm:w-6 sm:h-6" />
+          ) : theme === 'dark' ? (
+            <Sun className="w-5 h-5 sm:w-6 sm:h-6 text-amber-300 fill-amber-300/10" />
+          ) : (
+            <Moon className="w-5 h-5 sm:w-6 sm:h-6 text-pink-200 fill-pink-200/10" />
+          )}
+        </button>
 
         <UserButton
           userProfileProps={{
@@ -226,6 +279,20 @@ export default function Navbar() {
           }}
         >
           <UserButton.MenuItems>
+            {!isPartner && (
+              <UserButton.Link
+                label={t('challenges')}
+                labelIcon={<Trophy className="w-4 h-4 text-rose-400" />}
+                href={`/${locale}/challenges`}
+              />
+            )}
+            {!isPartner && (
+              <UserButton.Link
+                label={t('community')}
+                labelIcon={<UsersIcon className="w-4 h-4 text-rose-400" />}
+                href={`/${locale}/community`}
+              />
+            )}
             <UserButton.Action
               label="Notification"
               labelIcon={<BellIcon className="w-4 h-4 text-rose-400" />}
@@ -241,7 +308,9 @@ export default function Navbar() {
 
           {!isPartner && (
             <UserButton.UserProfilePage label="Partner Sharing" url="partner-sharing" labelIcon={<UsersIcon className="w-4 h-4" />}>
-              <PartnerSharing />
+              <div className="p-4 sm:p-8 animate-in fade-in duration-300">
+                <PartnerSharing />
+              </div>
             </UserButton.UserProfilePage>
           )}
 

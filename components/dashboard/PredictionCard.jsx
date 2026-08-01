@@ -65,6 +65,45 @@ export default function PredictionCard({ cycleData }) {
       ? '#fbbf24'
       : '#f87171'
 
+  const hasNoCycles = !cycleData?.cycles || cycleData.cycles.length === 0
+
+  // The history has aged past the point where a projection means anything.
+  // Showing a confident date here would be worse than showing nothing:
+  // prolonged amenorrhea is itself a PCOD signal, so the honest answer is to
+  // ask for a recent log rather than to invent a number.
+  const isTooStale = cycleData?.hasEnoughRecentData === false
+  const missedCycles = cycleData?.missedCycles || 0
+
+  if (!hasNoCycles && isTooStale) {
+    return (
+      <div className={`pred-card glass pred-empty ${revealed ? 'pred-revealed' : ''}`}>
+        <div className="pred-sparkle-bar">
+          <span>✨</span>
+          <span className="pred-badge">{t('aiTitle')}</span>
+          <span>✨</span>
+        </div>
+        <h3 className="pred-title">{t('nextCycle')}</h3>
+        <p className="pred-empty-message">
+          {t('staleState', { missed: String(missedCycles) })}
+        </p>
+      </div>
+    )
+  }
+
+  if (hasNoCycles) {
+    return (
+      <div className={`pred-card glass pred-empty ${revealed ? 'pred-revealed' : ''}`}>
+        <div className="pred-sparkle-bar">
+          <span>✨</span>
+          <span className="pred-badge">{t('aiTitle')}</span>
+          <span>✨</span>
+        </div>
+        <h3 className="pred-title">{t('nextCycle')}</h3>
+        <p className="pred-empty-message">{t('emptyState')}</p>
+      </div>
+    )
+  }
+
   return (
     <div className={`pred-card glass ${revealed ? 'pred-revealed' : ''}`}>
       {/* Top sparkle bar */}
@@ -140,7 +179,9 @@ export default function PredictionCard({ cycleData }) {
       </div>
 
       <p className="pred-footer-note">
-        {t('basedOn', { avg: String(avgLen) })}
+        {cycleData?.isStale
+          ? t('staleNote', { missed: String(missedCycles), avg: String(avgLen) })
+          : t('basedOn', { avg: String(avgLen) })}
       </p>
     </div>
   )

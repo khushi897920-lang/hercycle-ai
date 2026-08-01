@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Bot, Sparkles, Send, RefreshCw, User, X, MessageSquare } from 'lucide-react'
+import fetchWithTimeout, { TimeoutError } from '@/lib/fetch-with-timeout'
 import toast from 'react-hot-toast'
 
 // Dynamic suggestion chips per cycle phase
@@ -61,7 +62,7 @@ export default function AIPartnerCoach({ phase = 'Follicular', cycleDay = 1, sym
   const fetchInitialBriefing = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/partner-coach', {
+      const res = await fetchWithTimeout('/api/partner-coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phase, cycleDay, symptoms, query: '' })
@@ -100,7 +101,7 @@ export default function AIPartnerCoach({ phase = 'Follicular', cycleDay = 1, sym
     setIsTyping(true)
 
     try {
-      const res = await fetch('/api/partner-coach', {
+      const res = await fetchWithTimeout('/api/partner-coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phase, cycleDay, symptoms, query: queryText })
@@ -117,7 +118,7 @@ export default function AIPartnerCoach({ phase = 'Follicular', cycleDay = 1, sym
       setMessages((prev) => [...prev, aiMsg])
     } catch (err) {
       console.error(err)
-      toast.error('Failed to get AI answer')
+      toast.error(err instanceof TimeoutError ? err.message : 'Failed to get AI answer')
     } finally {
       setIsTyping(false)
     }
