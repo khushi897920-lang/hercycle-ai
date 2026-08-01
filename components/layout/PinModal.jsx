@@ -63,6 +63,7 @@ export default function PinModal({ onPinSet }) {
               setError('')
             }}
             placeholder="••••••"
+            aria-label="Enter your 6-digit security PIN"
             className="w-full bg-[#3a1c4a] border border-[#e8527e]/40 rounded-xl px-4 py-3 text-center text-2xl tracking-widest text-white focus:outline-none focus:ring-2 focus:ring-[#e8527e]"
             autoFocus
           />

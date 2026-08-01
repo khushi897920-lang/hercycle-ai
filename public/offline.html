@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>You're offline — HerCycle AI</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #3a1030 0%, #1e0c28 60%, #150819 100%);
+      color: #fff;
+      text-align: center;
+    }
+    .card {
+      max-width: 420px;
+      width: 100%;
+    }
+    .emoji {
+      font-size: 56px;
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0 0 12px;
+      color: #ffe3ee;
+    }
+    p {
+      font-size: 15px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.75);
+      margin: 0 0 24px;
+    }
+    button {
+      appearance: none;
+      border: 1px solid rgba(232, 82, 126, 0.4);
+      background: #e8527e;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 12px 28px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    .hint {
+      margin-top: 18px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.45);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="emoji">🌸</div>
+    <h1>You're offline</h1>
+    <p>
+      No internet connection right now, but your cycle and log data is safe
+      on this device. Reconnect any time and HerCycle AI will sync
+      automatically.
+    </p>
+    <button onclick="window.location.reload()">Try again</button>
+    <p class="hint">Already loaded a page before? Go back — it may still be available offline.</p>
+  </div>
+</body>
+</html>

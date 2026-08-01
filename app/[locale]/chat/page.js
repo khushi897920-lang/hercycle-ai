@@ -8,6 +8,7 @@ import ChatAssistant from '@/components/dashboard/ChatAssistant'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { useOffline } from '@/lib/OfflineContext'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
 
 export default function ChatPage() {
   const t = useTranslations('pages.chat')
@@ -49,7 +50,7 @@ export default function ChatPage() {
     setIsTyping(true)
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetchWithTimeout('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMessage, language: locale, context: cycleData }),

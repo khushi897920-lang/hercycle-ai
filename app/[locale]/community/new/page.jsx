@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
+import fetchWithTimeout from '@/lib/fetch-with-timeout';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
@@ -28,7 +29,7 @@ export default function NewPostPage({ params }) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch('/api/forum/categories')
+        const res = await fetchWithTimeout('/api/forum/categories')
         const json = await res.json()
         if (json.success && json.data) {
           setCategories(json.data)
@@ -53,7 +54,7 @@ export default function NewPostPage({ params }) {
     setIsSubmitting(true);
     try {
       const token = await getToken();
-      const res = await fetch('/api/forum/posts', {
+      const res = await fetchWithTimeout('/api/forum/posts', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

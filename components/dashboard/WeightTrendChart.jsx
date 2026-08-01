@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Activity, Scale } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import fetchWithTimeout from '@/lib/fetch-with-timeout'
 import {
   CartesianGrid,
   Legend,
@@ -41,7 +42,7 @@ export default function WeightTrendChart({ refreshKey = 0 }) {
     async function loadEntries() {
       setLoading(true)
       try {
-        const response = await fetch('/api/weight', { cache: 'no-store' })
+        const response = await fetchWithTimeout('/api/weight', { cache: 'no-store' })
         const result = await response.json()
         if (active && response.ok && result.success) {
           setEntries(result.data || [])

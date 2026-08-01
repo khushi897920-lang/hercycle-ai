@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useUser } from '@clerk/nextjs'
 import generateReport from '@/lib/generateReport'
 import { useTranslations, useLocale } from 'next-intl'
 
@@ -56,6 +57,7 @@ function SkeletonRow({ width = '100%' }) {
 export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles = [], recentSymptoms = [] }) {
   // Animate gauge width on mount / data change
   const [gaugeWidth, setGaugeWidth] = useState(0)
+  const { user } = useUser()
   const t = useTranslations('Risk')
   const tFactors = useTranslations('factors')
   const tRec = useTranslations('recommendations')
@@ -219,7 +221,18 @@ export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles
         </p>
       )}
 
-      <button className="export-btn" onClick={() => generateReport({ userName: 'khushji', email: 'khushi79916234@gmail.com', cycles, pcod: pcodRisk, recentSymptoms, locale })}>
+      <button
+        className="export-btn"
+        onClick={() => generateReport({
+          userName: user?.fullName || user?.firstName || 'User',
+          email: user?.primaryEmailAddress?.emailAddress || '',
+          cycles,
+          pcod: pcodRisk,
+          recentSymptoms,
+          locale,
+          currentPhase: label,
+        })}
+      >
         {t('exportDoc')}
       </button>
     </div>

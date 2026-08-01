@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { devLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
+import { toISODate } from '@/lib/date-utils'
 
 const CYCLE_LENGTHS = [28, 27, 29, 28, 28, 27]
 const PERIOD_LENGTHS = [5, 5, 6, 5, 6, 5]
@@ -19,7 +20,7 @@ function addDays(date, n) {
   d.setDate(d.getDate() + n)
   return d
 }
-function fmt(date) { return date.toISOString().split('T')[0] }
+function fmt(date) { return toISODate(date) }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)] }
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5) }
 function flowPattern(day, totalDays) {

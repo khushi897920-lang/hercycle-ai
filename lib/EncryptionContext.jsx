@@ -1,11 +1,23 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { isE2EEEnabled, setE2EEEnabled } from './encryption-policy';
 
 const EncryptionContext = createContext();
 
 export function EncryptionProvider({ children }) {
     const [aesKey, setAesKey] = useState(null);
+
+    // Whether THIS DEVICE has opted into end-to-end encryption. Deliberately
+    // distinct from `isUnlocked`: enabled-but-locked must refuse writes, while
+    // never-enabled may still write plaintext. Conflating the two is what let
+    // the old code silently downgrade every save made before the PIN prompt.
+    const [isEncryptionEnabled, setIsEncryptionEnabled] = useState(false);
+
+    // localStorage is unavailable during SSR, so read the flag after mount.
+    useEffect(() => {
+        setIsEncryptionEnabled(isE2EEEnabled());
+    }, []);
 
     const deriveKey = useCallback(async (pin, salt) => {
         try {
@@ -43,6 +55,10 @@ export function EncryptionProvider({ children }) {
             );
 
             setAesKey(key);
+            // Deriving a key IS the opt-in. From here on, writes on this device
+            // fail closed instead of falling back to plaintext.
+            setE2EEEnabled(true);
+            setIsEncryptionEnabled(true);
             return key;
         } catch (error) {
             console.error("Key derivation failed", error);
@@ -107,8 +123,23 @@ export function EncryptionProvider({ children }) {
         return JSON.parse(decoder.decode(decrypted));
     }, [aesKey]);
 
+    /**
+     * Drops the in-memory key (lock). The device stays opted in, so writes are
+     * refused until the PIN is re-entered rather than silently downgraded.
+     */
     const clearKey = useCallback(() => {
         setAesKey(null);
+    }, []);
+
+    /**
+     * Opts this device out of E2EE entirely. Only meaningful once existing
+     * ciphertext has been migrated — exposed so a future settings screen can
+     * offer it explicitly rather than having it happen by accident.
+     */
+    const disableEncryption = useCallback(() => {
+        setAesKey(null);
+        setE2EEEnabled(false);
+        setIsEncryptionEnabled(false);
     }, []);
 
     return (
@@ -118,6 +149,8 @@ export function EncryptionProvider({ children }) {
                 encrypt,
                 decrypt,
                 clearKey,
+                disableEncryption,
+                isEncryptionEnabled,
                 isUnlocked: !!aesKey
             }}
         >

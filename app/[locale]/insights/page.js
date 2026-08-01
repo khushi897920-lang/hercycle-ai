@@ -14,7 +14,7 @@ import Footer from '@/components/layout/Footer'
 import { useOffline } from '@/lib/OfflineContext'
 import { useTranslations } from 'next-intl'
 import WeightTrendChart from '@/components/dashboard/WeightTrendChart'
-import { toYMD } from '@/lib/utils'
+import { formatDateForCSV } from '@/lib/utils'
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const PINK = '#e8527e'
 const MAUVE = '#9d3f7a'
@@ -137,9 +137,12 @@ export default function InsightsPage() {
   const [cycleData, setCycleData] = useState(null)
   const [pcodRisk, setPcodRisk] = useState(null)
   const [dailyLogs, setDailyLogs] = useState([])
+  const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     if (!isLoaded) return
     if (!isSignedIn) { router.push('/auth/login'); return }
 
@@ -163,9 +166,13 @@ export default function InsightsPage() {
   const totalCycles = cycles.length
   const totalLogs = dailyLogs.length
 
-  const nextDate = cycleData?.nextPeriodDate
-    ? new Date(cycleData.nextPeriodDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
-    : '—'
+  let nextDate = '—'
+  if (cycleData?.nextPeriodDate) {
+    const nextPeriodDateObj = new Date(cycleData.nextPeriodDate)
+    if (!isNaN(nextPeriodDateObj.getTime())) {
+      nextDate = nextPeriodDateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+    }
+  }
 
   const cycleLengthData = cycles
     .slice(0, 6)
@@ -175,7 +182,8 @@ export default function InsightsPage() {
   const symptomCounts = {}
   SYMPTOM_LIST.forEach(s => { symptomCounts[s] = 0 })
   dailyLogs.forEach(log => {
-    const syms = log.symptoms || []
+    if (!log) return
+    const syms = Array.isArray(log.symptoms) ? log.symptoms : []
     syms.forEach(s => {
       const key = SYMPTOM_LIST.find(k => k.toLowerCase() === s.toLowerCase())
       if (key) symptomCounts[key] = (symptomCounts[key] || 0) + 1
@@ -184,7 +192,10 @@ export default function InsightsPage() {
   const symptomFreq = SYMPTOM_LIST.map(s => ({ name: tSymp(s), count: symptomCounts[s] }))
 
   const moodCounts = { '😊': 0, '😐': 0, '😢': 0, '😡': 0 }
-  dailyLogs.forEach(log => { if (log.mood && moodCounts[log.mood] !== undefined) moodCounts[log.mood]++ })
+  dailyLogs.forEach(log => {
+    if (!log) return
+    if (log.mood && moodCounts[log.mood] !== undefined) moodCounts[log.mood]++
+  })
   const moodData = MOOD_EMOJIS.map(emoji => ({
     emoji,
     label: tMood(MOOD_LABELS[emoji]),
@@ -199,7 +210,7 @@ export default function InsightsPage() {
     if (!cycles.length) return
     const header = 'start_date,end_date,cycle_length'
     const rows = cycles.map(c =>
-      `${toYMD(c.start_date) || ''},${toYMD(c.end_date) || ''},${c.cycle_length || ''}`
+      `${formatDateForCSV(c.start_date)},${formatDateForCSV(c.end_date)},${c.cycle_length || ''}`
     )
     const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
@@ -208,6 +219,71 @@ export default function InsightsPage() {
     a.download = 'hercycle-cycles.csv'
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  const riskTier = pcodRisk?.tier || pcodRisk?.label || 'LOW RISK'
+  const riskLevelWord =
+    riskTier === 'HIGH RISK' ? 'High' :
+      riskTier === 'MEDIUM RISK' ? 'Medium' : 'Low'
+
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+  const recentSymptomNames = new Set()
+  dailyLogs.forEach(log => {
+    if (!log || !log.date) return
+    const logDate = new Date(log.date)
+    if (isNaN(logDate.getTime()) || logDate < thirtyDaysAgo) return
+    const syms = Array.isArray(log.symptoms) ? log.symptoms : []
+    syms.forEach(s => {
+      const key = SYMPTOM_LIST.find(k => k.toLowerCase() === s.toLowerCase())
+      if (key) recentSymptomNames.add(tSymp(key))
+    })
+  })
+  const recentSymptomsText = recentSymptomNames.size > 0
+    ? Array.from(recentSymptomNames).join(', ')
+    : t('noSymptomsLogged')
+
+  const handleCopySummary = async () => {
+    const summaryText = `🌸 HerCycle AI Health Summary
+- Avg Cycle Length: ${avgCycle} Days
+- Recent PCOD Risk: ${riskLevelWord}
+- Logged Symptoms (Last 30 Days): ${recentSymptomsText}`
+
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(summaryText)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      } else {
+        const textArea = document.createElement('textarea')
+        textArea.value = summaryText
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        textArea.style.top = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        const successful = document.execCommand('copy')
+        document.body.removeChild(textArea)
+        if (successful) {
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
+        } else {
+          throw new Error('Fallback copy failed')
+        }
+      }
+    } catch (err) {
+      console.error('Could not copy summary', err)
+    }
+  }
+
+  if (!mounted) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0e0314' }}>
+        <p style={{ color: TEXT_FAINT }}>Loading Insights...</p>
+      </div>
+    )
   }
 
   return (
@@ -232,7 +308,24 @@ export default function InsightsPage() {
             }}>
               <BarChart2 size={28} color="white" strokeWidth={1.5} />
             </div>
-            <h1 style={{ margin: 0, fontSize: '2rem' }}>{t('title')}</h1>
+            <h1 style={{ margin: 0, fontSize: '2rem', flex: 1 }}>{t('title')}</h1>
+            
+            {!loading && (
+              <div style={{
+                background: 'rgba(233,30,140,0.15)',
+                border: `1px solid ${PINK}55`,
+                padding: '6px 14px',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}>
+                <RefreshCw size={16} color={PINK} />
+                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ffb3d9' }}>
+                  {t('avgCycle')}: {avgCycle}d
+                </span>
+              </div>
+            )}
           </div>
           <p style={{ color: TEXT_FAINT, marginBottom: '2rem' }}>
             {t('subtitle')}
@@ -268,16 +361,23 @@ export default function InsightsPage() {
               label={t('pcodRisk')}
               value={loading ? '…' : `${pcodRisk?.score ?? 0}/100`}
               sub={
-                pcodRisk?.tier === 'HIGH RISK' ? tRisk('high')
-                  : pcodRisk?.tier === 'MEDIUM RISK' ? tRisk('med')
+                riskTier === 'HIGH RISK' ? tRisk('high')
+                  : riskTier === 'MEDIUM RISK' ? tRisk('med')
                     : tRisk('low')
               }
             />
           </div>
 
-          {/* ── CSV Export Button ── */}
-          {cycles.length > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+          {/* ── Export Buttons ── */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+            <button
+              onClick={handleCopySummary}
+              className="export-btn"
+              style={{ width: 'auto', padding: '10px 20px' }}
+            >
+              {copied ? `✅ ${t('copiedSummary')}` : `📋 ${t('copySummary')}`}
+            </button>
+            {cycles.length > 0 && (
               <button
                 onClick={handleCSVExport}
                 className="export-btn"
@@ -285,9 +385,8 @@ export default function InsightsPage() {
               >
                 ⬇️ {t('exportCsv')}
               </button>
-            </div>
-          )}
-
+            )}
+          </div>
 
           {/* ── Cycle Length Trend ── */}
           <SectionCard

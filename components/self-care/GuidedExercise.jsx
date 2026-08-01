@@ -84,8 +84,8 @@ export default function GuidedExercise({ exercise, onFinish }) {
         {!imageLoaded && (
           <div className="absolute inset-0 bg-white/5 animate-pulse"></div>
         )}
-        <img
-          key={currentStep}
+          <img
+          key={`${currentStep}-${pose.image}`}
           src={pose.image}
           alt={pose.title}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'
@@ -103,6 +103,7 @@ export default function GuidedExercise({ exercise, onFinish }) {
 
         <button
           onClick={onFinish}
+          aria-label="Close guided exercise"
           className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white hover:bg-black/60 transition-colors"
         >
           <X className="w-5 h-5" />
@@ -127,6 +128,7 @@ export default function GuidedExercise({ exercise, onFinish }) {
         <button
           onClick={handlePrev}
           disabled={currentStep === 0}
+          aria-label="Previous step"
           className="p-3 rounded-full hover:bg-white/10 text-white disabled:opacity-30 transition-colors"
         >
           <ChevronLeft className="w-8 h-8" />
@@ -134,6 +136,7 @@ export default function GuidedExercise({ exercise, onFinish }) {
 
         <button
           onClick={togglePlay}
+          aria-label={isPlaying ? 'Pause' : 'Play'}
           className="w-16 h-16 rounded-full bg-[#e8527e] hover:bg-pink-400 flex items-center justify-center shadow-lg transition-transform active:scale-95 text-white"
         >
           {isPlaying ? (
@@ -145,6 +148,7 @@ export default function GuidedExercise({ exercise, onFinish }) {
 
         <button
           onClick={handleNext}
+          aria-label="Next step"
           className="p-3 rounded-full hover:bg-white/10 text-white transition-colors"
         >
           <ChevronRight className="w-8 h-8" />

@@ -5,6 +5,7 @@
     "insights": "Insights",
     "chat": "Chat",
     "community": "Community",
+    "challenges": "Challenges",
     "selfCare": "Self Care",
     "offline": "Offline",
     "syncPending": "Sync Pending",
@@ -56,7 +57,10 @@
     "confidence": "Prediction Confidence",
     "avgCycle": "Avg Cycle (days)",
     "cyclesRecorded": "Cycles Recorded",
-    "basedOn": "Based on your {avg}-day average cycle."
+    "basedOn": "Based on your {avg}-day average cycle.",
+    "emptyState": "Log your first cycle to see predictions",
+    "staleState": "We haven't seen a period logged in a while, so we can't predict your next cycle yet. Log your most recent period to get predictions again.",
+    "staleNote": "Estimated from your {avg}-day average, but {missed} expected cycle(s) haven't been logged — accuracy is reduced."
   },
   "features": {
     "title": "Core Features",
@@ -74,7 +78,8 @@
     "sectionLog": "Log Your Day",
     "sectionChat": "Health Assistant",
     "sectionPCOD": "PCOD Risk Assessment",
-    "sectionPrediction": "Smart Prediction"
+    "sectionPrediction": "Smart Prediction",
+    "pcosAssessments": "PCOS Assessments"
   },
   "cycle": {
     "period": "Period",
@@ -134,7 +139,10 @@
       "symptomEmpty": "No daily logs yet. Log your symptoms on the Track page or dashboard.",
       "moodTitle": "😊 Mood Distribution",
       "moodEmpty": "Log your mood daily to see your mood distribution here.",
-      "exportCsv": "Export Cycles CSV"
+      "exportCsv": "Export Cycles CSV",
+      "copySummary": "Copy Text Summary",
+      "copiedSummary": "Copied! Paste it in WhatsApp",
+      "noSymptomsLogged": "None logged"
     },
     "track": {
       "title": "Cycle Tracker",
@@ -146,7 +154,7 @@
     }
   },
   "footer": {
-    "copyright": "© 2025 HerCycle AI. Built with 💕 for women's health tech."
+    "copyright": "© 2025 <logo>HerCycle AI</logo>. Built with 💕 for women's health tech."
   },
   "symptoms": {
     "Cramps": "Cramps",
@@ -211,6 +219,7 @@
     "comment_posted": "Comment posted anonymously!",
     "comments": "Comments",
     "write_comment": "Share your thoughts anonymously...",
+    "submit_comment": "Submit comment",
     "no_comments": "No comments yet. Be the first to share!",
     "cat_pcod-advice_name": "PCOD Advice",
     "cat_pcod-advice_desc": "Share tips and ask questions about managing PCOD.",
@@ -309,7 +318,10 @@
   },
   "SelfCare": {
     "title": "Self Care",
+    "yourFavorites": "Your Favorites",
     "crampRelief": "Menstrual cramps relief",
+    "searchPlaceholder": "Search exercises or soundscapes...",
+    "noResults": "No exercises or soundscapes found.",
     "soundscapes": "Soundscapes",
     "start": "Start",
     "next": "Next",
@@ -320,6 +332,133 @@
     "sessionComplete": "Session Complete!",
     "greatJob": "Great job taking time for yourself today.",
     "backToSelfCare": "Back to Self Care",
-    "step": "Step {current} of {total}"
+    "step": "Step {current} of {total}",
+    "recommendedForYou": "Recommended for You",
+    "recExercises": "Recommended Exercises",
+    "recSoundscapes": "Recommended Soundscapes",
+    "hydrationTitle": "Hydration Tracker",
+    "glasses": "{count} / {target} Glasses",
+    "addGlass": "Add a glass of water",
+    "removeGlass": "Remove a glass of water",
+    "hydrationGoalReached": "🎉 Daily goal reached! Great job staying hydrated.",
+    "hydrationTips": {
+      "menstrual": "Drinking warm water during your period helps relax uterine muscles and reduce cramp severity.",
+      "follicular": "Steady hydration supports your rising energy levels during this phase.",
+      "ovulation": "Extra water intake can help ease bloating around ovulation.",
+      "luteal": "Staying hydrated can reduce bloating and help stabilize mood before your period.",
+      "default": "Staying hydrated helps relax muscles and reduce water retention."
+    },
+    "cycleTipTitle": "Today's Cycle Tip",
+    "cycleTips": {
+      "menstrual": {
+        "title": "🩸 Menstrual",
+        "tip1": "Stay hydrated and prioritize gentle movement.",
+        "tip2": "Rest when your body needs it.",
+        "tip3": "A heating pad may help relieve cramps."
+      },
+      "follicular": {
+        "title": "🌸 Follicular",
+        "tip1": "Your energy is increasing.",
+        "tip2": "Great time to try new activities.",
+        "tip3": "Maintain balanced nutrition."
+      },
+      "ovulation": {
+        "title": "🌼 Ovulation",
+        "tip1": "Energy may be at its peak.",
+        "tip2": "Great day for light exercise.",
+        "tip3": "Stay hydrated."
+      },
+      "luteal": {
+        "title": "🍂 Luteal",
+        "tip1": "Prioritize quality sleep.",
+        "tip2": "Gentle stretching may reduce tension.",
+        "tip3": "Magnesium-rich foods may help."
+      },
+      "general": {
+        "title": "🌷 General Wellness",
+        "tip1": "Track your cycle to unlock personalized tips.",
+        "tip2": "Stay hydrated and get enough rest.",
+        "tip3": "Gentle movement supports your body every day."
+      }
+    }
+  },
+  "Challenges": {
+    "title": "Today's Challenges",
+    "yourBadges": "Your Badges",
+    "badgeEarned": "Badge Earned!",
+    "loading": "Loading challenges..."
+  },
+  "PcosSymptomProfile": {
+    "cardTitle": "PCOS Symptom Profile Assessment",
+    "cardDesc": "Assess your specific symptom pattern and likelihood of common PCOS phenotypes.",
+    "takeQuiz": "Take Assessment",
+    "disclaimerTitle": "Disclaimer",
+    "disclaimerText": "This assessment is for educational purposes only. It is NOT a medical diagnosis and should not replace professional medical advice.",
+    "startAssessment": "Start Assessment",
+    "progressTitle": "PCOS Symptom Profile",
+    "questionOf": "Question {current} of {total}",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "next": "Next",
+    "viewResults": "View Results",
+    "resultsTitle": "Assessment Results",
+    "symptomLikelihood": "Estimated PCOS Symptom Likelihood",
+    "likelihood": "Likelihood",
+    "confidenceTitle": "Confidence",
+    "confidenceExplanation": "This represents how strongly your answers align with the identified pattern.",
+    "matchingProfile": "Closest Matching Profile",
+    "nextStepsTitle": "Suggested Next Steps",
+    "educationalDisclaimer": "This score is an educational estimate based on your answers. It is NOT a medical diagnosis. Always display a disclaimer explaining that only a qualified healthcare professional can diagnose PCOS.",
+    "retakeAssessment": "Retake Quiz",
+    "close": "Close",
+    "questions": {
+      "q1": "Are your menstrual cycles irregular (e.g., fewer than 9 periods a year or cycles longer than 35 days)?",
+      "q2": "Do you have persistent or severe acne that doesn't respond well to standard treatments?",
+      "q3": "Do you have excess facial or body hair (hirsutism), such as on your chin, upper lip, chest, or abdomen?",
+      "q4": "Have you noticed scalp hair thinning or hair loss (androgenetic alopecia)?",
+      "q5": "Have you experienced unexplained weight gain or do you find it unusually difficult to lose weight?",
+      "q6": "Have you noticed patches of skin darkening (acanthosis nigricans), especially around your neck, armpits, or groin?",
+      "q7": "Do you have a family history of diabetes, gestational diabetes, or insulin resistance?",
+      "q8": "Have you ever been diagnosed with multiple ovarian cysts by an ultrasound?",
+      "q9": "Have you ever been diagnosed with insulin resistance or prediabetes?"
+    },
+    "profiles": {
+      "low": {
+        "name": "Low Symptom Pattern",
+        "explanation": "Based on your answers, you exhibit a low likelihood of common PCOS symptoms. Your cycle and androgen indicators appear balanced.",
+        "step1": "Keep tracking your cycle regularly.",
+        "step2": "Maintain a balanced diet and active lifestyle.",
+        "step3": "Consult a doctor if you develop new symptoms."
+      },
+      "ir": {
+        "name": "Insulin Resistance Pattern",
+        "explanation": "Your symptom pattern strongly aligns with the metabolic phenotype of PCOS, which is closely linked to insulin resistance. This pattern often involves insulin processing difficulties, weight changes, and skin darkening.",
+        "step1": "Discuss insulin levels and HbA1c tests with your healthcare provider.",
+        "step2": "Focus on a diet rich in fiber and low glycemic index foods.",
+        "step3": "Incorporate regular physical activity to help improve insulin sensitivity."
+      },
+      "andro": {
+        "name": "Hyperandrogenic Pattern",
+        "explanation": "Your answers point toward a hyperandrogenic profile, characterized by elevated androgen levels. Symptoms like acne, excess hair growth, and scalp hair thinning are typical of this pattern.",
+        "step1": "Consult an endocrinologist or dermatologist to discuss hormone levels.",
+        "step2": "Explore anti-androgen treatments or topical options for acne.",
+        "step3": "Focus on anti-inflammatory nutrition and stress management."
+      },
+      "ovul": {
+        "name": "Ovulatory Pattern",
+        "explanation": "Your symptoms indicate a pattern primarily related to ovulation and cycle irregularity, along with potential cysts, without high metabolic or androgenic indicators.",
+        "step1": "Discuss irregular cycles and ultrasound findings with a gynecologist.",
+        "step2": "Monitor ovulation tracking to understand cycle details.",
+        "step3": "Support cycle regularity with stress reduction and optimal sleep."
+      },
+      "mixed": {
+        "name": "Mixed Pattern",
+        "explanation": "You exhibit symptoms across multiple patterns, indicating a mixed PCOS symptom profile (often combining metabolic, androgenic, and cycle factors).",
+        "step1": "Schedule a comprehensive evaluation with a gynecologist or endocrinologist.",
+        "step2": "Consider a full hormone panel and insulin response tests.",
+        "step3": "Adopt a holistic lifestyle approach targeting both metabolic and hormonal health."
+      }
+    }
   }
 }

@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import DailyLogPanel from './DailyLogPanel'
 import { useOffline } from '@/lib/OfflineContext'
 import { findCycleContainingDate } from '@/lib/cycle-helpers'
+import { isEncryptionFailure } from '@/lib/encryption-policy'
 
 export default function DayLogDrawer({ isOpen, onClose, selectedDate, cycleData, onSaved }) {
   const tTrack = useTranslations('pages.track')
@@ -48,13 +49,9 @@ export default function DayLogDrawer({ isOpen, onClose, selectedDate, cycleData,
 
   const handleStartPeriod = async () => {
     if (!selectedDate) return
-    const startDate = new Date(selectedDate)
-    const endDate = new Date(startDate)
-    endDate.setDate(endDate.getDate() + 5)
-    
     const cycleDataObj = {
-      start_date: startDate.toISOString().split('T')[0],
-      end_date: endDate.toISOString().split('T')[0],
+      start_date: toISODate(selectedDate),
+      end_date: addDaysISO(selectedDate, 5),
       cycle_length: cycleData?.averageCycleLength || 28,
     }
 
@@ -113,9 +110,13 @@ export default function DayLogDrawer({ isOpen, onClose, selectedDate, cycleData,
       const data = await offlineClient.saveDailyLog(logData)
       if (data.success) {
         if (data.offline) toast.success('💾 Saved offline! Will sync when online.')
-        else toast.success('✅ Log saved!')
+        else toast.success('Log saved!')
         onSaved()
         onClose()
+      } else if (isEncryptionFailure(data)) {
+        // Fail-closed: keep the drawer open so the entry can be re-saved once
+        // the PIN has been entered.
+        toast.error(`🔒 ${data.error}`)
       } else {
         toast.error(`❌ Failed to save: ${data.message || data.error || 'Unknown error'}`)
       }
