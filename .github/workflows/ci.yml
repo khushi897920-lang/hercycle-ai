@@ -67,6 +67,9 @@ jobs:
             echo "GROQ_API_KEY=ci-groq" >> $GITHUB_ENV
           fi
 
+      - name: Run Linter
+        run: npm run lint
+
       - name: Run build
         run: npm run build
 

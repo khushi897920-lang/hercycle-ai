@@ -8,6 +8,7 @@
         "dev:webpack": "next dev --webpack --hostname 0.0.0.0 --port 3000",
         "build": "next build",
         "start": "next start",
+        "lint": "next lint",
         "test:e2e": "node e2e/run_all_e2e.mjs"
     },
     "dependencies": {
@@ -84,6 +85,8 @@
     "devDependencies": {
         "autoprefixer": "^10.4.19",
         "dotenv": "^17.4.2",
+        "eslint": "^8.57.0",
+        "eslint-config-next": "14.2.3",
         "globals": "^17.7.0",
         "postcss": "^8",
         "tailwindcss": "^3.4.1"
