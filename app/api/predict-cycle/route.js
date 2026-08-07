@@ -44,7 +44,7 @@ export async function POST(request) {
 
     // Gracefully handle new users / empty cycle history using default prediction baseline
     const cycleHistory = Array.isArray(cycles) ? cycles : []
-    const prediction = predictNextPeriod(cycleHistory)
+    const prediction = await predictNextPeriod(cycleHistory)
 
     if (!cycleHistory.length) {
       logger.info(`New user or empty cycle history for user ${userId}; returned default baseline prediction`);

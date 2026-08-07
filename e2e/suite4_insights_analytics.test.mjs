@@ -22,7 +22,7 @@ describe('Suite 4: Health Insights, Analytics & Data Export Flow', () => {
     ];
     const symptoms = ['Acne', 'Bloating', 'Fatigue'];
 
-    const risk = calculatePCODRisk(cycles, symptoms);
+    const risk = await calculatePCODRisk(cycles, symptoms);
     assert(typeof risk.score === 'number', 'Risk score should be a number');
     assert(risk.score >= 0 && risk.score <= 100, 'Risk score should be between 0 and 100');
   });

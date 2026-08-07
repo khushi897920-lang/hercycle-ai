@@ -5,7 +5,7 @@ import { Bell, Heart, Mail, Sparkles, Check, CheckCheck, Clock, ShieldAlert, Dro
 import { useUser } from '@clerk/nextjs'
 import toast from 'react-hot-toast'
 import { getPrimaryPartnerNudges, getSharedInsights } from '@/lib/actions/partner'
-import { requestNotificationPermission, getNotificationPermissionStatus, sendDeviceNotification } from '@/lib/utils/notifications'
+import { requestNotificationPermission, getNotificationPermissionStatus, sendDeviceNotification, PUSH_STATES } from '@/lib/utils/notifications'
 import NotificationPreferences from '@/components/settings/NotificationPreferences'
 
 export default function NotificationSettings() {
@@ -40,14 +40,29 @@ export default function NotificationSettings() {
   }, [])
 
   const handleEnableDevicePush = async () => {
-    const status = await requestNotificationPermission()
-    setDevicePermission(status)
-    if (status === 'granted') {
+    // requestNotificationPermission now reports whether the subscription
+    // actually reached the server, not just whether the browser prompt was
+    // accepted. The two are not the same thing: this flow used to show a
+    // success toast whenever permission was granted, while the subscription
+    // was failing to save every single time.
+    const { state, permission, message } = await requestNotificationPermission()
+    setDevicePermission(permission)
+
+    if (state === PUSH_STATES.ENABLED) {
       toast.success('Device push notifications enabled! 🔔')
-      sendDeviceNotification('HerCycle AI Notifications Active 🌸', 'You will now receive instant lock screen & push alerts for love notes & period updates!')
-    } else if (status === 'denied') {
-      toast.error('Notification permission was blocked in browser settings.')
+      // A local notification, shown by this tab. Kept as immediate feedback,
+      // but only now that it follows a subscription we know was stored — on
+      // its own it demonstrates nothing about background push.
+      sendDeviceNotification(
+        'HerCycle AI Notifications Active 🌸',
+        'You will now receive instant lock screen & push alerts for love notes & period updates!'
+      )
+      return
     }
+
+    // Every other state gets the specific reason rather than silence. A
+    // dismissed prompt in particular used to produce no feedback at all.
+    toast.error(message)
   }
 
   const loadNotificationsFeed = async () => {

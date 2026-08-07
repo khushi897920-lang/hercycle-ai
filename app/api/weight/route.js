@@ -5,10 +5,9 @@ import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { crudLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
+import { isoCalendarDate } from '@/lib/date-schemas'
 
-const dateSchema = z
-  .string({ required_error: 'recorded_date is required', invalid_type_error: 'recorded_date must be a string' })
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'recorded_date must be in YYYY-MM-DD format')
+const dateSchema = isoCalendarDate({ label: 'recorded_date' })
 
 const weightEntrySchema = z.object({
   recorded_date: dateSchema,

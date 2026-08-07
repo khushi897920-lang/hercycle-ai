@@ -14,7 +14,9 @@ import Footer from '@/components/layout/Footer'
 import { useOffline } from '@/lib/OfflineContext'
 import { useTranslations } from 'next-intl'
 import WeightTrendChart from '@/components/dashboard/WeightTrendChart'
+import SymptomPhaseInsights from '@/components/dashboard/SymptomPhaseInsights'
 import { formatDateForCSV } from '@/lib/utils'
+import { normaliseRiskResult } from '@/lib/pcod-risk-result'
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const PINK = '#e8527e'
 const MAUVE = '#9d3f7a'
@@ -124,6 +126,15 @@ const CustomTooltip = ({ active, payload, label }) => {
 const axisProps = { tick: { fill: 'rgba(255,255,255,0.75)', fontSize: 12 } }
 const gridProps = { strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }
 
+// Formats a YYYY-MM-DD cycle start date into a compact "day month" label,
+// e.g. "2026-07-03" -> "3 Jul". Parsing is anchored to local midnight to avoid
+// the UTC offset shift that `new Date("YYYY-MM-DD")` introduces.
+function formatStartDate(value) {
+  const d = new Date(`${value}T00:00:00`)
+  if (isNaN(d.getTime())) return value || ''
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function InsightsPage() {
   const t = useTranslations('pages.insights')
@@ -174,10 +185,15 @@ export default function InsightsPage() {
     }
   }
 
+// Last 12 cycles, rendered oldest -> newest. The x-axis uses each cycle's
+  // start date so users can spot how cycle length varies over time.
   const cycleLengthData = cycles
-    .slice(0, 6)
+    .slice(0, 12)
     .reverse()
-    .map((c, i) => ({ name: `C${i + 1}`, days: c.cycle_length || 28 }))
+    .map(c => ({
+      name: formatStartDate(c.start_date),
+      days: c.cycle_length || 28,
+    }))
 
   const symptomCounts = {}
   SYMPTOM_LIST.forEach(s => { symptomCounts[s] = 0 })
@@ -221,10 +237,15 @@ export default function InsightsPage() {
     URL.revokeObjectURL(url)
   }
 
-  const riskTier = pcodRisk?.tier || pcodRisk?.label || 'LOW RISK'
+  // `null` when there is no assessment. This used to default to 'LOW RISK',
+  // which turned every missing or unrecognised payload into a reassuring
+  // reading — in the stat card, and in the summary users copy and share.
+  const riskResult = normaliseRiskResult(pcodRisk)
+  const riskTier = riskResult?.tier ?? null
   const riskLevelWord =
     riskTier === 'HIGH RISK' ? 'High' :
-      riskTier === 'MEDIUM RISK' ? 'Medium' : 'Low'
+      riskTier === 'MEDIUM RISK' ? 'Medium' :
+        riskTier === 'LOW RISK' ? 'Low' : 'Not available'
 
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -362,11 +383,12 @@ export default function InsightsPage() {
             <StatCard
               icon={<span style={{ fontSize: '1.75rem', lineHeight: 1 }}>🩺</span>}
               label={t('pcodRisk')}
-              value={loading ? '…' : `${pcodRisk?.score ?? 0}/100`}
+              value={loading ? '…' : riskResult ? `${riskResult.score}/100` : '—'}
               sub={
                 riskTier === 'HIGH RISK' ? tRisk('high')
                   : riskTier === 'MEDIUM RISK' ? tRisk('med')
-                    : tRisk('low')
+                    : riskTier === 'LOW RISK' ? tRisk('low')
+                      : tRisk('unavailableBadge')
               }
             />
           </div>
@@ -495,6 +517,17 @@ export default function InsightsPage() {
               </ResponsiveContainer>
             )}
           </SectionCard>
+
+          {/* ── Symptom patterns by cycle phase ──
+              Sits directly after the frequency chart on purpose: it answers the
+              question that chart raises. "Cramps: 34" is a count; this is where
+              in the cycle those 34 actually landed. */}
+          <SymptomPhaseInsights
+            dailyLogs={dailyLogs}
+            cycles={cycles}
+            averageCycleLength={avgCycle}
+            loading={loading}
+          />
 
           {/* ── Mood Distribution ── */}
           <SectionCard

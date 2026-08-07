@@ -9,6 +9,7 @@ import { Send, ArrowUp, ArrowDown } from 'lucide-react';
 import fetchWithTimeout from '@/lib/fetch-with-timeout';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase-client';
+import { renderStoredAlias } from '@/lib/alias-display';
 
 // Create once at module level — stable reference, no new object on every render
 const supabase = createClient();
@@ -140,7 +141,7 @@ export default function CommentSection({ postId, initialComments = [] }) {
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">{comment.author_alias}</span>
+            <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">{renderStoredAlias(comment.author_alias)}</span>
             <span className="text-xs text-slate-400">•</span>
             <span className="text-xs text-slate-400">{formatDistanceToNow(new Date(comment.created_at), {
               addSuffix: true,

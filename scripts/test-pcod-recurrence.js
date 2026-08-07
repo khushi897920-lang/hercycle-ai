@@ -7,7 +7,7 @@ function assert(condition, message) {
   }
 }
 
-function runTests() {
+async function runTests() {
   console.log('Running PCOD Risk Engine Recurrence Mapping Tests...\n');
 
   const mockCycles = [
@@ -19,7 +19,7 @@ function runTests() {
   // Test 1: Flat string array backward compatibility
   {
     const symptoms = ['acne', 'fatigue', 'bloating'];
-    const res = calculatePCODRisk(mockCycles, symptoms);
+    const res = await calculatePCODRisk(mockCycles, symptoms);
     assert(res.score === 25, `Expected score 25, got ${res.score}`);
     assert(res.tier === 'LOW RISK', `Expected LOW RISK, got ${res.tier}`);
     assert(res.factors.includes('Multiple PCOD-related symptoms reported'), 'Expected multiple symptoms factor');
@@ -33,7 +33,7 @@ function runTests() {
       { date: '2026-06-15', symptoms: ['acne', 'fatigue'] },
       { date: '2026-05-10', symptoms: ['acne', 'bloating'] }
     ];
-    const res = calculatePCODRisk(mockCycles, dailyLogs);
+    const res = await calculatePCODRisk(mockCycles, dailyLogs);
     assert(res.score === 35, `Expected score 35, got ${res.score}`);
     assert(res.tier === 'MEDIUM RISK', `Expected MEDIUM RISK, got ${res.tier}`);
     assert(res.factors.some(f => f.includes('High symptom recurrence') || f.includes('Persistent recurrence')), 'Expected high symptom recurrence factor');
@@ -46,7 +46,7 @@ function runTests() {
       { date: '2026-07-20', symptoms: ['acne'] },
       { date: '2026-02-01', symptoms: ['acne', 'fatigue', 'bloating', 'headache', 'hirsutism'] } // >90 days old
     ];
-    const res = calculatePCODRisk(mockCycles, dailyLogs);
+    const res = await calculatePCODRisk(mockCycles, dailyLogs);
     // Only 1 symptom within 90 days -> 10 points score
     assert(res.score === 10, `Expected score 10 for recent log only, got ${res.score}`);
     assert(res.tier === 'LOW RISK', `Expected LOW RISK, got ${res.tier}`);
@@ -61,7 +61,7 @@ function runTests() {
       { date: '2026-07-15', symptoms: ['acne'] },
       { date: '2026-07-10', symptoms: ['acne'] }
     ];
-    const res = calculatePCODRisk(mockCycles, dailyLogs);
+    const res = await calculatePCODRisk(mockCycles, dailyLogs);
     assert(res.score === 20, `Expected score 20, got ${res.score}`);
     assert(res.factors.some(f => f.includes('Recurring PCOD symptom pattern')), 'Expected recurring pattern factor');
     console.log('✅ Test 4 Passed: Single highly recurring symptom pattern detected');
@@ -80,7 +80,7 @@ function runTests() {
       { date: '2026-06-15', symptoms: ['acne', 'fatigue', 'hirsutism'] },
       { date: '2026-05-10', symptoms: ['acne', 'weight gain'] }
     ];
-    const res = calculatePCODRisk(irregularCycles, dailyLogs);
+    const res = await calculatePCODRisk(irregularCycles, dailyLogs);
     // Cycle stdDev/range: +35 (20 irregularity + 15 range)
     // Symptoms: +35
     // Total score = 70 (capped at 85)

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { X, ChevronLeft, ChevronRight, RotateCcw, AlertTriangle, Sparkles } from 'lucide-react'
+import useModalA11y from '@/lib/a11y/useModalA11y'
 
 const QUESTIONS = [
   {
@@ -44,6 +45,10 @@ const QUESTIONS = [
 export default function PcosQuizModal({ onClose }) {
   const [step, setStep] = useState(0) // 0 = disclaimer, 1..7 = questions, 8 = results
   const [answers, setAnswers] = useState({}) // { [id]: boolean }
+
+  const { containerRef, backdropRef, onBackdropMouseDown, onBackdropClick } = useModalA11y({
+    onClose,
+  })
 
   const handleSelectAnswer = (val) => {
     const currentQuestion = QUESTIONS[step - 1]
@@ -95,19 +100,40 @@ export default function PcosQuizModal({ onClose }) {
   }
 
   const currentQuestion = step >= 1 && step <= 7 ? QUESTIONS[step - 1] : null
-  const progressPercent = step >= 1 && step <= 7 ? (step / QUESTIONS.length) * 100 : 0
+  const progressPercent = step >= 1 && step <= 7 ? (step / (QUESTIONS.length + 1)) * 100 : step === 8 ? 100 : 0
   const isAnswered = currentQuestion ? answers[currentQuestion.id] !== undefined : false
 
+  // The heading changes with the step, so the accessible name is taken from
+  // whichever heading is currently rendered rather than from a fixed id.
+  const titleId = step === 0 ? 'pcos-quiz-disclaimer-title'
+    : step === 8 ? 'pcos-quiz-results-title'
+      : 'pcos-quiz-question-title'
+
   return (
-    <div className="onboard-overlay" style={{ zIndex: 1000 }} role="dialog" aria-modal="true">
-      <div className="onboard-card relative px-6 md:px-8 py-10 max-w-lg w-full">
+    <div
+      ref={backdropRef}
+      className="onboard-overlay"
+      style={{ zIndex: 1000 }}
+      onMouseDown={onBackdropMouseDown}
+      onClick={onBackdropClick}
+    >
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="onboard-card relative px-6 md:px-8 py-10 max-w-lg w-full focus:outline-none"
+      >
         {/* Close Button */}
         <button
+          type="button"
           onClick={onClose}
+          data-modal-close=""
           className="absolute top-4 right-4 text-white/50 hover:text-white/80 transition-colors p-1.5 rounded-full hover:bg-white/5"
-          aria-label="Close"
+          aria-label="Close the PCOS screening quiz"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5" aria-hidden="true" />
         </button>
 
         {/* STEP 0: Disclaimer */}
@@ -116,7 +142,7 @@ export default function PcosQuizModal({ onClose }) {
             <div className="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mb-4">
               <AlertTriangle className="w-6 h-6 text-amber-300" />
             </div>
-            <h2 className="onboard-title text-2xl mb-4 font-bold text-white">Disclaimer</h2>
+            <h2 id="pcos-quiz-disclaimer-title" className="onboard-title text-2xl mb-4 font-bold text-white">Disclaimer</h2>
             <p className="text-white/85 text-sm leading-relaxed mb-8">
               This screening quiz is for educational purposes only. It is <strong>NOT</strong> a medical diagnosis and should not replace professional medical advice.
             </p>
@@ -138,7 +164,14 @@ export default function PcosQuizModal({ onClose }) {
               <span>Question {step} of {QUESTIONS.length}</span>
             </div>
             {/* Progress bar */}
-            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-8">
+            <div
+              className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-8"
+              role="progressbar"
+              aria-valuemin={1}
+              aria-valuemax={QUESTIONS.length}
+              aria-valuenow={step}
+              aria-valuetext={`Question ${step} of ${QUESTIONS.length}`}
+            >
               <div
                 className="h-full bg-gradient-to-r from-rose-500 to-pink-500 transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
@@ -146,13 +179,15 @@ export default function PcosQuizModal({ onClose }) {
             </div>
 
             {/* Question Text */}
-            <h3 className="text-white font-bold text-lg md:text-xl leading-snug mb-8 min-h-[4rem] flex items-center justify-center">
+            <h3 id="pcos-quiz-question-title" className="text-white font-bold text-lg md:text-xl leading-snug mb-8 min-h-[4rem] flex items-center justify-center">
               {currentQuestion.text}
             </h3>
 
             {/* Yes/No Options */}
-            <div className="flex gap-4 mb-10">
+            <div className="flex gap-4 mb-10" role="group" aria-labelledby="pcos-quiz-question-title">
               <button
+                type="button"
+                aria-pressed={answers[currentQuestion.id] === true}
                 onClick={() => handleSelectAnswer(true)}
                 className={`flex-1 py-4 rounded-2xl border text-sm font-semibold transition-all ${
                   answers[currentQuestion.id] === true
@@ -163,6 +198,8 @@ export default function PcosQuizModal({ onClose }) {
                 Yes
               </button>
               <button
+                type="button"
+                aria-pressed={answers[currentQuestion.id] === false}
                 onClick={() => handleSelectAnswer(false)}
                 className={`flex-1 py-4 rounded-2xl border text-sm font-semibold transition-all ${
                   answers[currentQuestion.id] === false
@@ -201,12 +238,12 @@ export default function PcosQuizModal({ onClose }) {
             <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center mb-3">
               <Sparkles className="w-5 h-5 text-pink-300" />
             </div>
-            <h2 className="onboard-title text-2xl font-bold text-white mb-1">Quiz Results</h2>
+            <h2 id="pcos-quiz-results-title" className="onboard-title text-2xl font-bold text-white mb-1">Quiz Results</h2>
             <p className="text-white/60 text-xs tracking-wide uppercase mb-4">Estimated PCOS Symptom Likelihood</p>
 
             {/* Circular Gauge */}
             <div className="relative w-32 h-32 mx-auto my-4 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90">
+              <svg className="w-full h-full transform -rotate-90" aria-hidden="true" focusable="false">
                 <circle
                   cx="64"
                   cy="64"
@@ -235,9 +272,9 @@ export default function PcosQuizModal({ onClose }) {
             </div>
 
             {/* Interpretation */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 my-4 max-w-sm w-full">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 my-4 max-w-sm w-full" role="status">
               <p className="text-white text-sm font-medium leading-relaxed">
-                {interpretationText}
+                Estimated likelihood {totalScore} percent. {interpretationText}
               </p>
             </div>
 

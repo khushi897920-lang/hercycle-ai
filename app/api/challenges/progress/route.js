@@ -5,6 +5,8 @@ import { crudLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
 import { CHALLENGES, BADGES } from '@/lib/challenges-data'
+import { resolveRequestDay } from '@/lib/request-day'
+import { calculateCurrentStreak } from '@/lib/challenge-streaks'
 
 // const progressSchema = z.object({
 //   challenge_type: z.enum(['water', 'stretch', 'mood']),
@@ -40,7 +42,11 @@ export async function POST(request) {
 
     const { challenge_type, increment } = result.data
     const target = CHALLENGES[challenge_type].target
-    const today = new Date().toISOString().slice(0, 10)
+    // The caller's calendar day. Recording against the server's UTC day meant a
+    // user in UTC+5:30 logging at 02:00 wrote to yesterday's row — and if that
+    // day was already complete, `Math.min(existing + increment, target)`
+    // discarded the increment with no feedback at all.
+    const today = resolveRequestDay(request)
     const supabaseAdmin = getSupabaseAdmin()
 
     const { data: existing, error: fetchError } = await supabaseAdmin
@@ -81,7 +87,7 @@ export async function POST(request) {
 
     let newlyEarnedBadges = []
     if (justCompleted) {
-      newlyEarnedBadges = await checkAndAwardBadges(supabaseAdmin, userId)
+      newlyEarnedBadges = await checkAndAwardBadges(supabaseAdmin, userId, today)
     }
 
     logger.info(`Successfully updated ${challenge_type} progress for user ${userId}`)
@@ -95,7 +101,7 @@ export async function POST(request) {
   }
 }
 
-async function checkAndAwardBadges(supabaseAdmin, userId) {
+async function checkAndAwardBadges(supabaseAdmin, userId, today) {
   const { data: allProgress } = await supabaseAdmin
     .from('challenge_progress')
     .select('challenge_type, completed, date')
@@ -105,7 +111,7 @@ async function checkAndAwardBadges(supabaseAdmin, userId) {
   const stats = {
     totalCompletions: allProgress?.length || 0,
     waterCompletions: allProgress?.filter((p) => p.challenge_type === 'water').length || 0,
-    streak: calculateStreak(allProgress || []),
+    streak: calculateCurrentStreak(allProgress || [], today),
   }
 
   const { data: existingBadges } = await supabaseAdmin.from('user_badges').select('badge_key').eq('user_id', userId)
@@ -118,16 +124,3 @@ async function checkAndAwardBadges(supabaseAdmin, userId) {
   return toAward.map((b) => b.key)
 }
 
-function calculateStreak(completedRows) {
-  const dates = [...new Set(completedRows.map((r) => r.date))].sort().reverse()
-  let streak = 0
-  let cursor = new Date()
-  for (const d of dates) {
-    const expected = cursor.toISOString().slice(0, 10)
-    if (d === expected) {
-      streak++
-      cursor.setDate(cursor.getDate() - 1)
-    } else break
-  }
-  return streak
-}

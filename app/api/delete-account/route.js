@@ -1,10 +1,23 @@
 import { getAuthUserId } from '@/lib/clerk-server'
 import { clerkClient } from '@clerk/nextjs/server'
 import { logger } from '@/lib/logger'
+import { crudLimiter } from '@/lib/rateLimiter'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request) {
+  // ============ RATE LIMITING ============
+  try {
+    await crudLimiter.check(request)
+  } catch (rateLimitError) {
+    logger.warn(`[Rate Limit] Delete account endpoint: ${rateLimitError.message}`)
+    return new Response(JSON.stringify({ error: 'Too many requests, please slow down.' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+  // =======================================
+
   try {
     const userId = await getAuthUserId()
     if (!userId) {

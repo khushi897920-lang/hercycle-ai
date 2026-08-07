@@ -5,9 +5,13 @@ import { crudLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
 import { eventBus } from '@/lib/events'
+import { isoCalendarDate } from '@/lib/date-schemas'
 
 const logPostSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
+  // Shape alone is not enough: the old `/^\d{4}-\d{2}-\d{2}$/` accepted
+  // "2026-02-31" and "2026-13-45", and this route answered 200 for a day that
+  // does not exist.
+  date: isoCalendarDate({ label: 'date' }),
   symptoms: z.array(z.string()).optional(),
   mood: z.string().nullable().optional(),
   flow: z.string().nullable().optional(),

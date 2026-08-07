@@ -68,7 +68,7 @@ export default async function RootLayout({ children, params }) {
 
   return (
     <ClerkProvider clockSkewInMs={30000}>
-      <html lang={locale}>
+      <html lang={locale} suppressHydrationWarning>
         <head>
           <link rel="apple-touch-icon" href="/icon-192.png" />
           <link rel="apple-touch-icon" sizes="152x152" href="/icon-192.png" />

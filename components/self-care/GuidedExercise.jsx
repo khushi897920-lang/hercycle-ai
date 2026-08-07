@@ -17,6 +17,13 @@ export default function GuidedExercise({ exercise, onFinish }) {
     setImageLoaded(false);
   }, [currentStep]);
 
+  // Cached images can be `complete` before React attaches onLoad, which would
+  // otherwise leave the pose stuck at opacity-0 (the fade flicker). Mark it
+  // ready immediately if the browser already finished loading it.
+  const handleImageReady = (el) => {
+    if (el && el.complete) setImageLoaded(true);
+  };
+
   useEffect(() => {
     let timer;
     if (isPlaying && timeLeft > 0 && !isCompleted) {
@@ -88,9 +95,11 @@ export default function GuidedExercise({ exercise, onFinish }) {
           key={`${currentStep}-${pose.image}`}
           src={pose.image}
           alt={pose.title}
+          loading="eager"
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
           onLoad={() => setImageLoaded(true)}
+          ref={handleImageReady}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80"></div>
 

@@ -9,6 +9,7 @@ import CommentSection from '@/components/community/CommentSection';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { ArrowLeft, User } from 'lucide-react';
+import { renderStoredAlias } from '@/lib/alias-display';
 
 export const revalidate = 60;
 
@@ -55,7 +56,7 @@ export default async function PostPage({ params }) {
           <div className="flex items-center gap-3 mb-4 text-sm text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-4">
             <div className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
               <User size={14} />
-              {post.author_alias}
+              {renderStoredAlias(post.author_alias)}
             </div>
             <span>•</span>
             <time dateTime={post.created_at}>

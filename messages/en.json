@@ -11,7 +11,24 @@
     "syncPending": "Sync Pending",
     "syncing": "Syncing",
     "logToday": "Log Today",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "syncFailed": "Not saved"
+  },
+  "SyncFailures": {
+    "title": "{count} change(s) could not be saved",
+    "subtitle": "These were logged on this device but never reached the server. Retry them, or discard them if you no longer need them.",
+    "retry": "Retry",
+    "retry_all": "Retry all {count}",
+    "discard": "Discard",
+    "discard_confirm": "Discard permanently?",
+    "discard_yes": "Yes, discard",
+    "discard_cancel": "Keep it",
+    "dismiss_panel": "Hide failed changes",
+    "edit_count": "{count} edits to the same entry",
+    "reason_rejected": "The server rejected this change, so retrying it as-is will not help",
+    "reason_gave_up": "We tried several times and could not reach the server",
+    "reason_unknown": "This change could not be saved",
+    "action_required_note": "{count} of these need a decision from you — a retry alone will not clear them."
   },
   "Hero": {
     "title1": "Listen to your",
@@ -48,7 +65,11 @@
     "noData": "No Data",
     "logTwoCycles": "Log at least 2 cycles to see your risk assessment.",
     "currentCycles": "You currently have {count} cycle(s) recorded.",
-    "noRiskFactors": "No risk factors identified."
+    "noRiskFactors": "No risk factors identified.",
+    "unavailableBadge": "Unavailable",
+    "unavailableBackend": "We couldn't run your risk assessment right now.",
+    "unavailableOffline": "Your risk assessment needs a connection, and there's nothing saved on this device yet.",
+    "unavailableSub": "This is not a result — please try again in a moment."
   },
   "Prediction": {
     "aiTitle": "AI Prediction",
@@ -249,7 +270,20 @@
     "cat_mental-health_desc": "A safe space to talk about emotional well-being and stress.",
     "cat_general-discussion_name": "General Discussion",
     "cat_general-discussion_desc": "Talk about anything else related to women's health.",
-    "reply": "Reply"
+    "reply": "Reply",
+    "all_categories": "All discussions",
+    "sort_label": "Sort discussions",
+    "sort_newest": "Newest first",
+    "sort_oldest": "Oldest first",
+    "clear_search": "Clear search",
+    "search_too_short": "Type at least 2 characters to search",
+    "searching": "Searching…",
+    "showing_results": "Showing {count} matching discussions",
+    "load_more": "Load more discussions",
+    "loading": "Loading…",
+    "load_failed": "Could not load discussions.",
+    "retry": "Try again",
+    "open_category_page": "Open this category as its own page"
   },
   "PartnerSharing": {
     "title": "Partner Sharing",
@@ -361,6 +395,18 @@
     "addGlass": "Add a glass of water",
     "removeGlass": "Remove a glass of water",
     "hydrationGoalReached": "🎉 Daily goal reached! Great job staying hydrated.",
+    "hydrationSettings": "Hydration Settings",
+    "hydrationSettingsClose": "Save & Close",
+    "dailyGoalLabel": "Daily Goal",
+    "cupCapacityLabel": "Cup Capacity",
+    "cupStyleLabel": "Cup Style",
+    "cupStyleGlass": "Glass",
+    "cupStyleTumbler": "Tumbler",
+    "cupStyleBottle": "Bottle",
+    "hydrationProgress": "{current} / {total} ml",
+    "glassAriaFilled": "Glass {n} — {ml} ml — filled. Click to unfill.",
+    "glassAriaEmpty": "Glass {n} — {ml} ml — empty. Click to fill up to here.",
+    "openHydrationSettings": "Open hydration settings",
     "hydrationTips": {
       "menstrual": "Drinking warm water during your period helps relax uterine muscles and reduce cramp severity.",
       "follicular": "Steady hydration supports your rising energy levels during this phase.",
@@ -451,6 +497,22 @@
         "tip2": "Stay hydrated and get enough rest.",
         "tip3": "Gentle movement supports your body every day."
       }
+    },
+    "checklistTitle": "Daily Checklist",
+    "checklistProgress": "{done} / {total} Completed",
+    "checklistAllDone": "🎉 All tasks done! Take a moment to celebrate yourself.",
+    "checklistAddPlaceholder": "Add a custom task...",
+    "checklistAdd": "Add",
+    "checklistEdit": "Edit task",
+    "checklistSave": "Save",
+    "checklistCancel": "Cancel",
+    "checklistDelete": "Delete task",
+    "checklistToggle": "Toggle {label}",
+    "checklistTask": {
+      "drinkWater": "💧 Drink Water",
+      "stretch": "🧘 Stretch",
+      "healthyMeal": "🥗 Eat a Healthy Meal",
+      "sleep": "😴 Get Enough Sleep"
     }
   },
   "Challenges": {
@@ -547,5 +609,29 @@
     "saveBtn": "Save Changes",
     "savedSuccess": "Hydration reminder schedule saved! 💧",
     "savedError": "Failed to save reminder settings."
+  },
+  "SymptomPhases": {
+    "title": "Symptom Patterns by Cycle Phase",
+    "subtitle": "Where in your cycle each symptom actually shows up — adjusted for how many days you logged in each phase.",
+    "loading": "Analysing your logs…",
+    "needMoreTitle": "Not enough logged days yet",
+    "needMoreDays": "Log {count} more day(s) to start seeing phase patterns.",
+    "needMorePhases": "Keep logging across the whole cycle, not just during your period, so phases can be compared.",
+    "needMoreOccurrences": "{count} more log(s) of this symptom needed before a pattern can be shown.",
+    "noSymptoms": "No symptoms logged in this period yet.",
+    "none": "none",
+    "daysCount": "{count} days",
+    "loggedTimes": "logged {count} times",
+    "finding": "You logged {symptom} about {lift}× more often during your {phase} phase than across the rest of your cycle.",
+    "evenlySpread": "{symptom} is spread fairly evenly across your cycle — no clear phase pattern.",
+    "barLabel": "Distribution of {symptom} across cycle phases: {breakdown}",
+    "phase_menstrual": "menstrual",
+    "phase_follicular": "follicular",
+    "phase_ovulation": "ovulation",
+    "phase_luteal": "luteal",
+    "confidence_high": "Strong evidence",
+    "confidence_moderate": "Some evidence",
+    "confidence_low": "Early signal",
+    "disclaimer": "These are patterns in what you logged, not a medical finding. Share them with a clinician rather than acting on them alone."
   }
 }

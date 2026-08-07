@@ -8,6 +8,7 @@ import {
   sendDeviceNotification,
   getNotificationPermissionStatus,
 } from '@/lib/utils/notifications'
+import { getTodayISO } from '@/lib/date-utils'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -72,7 +73,10 @@ function calcEstimatedReminders(startTime, endTime, repeatMinutes) {
 function getTodayWaterCount() {
   try {
     const saved = JSON.parse(localStorage.getItem(WATER_KEY))
-    const today = new Date().toISOString().slice(0, 10)
+    // The user's calendar day, not the UTC one — reading the UTC day here reset
+    // the water counter at 05:30 in the morning for the app's primary market
+    // and mid-afternoon for users in the Pacific.
+    const today = getTodayISO()
     if (saved && saved.date === today) return saved.count
   } catch (_) {}
   return 0

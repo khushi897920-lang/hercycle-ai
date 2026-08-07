@@ -4,16 +4,7 @@ import { useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import generateReport from '@/lib/generateReport'
 import { useTranslations, useLocale } from 'next-intl'
-
-// ── Tier normalization ────────────────────────────────────────────────────────
-// Accepts both "MEDIUM RISK" (label) and "MEDIUM" (tier) from the API
-function normalizeLabel(raw) {
-  if (!raw) return 'LOW RISK'
-  const up = raw.toUpperCase()
-  if (up.includes('HIGH'))   return 'HIGH RISK'
-  if (up.includes('MED'))    return 'MEDIUM RISK'
-  return 'LOW RISK'
-}
+import { RISK_UNAVAILABLE_REASONS, normaliseRiskResult } from '@/lib/pcod-risk-result'
 
 // ── Tier → visual tokens ──────────────────────────────────────────────────────
 const TIER_TOKENS = {
@@ -54,29 +45,58 @@ function SkeletonRow({ width = '100%' }) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles = [], recentSymptoms = [] }) {
+export default function PCODRiskCard({ pcodRisk, unavailableReason = null, loading, cycleCount = 0, cycles = [], recentSymptoms = [] }) {
   // Animate gauge width on mount / data change
   const [gaugeWidth, setGaugeWidth] = useState(0)
+  const [exporting, setExporting] = useState(false)
   const { user } = useUser()
   const t = useTranslations('Risk')
   const tFactors = useTranslations('factors')
   const tRec = useTranslations('recommendations')
   const locale = useLocale()
 
-  const label          = normalizeLabel(pcodRisk?.label || pcodRisk?.tier)
-  const score          = pcodRisk?.score  ?? 0
-  const factors        = pcodRisk?.factors ?? []
-  const recommendation = pcodRisk?.recommendation ?? ''
+  // A payload that does not validate is treated as absent. It used to be
+  // coerced into "LOW RISK" by the old normalizeLabel default, which meant an
+  // error payload and a genuine low-risk assessment rendered identically.
+  const result         = normaliseRiskResult(pcodRisk)
+  const label          = result?.tier ?? null
+  const score          = result?.score ?? 0
+  const factors        = result?.factors ?? []
+  const recommendation = result?.recommendation ?? ''
   const tokens         = TIER_TOKENS[label] ?? TIER_TOKENS['LOW RISK']
 
   useEffect(() => {
-    if (!loading && pcodRisk) {
+    if (!loading && result) {
       // Slight delay so CSS transition fires visibly after paint
       const t = setTimeout(() => setGaugeWidth(score), 120)
       return () => clearTimeout(t)
     }
     setGaugeWidth(0)
-  }, [loading, pcodRisk, score])
+  }, [loading, result, score])
+
+  // generateReport awaits the Devanagari font before it draws anything, so the
+  // click handler has to await it too. Firing and forgetting meant a font
+  // fetch or a jsPDF failure surfaced as an unhandled rejection and a button
+  // that appeared to do nothing at all.
+  const handleExport = async () => {
+    if (exporting) return
+    setExporting(true)
+    try {
+      await generateReport({
+        userName: user?.fullName || user?.firstName || 'User',
+        email: user?.primaryEmailAddress?.emailAddress || '',
+        cycles,
+        pcod: result,
+        recentSymptoms,
+        locale,
+        currentPhase: label,
+      })
+    } catch (error) {
+      console.error('Failed to generate the doctor report', error)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   // ── Loading skeleton ────────────────────────────────────────────────────────
   if (loading) {
@@ -101,8 +121,51 @@ export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles
     )
   }
 
+  // ── Assessment could not be run ────────────────────────────────────────────
+  // Distinct from the "not enough data yet" state below: here we genuinely do
+  // not know, and saying so is the only honest option. The card must not fall
+  // back to a tier, because the whole point of this screening is to surface a
+  // risk the user has not noticed.
+  if (!result && unavailableReason) {
+    const isOffline = unavailableReason === RISK_UNAVAILABLE_REASONS.OFFLINE
+
+    return (
+      <div className="risk-card glass">
+        <div className="risk-header">
+          <div>
+            <h3>{t('title')}</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-faint)', marginTop: 4 }}>
+              {t('riskSub')}
+            </p>
+          </div>
+          <div className="risk-badge" style={{
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            color: 'var(--text-faint)',
+          }}>
+            {t('unavailableBadge')}
+          </div>
+        </div>
+
+        <div className="risk-empty-state" role="status">
+          <div className="risk-empty-icon">⚠️</div>
+          <p className="risk-empty-msg">
+            {isOffline ? t('unavailableOffline') : t('unavailableBackend')}
+          </p>
+          <p className="risk-empty-sub">
+            {t('unavailableSub')}
+          </p>
+        </div>
+
+        <button className="export-btn" disabled style={{ opacity: 0.4 }}>
+          {t('exportDoc')}
+        </button>
+      </div>
+    )
+  }
+
   // ── Empty / insufficient data fallback ─────────────────────────────────────
-  if (!pcodRisk || cycleCount < 2) {
+  if (!result || cycleCount < 2) {
     return (
       <div className="risk-card glass">
         <div className="risk-header">
@@ -223,15 +286,8 @@ export default function PCODRiskCard({ pcodRisk, loading, cycleCount = 0, cycles
 
       <button
         className="export-btn"
-        onClick={() => generateReport({
-          userName: user?.fullName || user?.firstName || 'User',
-          email: user?.primaryEmailAddress?.emailAddress || '',
-          cycles,
-          pcod: pcodRisk,
-          recentSymptoms,
-          locale,
-          currentPhase: label,
-        })}
+        disabled={exporting}
+        onClick={handleExport}
       >
         {t('exportDoc')}
       </button>

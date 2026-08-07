@@ -14,6 +14,11 @@ import {
   planNextAttempt,
 } from './sync-queue'
 import fetchWithTimeout, { TimeoutError } from './fetch-with-timeout'
+import {
+  RISK_UNAVAILABLE_REASONS,
+  normaliseRiskResult,
+  riskUnavailable,
+} from './pcod-risk-result'
 import toast from 'react-hot-toast'
 import {
   toEncryptionFailure,
@@ -391,7 +396,7 @@ export function OfflineProvider({ children }) {
             // One atomic clear+repopulate, no interleaved awaits.
             await cacheRecords('cycles', cycles);
 
-            const prediction = predictNextPeriod(sortByStartDateDesc(cycles));
+            const prediction = await predictNextPeriod(sortByStartDateDesc(cycles));
             return {
               success: true,
               data: {
@@ -409,7 +414,7 @@ export function OfflineProvider({ children }) {
 
       const cachedCycles = await getAllFromStore('cycles');
       const sortedCycles = sortByStartDateDesc(cachedCycles);
-      const prediction = predictNextPeriod(sortedCycles);
+      const prediction = await predictNextPeriod(sortedCycles);
 
       return {
         success: true,
@@ -487,11 +492,15 @@ export function OfflineProvider({ children }) {
           const res = await fetchWithTimeout('/api/pcod-risk');
           if (res.ok) {
             const data = await res.json();
-            if (data.success) {
-              localStorage.setItem('pcod_risk_cache', JSON.stringify(data.data));
+            const result = normaliseRiskResult(data?.data);
+            if (data?.success && result) {
+              localStorage.setItem('pcod_risk_cache', JSON.stringify(result));
+              return { success: true, data: result };
             }
-            return data;
           }
+          // A non-2xx response (the server now answers 503 when it could not
+          // assess) falls through to the local paths below rather than being
+          // returned as a result.
         } catch (e) {
           console.warn('Fetch PCOD risk failed, calculating locally/falling back to cache', e);
         }
@@ -500,26 +509,26 @@ export function OfflineProvider({ children }) {
       try {
         const cachedCycles = await getAllFromStore('cycles');
         const cachedLogs = await getAllFromStore('daily_logs');
-        const allSymptoms = cachedLogs.flatMap(log => log.symptoms || []);
 
         if (cachedCycles.length > 0) {
-          const localRisk = calculatePCODRisk(cachedCycles, allSymptoms);
-          return { success: true, data: localRisk };
+          const localRisk = normaliseRiskResult(await calculatePCODRisk(cachedCycles, cachedLogs));
+          if (localRisk) return { success: true, data: localRisk };
         }
       } catch (e) {
         console.error('Local PCOD calculation failed:', e);
       }
 
-      const cached = localStorage.getItem('pcod_risk_cache');
-      if (cached) {
-        return { success: true, data: JSON.parse(cached) };
+      try {
+        const cachedRisk = normaliseRiskResult(JSON.parse(localStorage.getItem('pcod_risk_cache')));
+        if (cachedRisk) return { success: true, data: cachedRisk };
+      } catch (e) {
+        console.warn('Cached PCOD risk payload is unreadable, ignoring it.', e);
       }
 
-      return {
-        success: false,
-        error: 'Offline, no cached data',
-        data: { score: 25, label: 'LOW RISK', factors: [], recommendation: 'Offline mode active.' }
-      };
+      // No fabricated result. This used to return a hard-coded score of 25 and
+      // "LOW RISK" whenever the device was offline with nothing cached, and the
+      // dashboard rendered it as a genuine assessment.
+      return riskUnavailable(RISK_UNAVAILABLE_REASONS.OFFLINE);
     },
 
     saveDailyLog: async (log) => {

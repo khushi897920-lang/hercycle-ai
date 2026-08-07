@@ -11,7 +11,24 @@
     "syncPending": "सिंक बाकी",
     "syncing": "सिंक हो रहा है",
     "logToday": "आज लॉग करें",
-    "signOut": "साइन आउट"
+    "signOut": "साइन आउट",
+    "syncFailed": "सहेजा नहीं गया"
+  },
+  "SyncFailures": {
+    "title": "{count} बदलाव सहेजे नहीं जा सके",
+    "subtitle": "ये इस डिवाइस पर दर्ज हुए थे लेकिन सर्वर तक कभी नहीं पहुँचे। इन्हें दोबारा भेजें, या ज़रूरत न हो तो हटा दें।",
+    "retry": "पुनः प्रयास",
+    "retry_all": "सभी {count} पुनः भेजें",
+    "discard": "हटाएँ",
+    "discard_confirm": "स्थायी रूप से हटाएँ?",
+    "discard_yes": "हाँ, हटाएँ",
+    "discard_cancel": "रहने दें",
+    "dismiss_panel": "विफल बदलाव छिपाएँ",
+    "edit_count": "एक ही प्रविष्टि में {count} बदलाव",
+    "reason_rejected": "सर्वर ने इस बदलाव को अस्वीकार किया, इसलिए इसे ज्यों का त्यों दोबारा भेजने से मदद नहीं मिलेगी",
+    "reason_gave_up": "हमने कई बार कोशिश की पर सर्वर तक नहीं पहुँच सके",
+    "reason_unknown": "यह बदलाव सहेजा नहीं जा सका",
+    "action_required_note": "इनमें से {count} के लिए आपका निर्णय चाहिए — केवल पुनः प्रयास से ये हल नहीं होंगे।"
   },
   "Hero": {
     "title1": "अपने शरीर की",
@@ -48,7 +65,11 @@
     "noData": "डेटा नहीं",
     "logTwoCycles": "अपना जोखिम मूल्यांकन देखने के लिए कम से कम 2 चक्र लॉग करें।",
     "currentCycles": "आपके पास अभी {count} चक्र दर्ज हैं।",
-    "noRiskFactors": "कोई जोखिम कारक नहीं मिला।"
+    "noRiskFactors": "कोई जोखिम कारक नहीं मिला।",
+    "unavailableBadge": "उपलब्ध नहीं",
+    "unavailableBackend": "हम अभी आपका जोखिम मूल्यांकन नहीं कर सके।",
+    "unavailableOffline": "जोखिम मूल्यांकन के लिए कनेक्शन चाहिए, और इस डिवाइस पर अभी कुछ सहेजा नहीं गया है।",
+    "unavailableSub": "यह कोई परिणाम नहीं है — कृपया थोड़ी देर बाद पुनः प्रयास करें।"
   },
   "Prediction": {
     "aiTitle": "AI पूर्वानुमान",
@@ -249,7 +270,20 @@
     "cat_mental-health_desc": "भावनात्मक कल्याण और तनाव के बारे में बात करने के लिए एक सुरक्षित स्थान।",
     "cat_general-discussion_name": "सामान्य चर्चा",
     "cat_general-discussion_desc": "महिलाओं के स्वास्थ्य से संबंधित किसी भी अन्य विषय पर बात करें।",
-    "reply": "जवाब दें"
+    "reply": "जवाब दें",
+    "all_categories": "सभी चर्चाएँ",
+    "sort_label": "चर्चाएँ क्रमबद्ध करें",
+    "sort_newest": "नवीनतम पहले",
+    "sort_oldest": "सबसे पुराने पहले",
+    "clear_search": "खोज साफ़ करें",
+    "search_too_short": "खोजने के लिए कम से कम 2 अक्षर लिखें",
+    "searching": "खोज रहे हैं…",
+    "showing_results": "{count} मेल खाती चर्चाएँ दिखाई जा रही हैं",
+    "load_more": "और चर्चाएँ लोड करें",
+    "loading": "लोड हो रहा है…",
+    "load_failed": "चर्चाएँ लोड नहीं हो सकीं।",
+    "retry": "पुनः प्रयास करें",
+    "open_category_page": "इस श्रेणी को अलग पेज पर खोलें"
   },
   "PartnerSharing": {
     "title": "पार्टनर शेयरिंग",
@@ -361,6 +395,18 @@
     "addGlass": "एक गिलास पानी जोड़ें",
     "removeGlass": "एक गिलास पानी हटाएं",
     "hydrationGoalReached": "🎉 दैनिक लक्ष्य पूरा हुआ! हाइड्रेटेड रहने के लिए बहुत बढ़िया।",
+    "hydrationSettings": "हाइड्रेशन सेटिंग्स",
+    "hydrationSettingsClose": "सहेजें और बंद करें",
+    "dailyGoalLabel": "दैनिक लक्ष्य",
+    "cupCapacityLabel": "कप की क्षमता",
+    "cupStyleLabel": "कप का प्रकार",
+    "cupStyleGlass": "गिलास",
+    "cupStyleTumbler": "टम्बलर",
+    "cupStyleBottle": "बोतल",
+    "hydrationProgress": "{current} / {total} ml",
+    "glassAriaFilled": "गिलास {n} — {ml} ml — भरा हुआ। हटाने के लिए क्लिक करें।",
+    "glassAriaEmpty": "गिलास {n} — {ml} ml — खाली। यहाँ तक भरने के लिए क्लिक करें।",
+    "openHydrationSettings": "हाइड्रेशन सेटिंग्स खोलें",
     "hydrationTips": {
       "menstrual": "पीरियड्स के दौरान गुनगुना पानी पीने से गर्भाशय की मांसपेशियों को आराम मिलता है और ऐंठन कम होती है।",
       "follicular": "इस चरण में नियमित रूप से पानी पीना आपकी बढ़ती ऊर्जा को बनाए रखने में मदद करता है।",
@@ -451,6 +497,22 @@
         "tip2": "हाइड्रेटेड रहें और पर्याप्त आराम करें।",
         "tip3": "हल्की गतिविधि हर दिन आपके शरीर की मदद करती है।"
       }
+    },
+    "checklistTitle": "दैनिक चेकलिस्ट",
+    "checklistProgress": "{done} / {total} पूर्ण",
+    "checklistAllDone": "🎉 सभी कार्य पूरे! आज अपने लिए शाबाशी दें।",
+    "checklistAddPlaceholder": "कस्टम कार्य जोड़ें...",
+    "checklistAdd": "जोड़ें",
+    "checklistEdit": "कार्य संपादित करें",
+    "checklistSave": "सहेजें",
+    "checklistCancel": "रद्द करें",
+    "checklistDelete": "कार्य हटाएं",
+    "checklistToggle": "{label} टॉगल करें",
+    "checklistTask": {
+      "drinkWater": "💧 पानी पियें",
+      "stretch": "🧘 स्ट्रेचिंग करें",
+      "healthyMeal": "🥗 स्वस्थ भोजन खाएं",
+      "sleep": "😴 पर्याप्त नींद लें"
     }
   },
   "Challenges": {
@@ -547,5 +609,29 @@
     "saveBtn": "बदलाव सहेजें",
     "savedSuccess": "जल सेवन रिमाइंडर शेड्यूल सहेजा गया! 💧",
     "savedError": "रिमाइंडर सेटिंग सहेजने में विफल।"
+  },
+  "SymptomPhases": {
+    "title": "चक्र चरण के अनुसार लक्षण पैटर्न",
+    "subtitle": "आपके चक्र में हर लक्षण असल में कब दिखता है — हर चरण में लॉग किए गए दिनों के अनुसार समायोजित।",
+    "loading": "आपके लॉग का विश्लेषण हो रहा है…",
+    "needMoreTitle": "अभी पर्याप्त लॉग किए गए दिन नहीं हैं",
+    "needMoreDays": "चरण पैटर्न देखने के लिए {count} और दिन लॉग करें।",
+    "needMorePhases": "केवल पीरियड के दौरान नहीं, पूरे चक्र में लॉग करते रहें ताकि चरणों की तुलना हो सके।",
+    "needMoreOccurrences": "पैटर्न दिखाने से पहले इस लक्षण के {count} और लॉग चाहिए।",
+    "noSymptoms": "इस अवधि में अभी कोई लक्षण लॉग नहीं किया गया।",
+    "none": "कोई नहीं",
+    "daysCount": "{count} दिन",
+    "loggedTimes": "{count} बार लॉग किया गया",
+    "finding": "आपने {symptom} को अपने {phase} चरण में बाकी चक्र की तुलना में लगभग {lift}× अधिक बार लॉग किया।",
+    "evenlySpread": "{symptom} आपके पूरे चक्र में लगभग समान रूप से फैला है — कोई स्पष्ट चरण पैटर्न नहीं।",
+    "barLabel": "चक्र चरणों में {symptom} का वितरण: {breakdown}",
+    "phase_menstrual": "मासिक",
+    "phase_follicular": "फॉलिक्युलर",
+    "phase_ovulation": "ओव्युलेशन",
+    "phase_luteal": "ल्यूटियल",
+    "confidence_high": "मज़बूत प्रमाण",
+    "confidence_moderate": "कुछ प्रमाण",
+    "confidence_low": "शुरुआती संकेत",
+    "disclaimer": "ये आपके लॉग किए गए डेटा के पैटर्न हैं, कोई चिकित्सकीय निष्कर्ष नहीं। इन पर स्वयं कार्रवाई करने के बजाय इन्हें डॉक्टर के साथ साझा करें।"
   }
 }

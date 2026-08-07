@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { X, ChevronLeft, ChevronRight, RotateCcw, AlertTriangle, Sparkles, Activity, Shield } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import useModalA11y from '@/lib/a11y/useModalA11y'
 
 const QUESTIONS = [
   { id: 1, category: 'ovul', weight: 2 },
@@ -20,6 +21,10 @@ export default function PcosSymptomProfileModal({ onClose }) {
   const t = useTranslations('PcosSymptomProfile')
   const [step, setStep] = useState(0) // 0 = disclaimer, 1..9 = questions, 10 = results
   const [answers, setAnswers] = useState({}) // { [id]: boolean }
+
+  const { containerRef, backdropRef, onBackdropMouseDown, onBackdropClick } = useModalA11y({
+    onClose,
+  })
 
   const handleSelectAnswer = (val) => {
     const currentQuestion = QUESTIONS[step - 1]
@@ -107,18 +112,37 @@ export default function PcosSymptomProfileModal({ onClose }) {
   const progressPercent = step >= 1 && step <= 9 ? (step / QUESTIONS.length) * 100 : 0
   const isAnswered = currentQuestion ? answers[currentQuestion.id] !== undefined : false
 
+  // The visible heading changes with the step, so the accessible name follows
+  // whichever one is currently rendered.
+  const titleId = step === 0 ? 'pcos-profile-disclaimer-title'
+    : step === 10 ? 'pcos-profile-results-title'
+      : 'pcos-profile-question-title'
+
   return (
-    <div className="onboard-overlay" style={{ zIndex: 1000 }} role="dialog" aria-modal="true">
+    <div
+      ref={backdropRef}
+      className="onboard-overlay"
+      style={{ zIndex: 1000 }}
+      onMouseDown={onBackdropMouseDown}
+      onClick={onBackdropClick}
+    >
       <div
-        className="onboard-card relative px-6 md:px-8 py-10 max-w-lg w-full max-h-[90vh] flex flex-col"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="onboard-card relative px-6 md:px-8 py-10 max-w-lg w-full max-h-[90vh] flex flex-col focus:outline-none"
       >
         {/* Close Button */}
         <button
+          type="button"
           onClick={onClose}
+          data-modal-close=""
           className="absolute top-4 right-4 text-white/50 hover:text-white/80 transition-colors p-1.5 rounded-full hover:bg-white/5 bg-black/20 backdrop-blur-sm z-20"
-          aria-label="Close"
+          aria-label={t('close') || 'Close the PCOS symptom profile'}
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5" aria-hidden="true" />
         </button>
 
         {/* STEP 0: Disclaimer */}
@@ -129,7 +153,7 @@ export default function PcosSymptomProfileModal({ onClose }) {
               <div className="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mb-4">
                 <AlertTriangle className="w-6 h-6 text-amber-300" />
               </div>
-              <h2 className="onboard-title text-2xl mb-4 font-bold text-white">{t('disclaimerTitle')}</h2>
+              <h2 id="pcos-profile-disclaimer-title" className="onboard-title text-2xl mb-4 font-bold text-white">{t('disclaimerTitle')}</h2>
               <p className="text-white/85 text-sm leading-relaxed mb-8">
                 {t('disclaimerText')}
               </p>
@@ -151,7 +175,14 @@ export default function PcosSymptomProfileModal({ onClose }) {
                 <span>{t('questionOf', { current: step, total: QUESTIONS.length })}</span>
               </div>
               {/* Progress bar */}
-              <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-8">
+              <div
+              className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-8"
+              role="progressbar"
+              aria-valuemin={1}
+              aria-valuemax={QUESTIONS.length}
+              aria-valuenow={step}
+              aria-valuetext={`${step} / ${QUESTIONS.length}`}
+            >
                 <div
                   className="h-full bg-gradient-to-r from-rose-500 to-pink-500 transition-all duration-300"
                   style={{ width: `${progressPercent}%` }}
@@ -159,12 +190,12 @@ export default function PcosSymptomProfileModal({ onClose }) {
               </div>
 
               {/* Question Text */}
-              <h3 className="text-white font-bold text-lg md:text-xl leading-snug mb-8 min-h-[4rem] flex items-center justify-center">
+              <h3 id="pcos-profile-question-title" className="text-white font-bold text-lg md:text-xl leading-snug mb-8 min-h-[4rem] flex items-center justify-center">
                 {t(`questions.q${currentQuestion.id}`)}
               </h3>
 
               {/* Yes/No Options */}
-              <div className="flex gap-4 mb-10">
+              <div className="flex gap-4 mb-10" role="group" aria-labelledby="pcos-profile-question-title">
                 <button
                   onClick={() => handleSelectAnswer(true)}
                   className={`flex-1 py-4 rounded-2xl border text-sm font-semibold transition-all ${answers[currentQuestion.id] === true
@@ -212,7 +243,7 @@ export default function PcosSymptomProfileModal({ onClose }) {
               <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center mb-3">
                 <Sparkles className="w-5 h-5 text-pink-300 animate-pulse" />
               </div>
-              <h2 className="onboard-title text-2xl font-bold text-white mb-1">{t('resultsTitle')}</h2>
+              <h2 id="pcos-profile-results-title" className="onboard-title text-2xl font-bold text-white mb-1">{t('resultsTitle')}</h2>
               <p className="text-white/60 text-xs tracking-wide uppercase mb-4">{t('symptomLikelihood')}</p>
 
               {/* Likelihood & Confidence Row */}

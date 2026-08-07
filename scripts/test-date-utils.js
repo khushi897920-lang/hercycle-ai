@@ -252,40 +252,40 @@ function testUtils() {
   check(formatDateForCSV('garbage'), '', 'CSV export of garbage is empty')
 }
 
-function testPredictNextPeriod() {
+async function testPredictNextPeriod() {
   // Two clean 28-day cycles: the projection is exactly one cycle past the last
   // start date, and must render as that day in every timezone.
   const history = [
     { start_date: '2026-05-01', cycle_length: 28 },
     { start_date: '2026-05-29', cycle_length: 28 },
   ]
-  const result = predictNextPeriod(history)
+  const result = await predictNextPeriod(history)
   check(result.nextPeriodDate, 'Jun 26, 2026', 'prediction lands on 29 May + 28 days')
   check(result.averageCycleLength, 28, 'prediction reports a 28-day average')
 
   // Single-entry path.
-  const single = predictNextPeriod([{ start_date: '2026-07-01', cycle_length: 30 }])
+  const single = await predictNextPeriod([{ start_date: '2026-07-01', cycle_length: 30 }])
   check(single.nextPeriodDate, 'Jul 31, 2026', 'single-entry prediction adds the stored cycle length')
   check(single.averageCycleLength, 30, 'single-entry prediction keeps a valid cycle length')
 
   // Timestamptz rows must behave identically to bare dates.
-  const fromTimestamps = predictNextPeriod([
+  const fromTimestamps = await predictNextPeriod([
     { start_date: '2026-05-01T00:00:00+00:00', cycle_length: 28 },
     { start_date: '2026-05-29T00:00:00+00:00', cycle_length: 28 },
   ])
   check(fromTimestamps.nextPeriodDate, 'Jun 26, 2026', 'timestamptz history predicts the same day')
 
   // Empty / unusable history still returns a well-formed shape.
-  const empty = predictNextPeriod([])
+  const empty = await predictNextPeriod([])
   check(empty.confidence, '0%', 'empty history reports 0% confidence')
   check(empty.averageCycleLength, 28, 'empty history falls back to 28 days')
   checkTrue(/^[A-Z][a-z]{2} \d{1,2}, \d{4}$/.test(empty.nextPeriodDate), 'empty history still formats a date')
 
-  const malformed = predictNextPeriod([{ start_date: 'not-a-date' }, { start_date: null }])
+  const malformed = await predictNextPeriod([{ start_date: 'not-a-date' }, { start_date: null }])
   check(malformed.confidence, '0%', 'malformed history reports 0% confidence')
 }
 
-function runAll() {
+async function runAll() {
   testIsISODateString()
   testParseAndFormat()
   testGetTodayISO()
@@ -294,7 +294,7 @@ function runAll() {
   testFormatDisplayDate()
   testCycleHelpers()
   testUtils()
-  testPredictNextPeriod()
+  await testPredictNextPeriod()
 }
 
 // ---------------------------------------------------------------------------
@@ -304,12 +304,16 @@ const selfPath = fileURLToPath(import.meta.url)
 
 if (process.argv.includes('--single')) {
   console.log(`\n▶ TZ=${process.env.TZ || 'system default'}`)
-  runAll()
-  if (failed > 0) {
-    console.error(`\n❌ ${failed} assertion(s) failed, ${passed} passed (TZ=${process.env.TZ})`)
-    process.exit(1)
-  }
-  console.log(`✅ ${passed} assertions passed (TZ=${process.env.TZ || 'system default'})`)
+  runAll().then(() => {
+    if (failed > 0) {
+      console.error(`\n❌ ${failed} assertion(s) failed, ${passed} passed (TZ=${process.env.TZ})`)
+      process.exit(1)
+    }
+    console.log(`✅ ${passed} assertions passed (TZ=${process.env.TZ || 'system default'})`)
+  }).catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 } else {
   console.log('Running the date-utils suite across the timezone matrix...')
   let anyFailed = false

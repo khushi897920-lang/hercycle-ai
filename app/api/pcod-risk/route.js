@@ -5,14 +5,18 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { aiLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
 import { pcodRiskCache } from '@/lib/cache'
+import {
+  RISK_UNAVAILABLE_REASONS,
+  normaliseRiskResult,
+  riskUnavailable,
+} from '@/lib/pcod-risk-result'
 
 
 export async function GET(request) {
   // ============ RATE LIMITING ============
   try {
-    // const identifier = await getRateLimitIdentifier(request);
-    await aiLimiter.check(request);
-    // await aiLimiter.checkNext(request, 5); // 5 requests per minute
+    const identifier = await getRateLimitIdentifier(request);
+    await aiLimiter.check(request, identifier);
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] PCOD risk endpoint: ${rateLimitError.message}`);
     return NextResponse.json(
@@ -47,8 +51,16 @@ export async function GET(request) {
       .order('start_date', { ascending: false })
       .limit(12)
 
+    // A failed query must not fall through. `cycles || []` reads as "no
+    // history", and calculatePCODRisk answers "no history" with a score of 0 /
+    // LOW RISK — so a transient database error used to be reported as a
+    // genuine, reassuring assessment, and then cached for five minutes.
     if (cyclesError) {
       logger.error(`Database error fetching cycles for user ${userId} PCOD risk:`, cyclesError.message);
+      return NextResponse.json(
+        riskUnavailable(RISK_UNAVAILABLE_REASONS.BACKEND),
+        { status: 503 }
+      )
     }
 
     const { data: logs, error: logsError } = await supabaseAdmin
@@ -60,24 +72,42 @@ export async function GET(request) {
 
     if (logsError) {
       logger.error(`Database error fetching logs for user ${userId} PCOD risk:`, logsError.message);
+      return NextResponse.json(
+        riskUnavailable(RISK_UNAVAILABLE_REASONS.BACKEND),
+        { status: 503 }
+      )
     }
 
-    const risk = calculatePCODRisk(cycles || [], logs || [])
+    const risk = normaliseRiskResult(await calculatePCODRisk(cycles || [], logs || []))
 
+    // The ML microservice is allowed to answer instead of the rule-based
+    // engine, so the shape is verified rather than assumed. An unrecognisable
+    // payload is a failure, not a low-risk reading.
+    if (!risk) {
+      logger.error(`PCOD risk calculation returned an unusable result for user ${userId}`);
+      return NextResponse.json(
+        riskUnavailable(RISK_UNAVAILABLE_REASONS.BACKEND),
+        { status: 503 }
+      )
+    }
+
+    // Only a real computation is cached. Caching a failure would serve it back
+    // without touching the database for the next five minutes.
     pcodRiskCache.set(cacheKey, risk);
 
     logger.info(`Successfully calculated PCOD risk assessment for user ${userId}`);
     return NextResponse.json({ success: true, data: risk })
   } catch (error) {
+    // No fabricated `data` here. The previous implementation returned a
+    // hard-coded score of 25 and the tier "LOW RISK" with HTTP 200, which the
+    // UI could not distinguish from a real assessment.
+    //
+    // The exception text stays in the log rather than being echoed to the
+    // client, where it leaked Postgres error strings and connection details.
     logger.error('Error calculating PCOD risk:', error.message || error)
-    return NextResponse.json({
-      success: false,
-      error: `Failed to calculate PCOD risk: ${error.message || error}`,
-      data: {
-        score: 25, label: 'LOW RISK',
-        factors: ['Regular cycle length maintained', 'No significant hormonal symptoms'],
-        recommendation: 'Keep tracking your cycle and maintaining healthy habits.'
-      }
-    })
+    return NextResponse.json(
+      riskUnavailable(RISK_UNAVAILABLE_REASONS.BACKEND),
+      { status: 503 }
+    )
   }
 }

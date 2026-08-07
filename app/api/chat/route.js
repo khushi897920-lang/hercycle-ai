@@ -7,7 +7,6 @@ import { logger } from '@/lib/logger'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { z } from 'zod'
 
-
 const TIMEOUT_MS = 8000; // 8 seconds timeout to prevent long hangs
 
 // Maximum number of conversation messages forwarded to the LLM. Sending a full
@@ -30,7 +29,7 @@ function pruneMessageHistory(messages, maxMessages = MAX_CONTEXT_MESSAGES, maxCh
 
   const systemPrompt = messages[0];
   let currentChars = JSON.stringify(systemPrompt).length;
-  
+
   const recentMessages = [];
 
   // Iterate backwards to prioritize most recent conversation turns
@@ -63,26 +62,30 @@ const chatPayloadSchema = z.object({
 })
 
 /**
- * Utility function to enforce a timeout on asynchronous operations
+ * Utility function to enforce a timeout on asynchronous operations.
+ * Uses AbortController so the underlying network call is actually cancelled,
+ * not just abandoned.
  */
-const withTimeout = async (promise, ms) => {
-  let timeoutId;
-  const timeoutPromise = new Promise((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error('Request timed out')), ms);
-  });
-  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+const withTimeout = async (fn, ms) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fn(controller.signal);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 };
 
 /**
  * Primary AI Call: Google Gemini API
  */
-async function callGemini(message, systemPrompt, history = []) {
+async function callGemini(message, systemPrompt, history = [], signal) {
   validateEnv();
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.6-flash',
   });
 
   const formattedHistory = history.map(msg => ({
@@ -108,15 +111,14 @@ async function callGemini(message, systemPrompt, history = []) {
     ]),
   });
 
-  const result = await chat.sendMessage(message);
+  const result = await chat.sendMessage(message, { signal });
   return result.response.text();
 }
-
 
 /**
  * Fallback AI Call: Groq API (llama3-8b-8192)
  */
-async function callGroq(message, systemPrompt, history = []) {
+async function callGroq(message, systemPrompt, history = [], signal) {
   validateEnv();
 
   if (!process.env.GROQ_API_KEY) {
@@ -143,7 +145,8 @@ async function callGroq(message, systemPrompt, history = []) {
         { role: 'user', content: message }
       ]),
       max_tokens: 300 // Keeping response small per prompt constraints
-    })
+    }),
+    signal
   });
 
   if (!response.ok) {
@@ -162,14 +165,17 @@ async function runWithRetry(fn, label) {
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await withTimeout(fn(), TIMEOUT_MS);
+      return await withTimeout((signal) => fn(signal), TIMEOUT_MS);
     } catch (error) {
+      const isAbort = error?.name === 'AbortError';
+      const reason = isAbort ? 'timed out' : error.message;
+
       if (attempt === maxRetries) {
-        logger.error(`${label} failed after all retries: ${error.message}`);
+        logger.error(`${label} failed after all retries: ${reason}`);
         throw error;
       }
       const delayMs = backoffDelays[attempt];
-      logger.warn(`${label} attempt ${attempt + 1} failed (${error.message}). Retrying in ${delayMs}ms...`);
+      logger.warn(`${label} attempt ${attempt + 1} failed (${reason}). Retrying in ${delayMs}ms...`);
       await delay(delayMs);
     }
   }
@@ -177,14 +183,14 @@ async function runWithRetry(fn, label) {
 
 async function callGeminiWithRetry(message, systemPrompt, history = []) {
   return runWithRetry(
-    () => callGemini(message, systemPrompt, history),
+    (signal) => callGemini(message, systemPrompt, history, signal),
     'Gemini API'
   );
 }
 
 async function callGroqWithRetry(message, systemPrompt, history = []) {
   return runWithRetry(
-    () => callGroq(message, systemPrompt, history),
+    (signal) => callGroq(message, systemPrompt, history, signal),
     'Groq API'
   );
 }
@@ -300,10 +306,10 @@ export async function POST(request) {
       const conditions = userProfile.known_conditions || [];
       const ageStr = userProfile.age ? sanitizeForPrompt(`${userProfile.age} yrs old`) : 'unknown age';
       const weightStr = userProfile.weight_kg ? sanitizeForPrompt(`${userProfile.weight_kg}kg`) : 'unknown weight';
-      const conditionsStr = conditions.length > 0 
-        ? conditions.map(c => sanitizeForPrompt(c)).join(', ') 
+      const conditionsStr = conditions.length > 0
+        ? conditions.map(c => sanitizeForPrompt(c)).join(', ')
         : 'none';
-      
+
       systemPrompt += `\n[CONTEXT: User is ${ageStr}, weighs ${weightStr}, conditions: ${conditionsStr}]. Use this context to personalize your response, but do not explicitly repeat their data back to them unless necessary.`;
     }
 

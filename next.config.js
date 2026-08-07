@@ -47,49 +47,69 @@ const nextConfig = {
     ],
   },
 
-  // Security, CORS & Compression headers
+  // Security & cache headers.
+  //
+  // The policy itself lives in lib/security-headers.mjs so that it can be read
+  // as a whole and tested (scripts/test-security-headers.js). It used to be
+  // written out as literals here, which is how the CSP came to consist of a
+  // single `frame-ancestors` directive — duplicating the X-Frame-Options above
+  // it and leaving script execution, script origins, <base> and form targets
+  // completely unrestricted, because an absent CSP directive means
+  // unrestricted rather than denied.
+  //
+  // The CORS block that used to be here is gone: it applied
+  // `Access-Control-Allow-Origin: <NEXT_PUBLIC_APP_URL or empty string>` to
+  // every response in the app, with no `Vary: Origin`. CORS is a per-request
+  // decision, so it now lives in middleware.js where the request's Origin can
+  // actually be inspected.
+  //
+  // `headers()` is async, so the ESM policy module is loaded with a dynamic
+  // import — this file is CommonJS and cannot `require` it. The module carries
+  // an .mjs extension so Node reads it as ESM without having to parse it as
+  // CommonJS first and warn about the reparse on every build.
   async headers() {
+    const {
+      SENSITIVE_API_PREFIXES,
+      NO_STORE,
+      buildContentSecurityPolicy,
+      cspHeaderName,
+      isReportOnly,
+      staticSecurityHeaders,
+    } = await import('./lib/security-headers.mjs')
+
+    const isDev = process.env.NODE_ENV !== 'production'
+
+    const commonHeaders = [
+      ...staticSecurityHeaders({ isDev }),
+      {
+        key: cspHeaderName(isReportOnly(process.env.CSP_REPORT_ONLY)),
+        value: buildContentSecurityPolicy({
+          isDev,
+          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        }),
+      },
+    ]
+
     return [
-      {
-        source: '/(.*)',
-        headers: [
-          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-          { key: 'Content-Security-Policy', value: "frame-ancestors 'self';" },
-          { key: 'Access-Control-Allow-Origin', value: process.env.NEXT_PUBLIC_APP_URL || '' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, PATCH, DELETE, OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-        ],
-      },
-      // Compression & Cache headers for API JSON responses (cycle history, daily logs, PCOD risk)
-      {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Vary', value: 'Accept-Encoding' },
-        ],
-      },
-      {
-        source: '/api/cycles',
-        headers: [
-          { key: 'Cache-Control', value: 'private, max-age=60, stale-while-revalidate=30' },
-          { key: 'Vary', value: 'Accept-Encoding' },
-        ],
-      },
-      {
-        source: '/api/log-day/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'private, max-age=60, stale-while-revalidate=30' },
-          { key: 'Vary', value: 'Accept-Encoding' },
-        ],
-      },
-      {
-        source: '/api/pcod-risk',
-        headers: [
-          { key: 'Cache-Control', value: 'private, max-age=300, stale-while-revalidate=60' },
-          { key: 'Vary', value: 'Accept-Encoding' },
-        ],
-      },
+      { source: '/(.*)', headers: commonHeaders },
+
+      { source: '/api/:path*', headers: [{ key: 'Vary', value: 'Accept-Encoding' }] },
+
+      // Personal health data must not be written to the browser's disk cache.
+      //
+      // These paths previously carried `private, max-age=60` (and 300 for the
+      // risk assessment). `private` only means "not a shared proxy" — it
+      // explicitly permits the browser to store the response, and signing out
+      // does not clear the HTTP cache. On a shared machine the next person
+      // could read the previous user's cycle history straight out of it,
+      // which also walks straight around the app's E2EE layer.
+      //
+      // Two entries per prefix because a Next.js `source` pattern matches
+      // either the bare path or the sub-paths, not both.
+      ...SENSITIVE_API_PREFIXES.flatMap((prefix) => [
+        { source: prefix, headers: [{ key: 'Cache-Control', value: NO_STORE }] },
+        { source: `${prefix}/:path*`, headers: [{ key: 'Cache-Control', value: NO_STORE }] },
+      ]),
     ]
   },
 }

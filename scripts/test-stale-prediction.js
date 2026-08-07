@@ -71,11 +71,11 @@ function checkInFuture(result, today, label) {
 // ---------------------------------------------------------------------------
 // Test 1 — the exact reported case
 // ---------------------------------------------------------------------------
-function testReportedCase() {
+async function testReportedCase() {
   console.log('\n▶ Test 1: the reported case')
 
   const today = at(2026, 7, 30)
-  const result = predictNextPeriod([
+  const result = await predictNextPeriod([
     { start_date: '2026-01-05', cycle_length: 28 },
     { start_date: '2026-02-02', cycle_length: 28 },
   ], today)
@@ -95,11 +95,11 @@ function testReportedCase() {
 // ---------------------------------------------------------------------------
 // Test 2 — fresh history is untouched
 // ---------------------------------------------------------------------------
-function testFreshHistoryUnchanged() {
+async function testFreshHistoryUnchanged() {
   console.log('\n▶ Test 2: fresh history behaves exactly as before')
 
   const today = at(2026, 7, 30)
-  const result = predictNextPeriod([
+  const result = await predictNextPeriod([
     { start_date: '2026-06-05', cycle_length: 28 },
     { start_date: '2026-07-03', cycle_length: 28 },
   ], today)
@@ -115,7 +115,7 @@ function testFreshHistoryUnchanged() {
 // ---------------------------------------------------------------------------
 // Test 3 — boundary conditions
 // ---------------------------------------------------------------------------
-function testBoundaries() {
+async function testBoundaries() {
   console.log('\n▶ Test 3: boundaries')
 
   const history = (lastStart) => [
@@ -125,22 +125,22 @@ function testBoundaries() {
 
   // Last period 2026-05-29, +28 days = 2026-06-26. If today IS that day, the
   // prediction is due today and must not be pushed forward.
-  const dueToday = predictNextPeriod(history('2026-05-29'), at(2026, 6, 26))
+  const dueToday = await predictNextPeriod(history('2026-05-29'), at(2026, 6, 26))
   check(dueToday.nextPeriodDate, 'Jun 26, 2026', 'a prediction due today is kept, not advanced')
   check(dueToday.missedCycles, 0, 'due-today counts as zero missed cycles')
 
   // One day later, it has been missed exactly once.
-  const oneDayLate = predictNextPeriod(history('2026-05-29'), at(2026, 6, 27))
+  const oneDayLate = await predictNextPeriod(history('2026-05-29'), at(2026, 6, 27))
   check(oneDayLate.missedCycles, 1, 'one day past due counts as one missed cycle')
   check(oneDayLate.nextPeriodDate, 'Jul 24, 2026', 'it advances by exactly one more cycle')
   check(parseInt(oneDayLate.confidence, 10), 83, 'one missed cycle costs 12 points')
 
   // Two missed cycles is still considered workable; three is not.
-  const twoMissed = predictNextPeriod(history('2026-05-29'), at(2026, 7, 25))
+  const twoMissed = await predictNextPeriod(history('2026-05-29'), at(2026, 7, 25))
   check(twoMissed.missedCycles, 2, 'two missed cycles detected')
   check(twoMissed.hasEnoughRecentData, true, 'two missed cycles is still shown as a prediction')
 
-  const threeMissed = predictNextPeriod(history('2026-05-29'), at(2026, 8, 22))
+  const threeMissed = await predictNextPeriod(history('2026-05-29'), at(2026, 8, 22))
   check(threeMissed.missedCycles, 3, 'three missed cycles detected')
   check(threeMissed.hasEnoughRecentData, false, 'three missed cycles is no longer meaningful')
 }
@@ -148,17 +148,17 @@ function testBoundaries() {
 // ---------------------------------------------------------------------------
 // Test 4 — the single-entry path
 // ---------------------------------------------------------------------------
-function testSingleEntry() {
+async function testSingleEntry() {
   console.log('\n▶ Test 4: the single-entry path')
 
   const today = at(2026, 7, 30)
 
-  const fresh = predictNextPeriod([{ start_date: '2026-07-01', cycle_length: 30 }], today)
+  const fresh = await predictNextPeriod([{ start_date: '2026-07-01', cycle_length: 30 }], today)
   check(fresh.nextPeriodDate, 'Jul 31, 2026', 'a fresh single entry is unchanged')
   check(fresh.confidence, '75%', 'and keeps its 75% confidence')
   check(fresh.missedCycles, 0, 'nothing skipped')
 
-  const stale = predictNextPeriod([{ start_date: '2026-01-05', cycle_length: 30 }], today)
+  const stale = await predictNextPeriod([{ start_date: '2026-01-05', cycle_length: 30 }], today)
   checkInFuture(stale, today, 'a stale single entry still predicts into the future')
   check(stale.isStale, true, 'flagged as stale')
   check(parseInt(stale.confidence, 10) < 75, true, 'confidence is reduced below the 75% baseline')
@@ -168,7 +168,7 @@ function testSingleEntry() {
 // ---------------------------------------------------------------------------
 // Test 5 — confidence never claims more than the data supports
 // ---------------------------------------------------------------------------
-function testConfidenceDecay() {
+async function testConfidenceDecay() {
   console.log('\n▶ Test 5: confidence decays with staleness')
 
   const history = [
@@ -182,7 +182,7 @@ function testConfidenceDecay() {
 
   // Walk the clock forward a cycle at a time; confidence must never increase.
   for (let month = 2; month <= 11; month += 1) {
-    const result = predictNextPeriod(history, at(2026, month, 15))
+    const result = await predictNextPeriod(history, at(2026, month, 15))
     const confidence = parseInt(result.confidence, 10)
     samples.push(confidence)
     if (confidence > previous) monotonic = false
@@ -194,12 +194,12 @@ function testConfidenceDecay() {
   check(samples[samples.length - 1] <= 30, true, 'a year-old history reports very low confidence')
 
   // An irregular but recent history should still outrank a regular stale one.
-  const irregularRecent = predictNextPeriod([
+  const irregularRecent = await predictNextPeriod([
     { start_date: '2026-05-01', cycle_length: 28 },
     { start_date: '2026-06-10', cycle_length: 40 },
     { start_date: '2026-07-05', cycle_length: 25 },
   ], at(2026, 7, 30))
-  const regularStale = predictNextPeriod(history, at(2026, 7, 30))
+  const regularStale = await predictNextPeriod(history, at(2026, 7, 30))
   check(parseInt(irregularRecent.confidence, 10) > parseInt(regularStale.confidence, 10), true,
     'recent-but-irregular beats regular-but-stale')
 }
@@ -207,21 +207,21 @@ function testConfidenceDecay() {
 // ---------------------------------------------------------------------------
 // Test 6 — degenerate input still returns a well-formed shape
 // ---------------------------------------------------------------------------
-function testDegenerateInput() {
+async function testDegenerateInput() {
   console.log('\n▶ Test 6: degenerate input')
 
   const today = at(2026, 7, 30)
 
-  const empty = predictNextPeriod([], today)
+  const empty = await predictNextPeriod([], today)
   check(empty.confidence, '0%', 'empty history reports 0%')
   check(empty.averageCycleLength, 28, 'empty history falls back to 28 days')
   checkTrue(/^[A-Z][a-z]{2} \d{1,2}, \d{4}$/.test(empty.nextPeriodDate), 'empty history still formats a date')
 
-  const malformed = predictNextPeriod([{ start_date: 'not-a-date' }, { start_date: null }], today)
+  const malformed = await predictNextPeriod([{ start_date: 'not-a-date' }, { start_date: null }], today)
   check(malformed.confidence, '0%', 'unparseable history reports 0%')
 
   // A start date far in the past must terminate rather than spin.
-  const ancient = predictNextPeriod([
+  const ancient = await predictNextPeriod([
     { start_date: '1990-01-01', cycle_length: 28 },
     { start_date: '1990-01-29', cycle_length: 28 },
   ], today)
@@ -229,7 +229,7 @@ function testDegenerateInput() {
   checkTrue(ancient.missedCycles > 0, 'and is flagged as stale')
 
   // Called without an explicit clock, the default must still be sane.
-  const defaultClock = predictNextPeriod([
+  const defaultClock = await predictNextPeriod([
     { start_date: '2020-01-01', cycle_length: 28 },
     { start_date: '2020-01-29', cycle_length: 28 },
   ])
@@ -237,15 +237,15 @@ function testDegenerateInput() {
     'the default clock also projects into the future')
 }
 
-function main() {
+async function main() {
   console.log('Running stale-prediction tests...')
 
-  testReportedCase()
-  testFreshHistoryUnchanged()
-  testBoundaries()
-  testSingleEntry()
-  testConfidenceDecay()
-  testDegenerateInput()
+  await testReportedCase()
+  await testFreshHistoryUnchanged()
+  await testBoundaries()
+  await testSingleEntry()
+  await testConfidenceDecay()
+  await testDegenerateInput()
 
   if (failed > 0) {
     console.error(`\n❌ ${failed} assertion(s) failed, ${passed} passed.`)
@@ -254,4 +254,7 @@ function main() {
   console.log(`\n✅ All ${passed} assertions passed.`)
 }
 
-main()
+main().catch(err => {
+  console.error(err);
+  process.exit(1);
+});

@@ -4,6 +4,9 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { crudLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
 import { CHALLENGES, MONTHLY_BADGES, getMonthKey } from '@/lib/challenges-data'
+import { resolveRequestDay, startOfMonthISO } from '@/lib/request-day'
+import { parseDateValue } from '@/lib/date-utils'
+import { calculateBestStreak } from '@/lib/challenge-streaks'
 
 export async function GET(request) {
   try {
@@ -17,9 +20,15 @@ export async function GET(request) {
     if (!userId) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
     await ensureUserExists(userId)
 
-    const now = new Date()
-    const monthKey = getMonthKey(now)
-    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+    // Anchor the month to the caller's calendar day.
+    //
+    // `new Date(y, m, 1).toISOString().slice(0, 10)` built local midnight on
+    // the 1st and then read its **UTC** day. East of UTC that instant is still
+    // the last day of the *previous* month, so the recap silently widened its
+    // window to include a day belonging to the month before.
+    const today = resolveRequestDay(request)
+    const monthKey = getMonthKey(parseDateValue(today) || new Date())
+    const firstOfMonth = startOfMonthISO(today)
     const supabaseAdmin = getSupabaseAdmin()
 
     const { data: monthRows, error } = await supabaseAdmin
@@ -69,18 +78,3 @@ export async function GET(request) {
   }
 }
 
-function calculateBestStreak(rows) {
-  const dates = [...new Set(rows.map((r) => r.date))].sort()
-  let best = 0, current = 0, prev = null
-  for (const d of dates) {
-    if (prev) {
-      const diff = (new Date(d) - new Date(prev)) / 86400000
-      current = diff === 1 ? current + 1 : 1
-    } else {
-      current = 1
-    }
-    best = Math.max(best, current)
-    prev = d
-  }
-  return best
-}

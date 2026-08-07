@@ -37,17 +37,17 @@ describe('Suite 7: Internationalization (i18n) Parity & Algorithm Edge Cases', (
   test('predictNextPeriod handles edge cases safely', async () => {
     const { predictNextPeriod } = await import('../lib/api-helpers.js');
 
-    const emptyResult = predictNextPeriod([]);
+    const emptyResult = await predictNextPeriod([]);
     assert(typeof emptyResult.nextPeriodDate === 'string', 'Should return estimated date string');
 
-    const singleResult = predictNextPeriod([{ start_date: '2026-07-01', cycle_length: 28 }]);
+    const singleResult = await predictNextPeriod([{ start_date: '2026-07-01', cycle_length: 28 }]);
     assert(typeof singleResult.nextPeriodDate === 'string', 'Should return predicted date for single cycle');
   });
 
   test('calculatePCODRisk handles empty inputs safely without crashing', async () => {
     const { calculatePCODRisk } = await import('../lib/api-helpers.js');
 
-    const emptyRisk = calculatePCODRisk([], []);
+    const emptyRisk = await calculatePCODRisk([], []);
     assert.strictEqual(emptyRisk.score, 0);
     assert.strictEqual(emptyRisk.tier, 'LOW RISK');
   });

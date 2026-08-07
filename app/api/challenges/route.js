@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { crudLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
 import { CHALLENGES } from '@/lib/challenges-data'
+import { resolveRequestDay } from '@/lib/request-day'
 
 // GET /api/challenges — today's progress + earned badges
 export async function GET(request) {
@@ -22,7 +23,9 @@ export async function GET(request) {
     }
     await ensureUserExists(userId)
 
-    const today = new Date().toISOString().slice(0, 10)
+    // The caller's calendar day, not the server's UTC one — otherwise a user
+    // in UTC+5:30 opening this page at 02:00 is shown yesterday's progress.
+    const today = resolveRequestDay(request)
     const supabaseAdmin = getSupabaseAdmin()
 
     const { data: todayProgress, error: progressError } = await supabaseAdmin

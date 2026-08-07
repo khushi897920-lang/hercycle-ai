@@ -27,6 +27,7 @@ import PcosQuizModal from '@/components/dashboard/PcosQuizModal'
 import PcosSymptomProfileCard from '@/components/dashboard/PcosSymptomProfileCard'
 import PcosSymptomProfileModal from '@/components/dashboard/PcosSymptomProfileModal'
 import { useOffline } from '@/lib/OfflineContext'
+import { RISK_UNAVAILABLE_REASONS } from '@/lib/pcod-risk-result'
 import { useLocale, useTranslations } from 'next-intl'
 import fetchWithTimeout from '@/lib/fetch-with-timeout'
 import FeaturesSection from '@/components/dashboard/FeaturesSection'
@@ -148,6 +149,9 @@ const HerCycleApp = () => {
   const [cycleData, setCycleData] = useState(null)
   const [pcodRisk, setPcodRisk] = useState(null)
   const [pcodRiskLoading, setPcodRiskLoading] = useState(true)
+  // Why the assessment is missing, when it is. Kept separate from `pcodRisk`
+  // so "we could not check" is never conflated with "we checked, you're fine".
+  const [pcodRiskReason, setPcodRiskReason] = useState(null)
   const [isLogOpen, setIsLogOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [dataLoaded, setDataLoaded] = useState(false)
@@ -238,9 +242,17 @@ const HerCycleApp = () => {
       const data = await offlineClient.fetchPCODRisk() // PCOD risk calculates locally now if offline, maybe we need to pass encryptionKey there too if it fetches? Wait, fetchPCODRisk just reads IndexedDB which has decrypted data.
       if (data.success) {
         setPcodRisk(data.data)
+        setPcodRiskReason(null)
+      } else {
+        // Clear any assessment already on screen. Leaving the previous one up
+        // would present a stale reading as though it were current.
+        setPcodRisk(null)
+        setPcodRiskReason(data.reason || RISK_UNAVAILABLE_REASONS.BACKEND)
       }
     } catch (error) {
       console.error('Error fetching PCOD risk:', error)
+      setPcodRisk(null)
+      setPcodRiskReason(RISK_UNAVAILABLE_REASONS.BACKEND)
     } finally {
       setPcodRiskLoading(false)
     }
@@ -509,6 +521,7 @@ const HerCycleApp = () => {
         <div className="dual-row">
           <PCODRiskCard
             pcodRisk={pcodRisk}
+            unavailableReason={pcodRiskReason}
             loading={pcodRiskLoading}
             cycleCount={cycleData?.cycles?.length ?? 0}
             cycles={cycleData?.cycles ?? []}

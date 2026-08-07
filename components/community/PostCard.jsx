@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { enUS, hi } from 'date-fns/locale';
 import { ArrowUp, ArrowDown, MessageSquare } from 'lucide-react';
 import fetchWithTimeout from '@/lib/fetch-with-timeout';
+import { renderStoredAlias } from '@/lib/alias-display';
 import toast from 'react-hot-toast';
 
 export default function PostCard({ post, locale }) {
@@ -96,7 +97,7 @@ export default function PostCard({ post, locale }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 text-xs text-slate-500 dark:text-slate-400">
             <span className="font-medium bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-700 dark:text-slate-300">
-              {post.author_alias}
+              {renderStoredAlias(post.author_alias)}
             </span>
             <span>•</span>
             <time dateTime={post.created_at}>

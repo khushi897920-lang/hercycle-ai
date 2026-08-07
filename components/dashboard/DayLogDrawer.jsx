@@ -8,11 +8,21 @@ import { useOffline } from '@/lib/OfflineContext'
 import { findCycleContainingDate } from '@/lib/cycle-helpers'
 import { isEncryptionFailure } from '@/lib/encryption-policy'
 import { toISODate } from '@/lib/date-utils'
+import useModalA11y from '@/lib/a11y/useModalA11y'
 
 export default function DayLogDrawer({ isOpen, onClose, selectedDate, cycleData, onSaved }) {
   const tTrack = useTranslations('pages.track')
   const locale = useLocale()
   const { offlineClient } = useOffline()
+
+  // `role="dialog" aria-modal="true"` used to sit on the overlay div — an empty
+  // backdrop with no content in it — while the panel holding every control was
+  // a sibling, outside the dialog entirely. A screen reader was told there was
+  // a modal dialog and then found nothing inside it.
+  const { containerRef, backdropRef, onBackdropMouseDown, onBackdropClick } = useModalA11y({
+    isOpen: Boolean(isOpen && selectedDate),
+    onClose,
+  })
 
   const [symptoms, setSymptoms] = useState([])
   const [mood, setMood] = useState(null)
@@ -22,6 +32,7 @@ export default function DayLogDrawer({ isOpen, onClose, selectedDate, cycleData,
   useEffect(() => {
     if (!isOpen || !selectedDate) return
 
+    let isCurrent = true
     setSymptoms([])
     setMood(null)
     setFlow(null)
@@ -29,16 +40,23 @@ export default function DayLogDrawer({ isOpen, onClose, selectedDate, cycleData,
     const fetchLog = async () => {
       try {
         const data = await offlineClient.fetchTodayLog(selectedDate)
+        if (!isCurrent) return
         if (data.success && data.data) {
           if (data.data.symptoms) setSymptoms(data.data.symptoms)
           if (data.data.mood) setMood(data.data.mood)
           if (data.data.flow) setFlow(data.data.flow)
         }
       } catch (err) {
-        console.error('Error fetching log for date:', err)
+        if (isCurrent) {
+          console.error('Error fetching log for date:', err)
+        }
       }
     }
     fetchLog()
+
+    return () => {
+      isCurrent = false
+    }
   }, [isOpen, selectedDate, offlineClient])
 
   if (!isOpen || !selectedDate) return null
@@ -135,23 +153,33 @@ export default function DayLogDrawer({ isOpen, onClose, selectedDate, cycleData,
 
   return (
     <>
-      <div 
+      <div
+        ref={backdropRef}
         className="day-log-drawer-overlay"
-        onClick={onClose}
+        onMouseDown={onBackdropMouseDown}
+        onClick={onBackdropClick}
+      />
+      <div
+        ref={containerRef}
         role="dialog"
         aria-modal="true"
-      />
-      <div className="day-log-drawer-panel glass">
+        aria-labelledby="day-log-drawer-title"
+        tabIndex={-1}
+        className="day-log-drawer-panel glass"
+        style={{ outline: 'none' }}
+      >
         <div className="drawer-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>
+          <h3 id="day-log-drawer-title" style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>
             {dateStr}
           </h3>
-          <button 
-            onClick={onClose} 
+          <button
+            type="button"
+            onClick={onClose}
+            data-modal-close=""
             style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.5rem', cursor: 'pointer' }}
-            aria-label="Close"
+            aria-label={`Close the log for ${dateStr}`}
           >
-            &times;
+            <span aria-hidden="true">&times;</span>
           </button>
         </div>
 

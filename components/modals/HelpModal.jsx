@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import fetchWithTimeout from '@/lib/fetch-with-timeout';
+import ModalShell from '@/components/ui/ModalShell';
 
 const faqs = [
   { question: "How is PCOD risk calculated?", answer: "Our AI model analyzes your symptoms, menstrual cycle data, and lifestyle factors to estimate your risk. It is not a substitute for professional medical advice." },
@@ -16,8 +17,6 @@ export default function HelpModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,29 +51,41 @@ export default function HelpModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-        <div className="p-6 border-b border-white/10 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-white">Help & Support</h2>
-          <button onClick={onClose} className="text-white/50 hover:text-white transition-colors">
-            ✕
-          </button>
-        </div>
-        
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Help & Support"
+      closeLabel="Close help and support"
+      backdropClassName="animate-in fade-in duration-200"
+      panelClassName="flex flex-col overflow-hidden"
+      headerClassName="p-6 pr-16 border-b border-white/10"
+      titleClassName="text-xl font-bold text-white"
+    >
         <div className="p-6 overflow-y-auto custom-scrollbar">
           <h3 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">Frequently Asked Questions</h3>
           <div className="space-y-2 mb-8">
             {faqs.map((faq, idx) => (
               <div key={idx} className="border border-white/10 rounded-lg overflow-hidden bg-white/5">
                 <button
-                  className="w-full px-4 py-3 text-left text-white font-medium flex justify-between items-center focus:outline-none"
+                  type="button"
+                  id={`faq-trigger-${idx}`}
+                  // Without these, a screen reader announces a plain button and
+                  // gives no indication that an answer expanded below it.
+                  aria-expanded={openFaq === idx}
+                  aria-controls={`faq-answer-${idx}`}
+                  className="w-full px-4 py-3 text-left text-white font-medium flex justify-between items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                 >
                   {faq.question}
-                  <span className="text-white/50">{openFaq === idx ? '−' : '+'}</span>
+                  <span className="text-white/50" aria-hidden="true">{openFaq === idx ? '−' : '+'}</span>
                 </button>
                 {openFaq === idx && (
-                  <div className="px-4 pb-3 text-white/70 text-sm animate-in slide-in-from-top-2 duration-200">
+                  <div
+                    id={`faq-answer-${idx}`}
+                    role="region"
+                    aria-labelledby={`faq-trigger-${idx}`}
+                    className="px-4 pb-3 text-white/70 text-sm animate-in slide-in-from-top-2 duration-200"
+                  >
                     {faq.answer}
                   </div>
                 )}
@@ -85,8 +96,9 @@ export default function HelpModal({ isOpen, onClose }) {
           <h3 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">Submit Feedback</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Feedback Type</label>
+              <label htmlFor="feedback-type" className="block text-sm font-medium text-white/80 mb-1">Feedback Type</label>
               <select
+                id="feedback-type"
                 value={type}
                 onChange={(e) => setType(e.target.value)}
                 className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -96,15 +108,21 @@ export default function HelpModal({ isOpen, onClose }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Message</label>
+              <label htmlFor="feedback-message" className="block text-sm font-medium text-white/80 mb-1">Message</label>
               <textarea
+                id="feedback-message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Tell us what went wrong or what you'd like to see..."
                 rows={4}
+                aria-invalid={error ? 'true' : undefined}
+                aria-describedby={error ? 'feedback-error' : undefined}
                 className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               ></textarea>
-              {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+              {/* A validation message that is only visible is invisible to a
+                  screen-reader user, who is told nothing about why submit
+                  appeared to do nothing. */}
+              <p id="feedback-error" role="alert" className="text-red-400 text-xs mt-1">{error}</p>
             </div>
             
             <button
@@ -114,14 +132,15 @@ export default function HelpModal({ isOpen, onClose }) {
             >
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </button>
-            {success && (
-              <div className="bg-green-500/20 border border-green-500/50 text-green-400 text-sm px-4 py-2 rounded-lg text-center animate-in fade-in zoom-in duration-300">
-                Message sent successfully!
-              </div>
-            )}
+            <div role="status" aria-live="polite">
+              {success && (
+                <div className="bg-green-500/20 border border-green-500/50 text-green-400 text-sm px-4 py-2 rounded-lg text-center animate-in fade-in zoom-in duration-300">
+                  Message sent successfully!
+                </div>
+              )}
+            </div>
           </form>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

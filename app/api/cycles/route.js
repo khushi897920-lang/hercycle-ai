@@ -6,18 +6,7 @@ import { logger } from '@/lib/logger'
 import { z } from 'zod'
 import { eventBus } from '@/lib/events'
 import { pcodRiskCache } from '@/lib/cache'
-
-/**
- * ISO date string must be a valid calendar date and must not be in the future.
- */
-const isoDateNotInFuture = z
-  .string()
-  .min(1, 'Date is required')
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
-  .refine(
-    (d) => !isNaN(Date.parse(d)),
-    { message: 'Must be a valid calendar date' }
-  )
+import { endsOnOrAfterStart, isoCalendarDate, optionalIsoCalendarDate } from '@/lib/date-schemas'
 
 /**
  * Physiologically valid cycle length: 15–90 days covers all clinical edge cases
@@ -32,47 +21,26 @@ const validCycleLength = z
 const cyclePostSchema = z
   .object({
     id: z.string().uuid('Must be a valid UUID').optional(),
-    start_date: isoDateNotInFuture,
-    end_date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'end_date must be in YYYY-MM-DD format')
-      .nullable()
-      .optional(),
+    start_date: isoCalendarDate({ label: 'start_date' }),
+    end_date: optionalIsoCalendarDate({ label: 'end_date' }),
     cycle_length: validCycleLength.optional(),
     encrypted_data: z.any().optional()
   })
   .refine(
-    (data) => {
-      if (data.end_date && data.start_date) {
-        return new Date(data.end_date) >= new Date(data.start_date);
-      }
-      return true;
-    },
+    (data) => endsOnOrAfterStart(data.start_date, data.end_date),
     { message: 'end_date must be on or after start_date', path: ['end_date'] }
   );
 
 const cyclePatchSchema = z
   .object({
     id: z.string().uuid('Must be a valid UUID'),
-    start_date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'start_date must be in YYYY-MM-DD format')
-      .optional(),
-    end_date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'end_date must be in YYYY-MM-DD format')
-      .nullable()
-      .optional(),
+    start_date: isoCalendarDate({ label: 'start_date' }).optional(),
+    end_date: optionalIsoCalendarDate({ label: 'end_date' }),
     cycle_length: validCycleLength.optional(),
     encrypted_data: z.any().optional()
   })
   .refine(
-    (data) => {
-      if (data.end_date && data.start_date) {
-        return new Date(data.end_date) >= new Date(data.start_date);
-      }
-      return true;
-    },
+    (data) => endsOnOrAfterStart(data.start_date, data.end_date),
     { message: 'end_date must be on or after start_date', path: ['end_date'] }
   );
 

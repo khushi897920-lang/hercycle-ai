@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Mail, Heart, Send, Sparkles, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { sendPartnerNudge } from '@/lib/actions/partner'
+import useModalA11y from '@/lib/a11y/useModalA11y'
 
 const LETTER_PRESETS = [
   'Rest well today my love 💌',
@@ -18,6 +19,14 @@ export default function CuteLetterModal({ isOpen, onClose, onSent }) {
   const [selectedPreset, setSelectedPreset] = useState('')
   const [customMessage, setCustomMessage] = useState('')
   const [sending, setSending] = useState(false)
+
+  // The old selector-based traps in this codebase all missed `textarea`, which
+  // is the primary control here — so Tab from the letter body went straight to
+  // the page behind the overlay.
+  const { containerRef, backdropRef, onBackdropMouseDown, onBackdropClick } = useModalA11y({
+    isOpen,
+    onClose,
+  })
 
   if (!isOpen) return null
 
@@ -46,8 +55,21 @@ export default function CuteLetterModal({ isOpen, onClose, onSent }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg overflow-hidden bg-gradient-to-b from-rose-950/90 via-slate-900/90 to-purple-950/90 border border-white/20 rounded-3xl shadow-2xl p-6 md:p-8">
+    <div
+      ref={backdropRef}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+      onMouseDown={onBackdropMouseDown}
+      onClick={onBackdropClick}
+    >
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cute-letter-title"
+        aria-describedby="cute-letter-description"
+        tabIndex={-1}
+        className="relative w-full max-w-lg overflow-hidden bg-gradient-to-b from-rose-950/90 via-slate-900/90 to-purple-950/90 border border-white/20 rounded-3xl shadow-2xl p-6 md:p-8 focus:outline-none"
+      >
         
         {/* Decorative background glow */}
         <div className="absolute -top-12 -right-12 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -60,18 +82,20 @@ export default function CuteLetterModal({ isOpen, onClose, onSent }) {
               <Mail className="w-5 h-5 text-rose-300" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white flex items-center gap-1.5">
-                Send a Cute Love Note <Sparkles className="w-4 h-4 text-amber-300" />
+              <h2 id="cute-letter-title" className="text-xl font-bold text-white flex items-center gap-1.5">
+                Send a Cute Love Note <Sparkles className="w-4 h-4 text-amber-300" aria-hidden="true" />
               </h2>
-              <p className="text-white/60 text-xs">Write a sweet letter to brighten her day</p>
+              <p id="cute-letter-description" className="text-white/60 text-xs">Write a sweet letter to brighten her day</p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            data-modal-close=""
             className="p-1.5 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors"
-            aria-label="Close"
+            aria-label="Close without sending the love note"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -82,7 +106,13 @@ export default function CuteLetterModal({ isOpen, onClose, onSent }) {
             <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400" /> Sealed with Love</span>
           </div>
 
+          <label htmlFor="cute-letter-body" className="sr-only">
+            Your love note, up to 300 characters
+          </label>
           <textarea
+            id="cute-letter-body"
+            data-autofocus=""
+            aria-describedby="cute-letter-count"
             value={customMessage}
             onChange={(e) => {
               setCustomMessage(e.target.value)
@@ -93,7 +123,9 @@ export default function CuteLetterModal({ isOpen, onClose, onSent }) {
             maxLength={300}
           />
 
-          <div className="text-right text-xs text-white/40 font-mono mt-1">
+          {/* aria-live="polite" rather than the default off: a silent counter
+              gives no warning that the limit is approaching. */}
+          <div id="cute-letter-count" aria-live="polite" className="text-right text-xs text-white/40 font-mono mt-1">
             {customMessage.length}/300
           </div>
         </div>
@@ -108,6 +140,7 @@ export default function CuteLetterModal({ isOpen, onClose, onSent }) {
               <button
                 key={idx}
                 type="button"
+                aria-pressed={selectedPreset === preset}
                 onClick={() => {
                   setSelectedPreset(preset)
                   setCustomMessage(preset)

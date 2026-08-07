@@ -111,16 +111,16 @@ export async function POST(request) {
     try {
       const { error } = await supabaseAdmin
         .from('users')
-        .insert([{ id: clerkUserId }])
+        .upsert([{ id: clerkUserId }], { onConflict: 'id' })
 
       if (error) {
-        logger.error(`Webhook: failed to insert user ${clerkUserId}:`, error.message);
+        logger.error(`Webhook: failed to upsert user ${clerkUserId}:`, error.message);
         throw new Error(error.message);
       }
 
       await recordAuditEvent(supabaseAdmin, eventId, eventType);
 
-      logger.info(`Webhook user.created: Inserted user ${clerkUserId}`);
+      logger.info(`Webhook user.created: Upserted user ${clerkUserId}`);
       return NextResponse.json({ success: true, message: 'User created successfully' })
     } catch (err) {
       logger.error(`Webhook: user creation failed for user ${clerkUserId}:`, err.message || err);
