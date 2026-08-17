@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { getAuthUserId, ensureUserExists } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { crudLimiter } from '@/lib/rateLimiter'
@@ -26,10 +26,7 @@ export async function GET(request) {
     await crudLimiter.check(request);
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Log-day GET endpoint: ${rateLimitError.message}`);
-    return NextResponse.json(
-      { success: false, message: 'Too many requests, please slow down.' },
-      { status: 429 }
-    );
+    return jsonError('Too many requests, please slow down.', 429)
   }
   // =======================================
 
@@ -37,7 +34,7 @@ export async function GET(request) {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to GET /api/log-day');
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
 
     await ensureUserExists(userId)
@@ -46,7 +43,7 @@ export async function GET(request) {
     const date = searchParams.get('date')
     
     if (!date) {
-      return NextResponse.json({ success: false, message: 'Bad Request: Missing date.' }, { status: 400 })
+      return jsonError('Bad Request: Missing date.', 400)
     }
 
     const supabaseAdmin = getSupabaseAdmin()
@@ -59,14 +56,14 @@ export async function GET(request) {
 
     if (error) {
       logger.error(`Database error fetching daily log for user ${userId}:`, error.message);
-      return NextResponse.json({ success: false, message: error.message }, { status: 500 })
+      return jsonError(error.message, 500)
     }
 
     logger.info(`Successfully fetched daily log for user ${userId}`);
-    return NextResponse.json({ success: true, data: data || null })
+    return jsonSuccess(data || null)
   } catch (error) {
     logger.error('Error fetching day log:', error.message || error);
-    return NextResponse.json({ success: false, message: `Failed to fetch daily log: ${error.message || error}` }, { status: 500 })
+    return jsonError(`Failed to fetch daily log: ${error.message || error}`, 500)
   }
 }
 
@@ -77,10 +74,7 @@ export async function POST(request) {
     await crudLimiter.check(request);
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Log-day POST endpoint: ${rateLimitError.message}`);
-    return NextResponse.json(
-      { success: false, message: 'Too many requests, please slow down.' },
-      { status: 429 }
-    );
+    return jsonError('Too many requests, please slow down.', 429)
   }
   // =======================================
 
@@ -88,7 +82,7 @@ export async function POST(request) {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to POST /api/log-day');
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
 
     await ensureUserExists(userId)
@@ -98,12 +92,12 @@ export async function POST(request) {
       json = await request.json();
     } catch (parseError) {
       logger.warn(`Malformed JSON payload in log-day POST: ${parseError.message}`);
-      return NextResponse.json({ success: false, message: 'Bad Request: Invalid JSON payload' }, { status: 400 });
+      return jsonError('Bad Request: Invalid JSON payload', 400)
     }
     const result = logPostSchema.safeParse(json)
     if (!result.success) {
       logger.warn(`Malformed daily log upsert payload from user ${userId}: ${result.error.message}`);
-      return NextResponse.json({ success: false, message: 'Bad Request', details: result.error.errors }, { status: 400 })
+      return jsonError('Bad Request', 400, null, result.error.errors)
     }
 
     const { date, symptoms, mood, flow, cervical_discharge, encrypted_data } = result.data
@@ -132,7 +126,7 @@ export async function POST(request) {
 
     if (error) {
       logger.error(`Database error upserting daily log for user ${userId}:`, error.message);
-      return NextResponse.json({ success: false, message: `Failed to log day: ${error.message}` }, { status: 500 })
+      return jsonError(`Failed to log day: ${error.message}`, 500)
     }
 
     logger.info(`Successfully upserted daily log for user ${userId}`);
@@ -140,9 +134,9 @@ export async function POST(request) {
     // Emit event for daily logs update
     eventBus.emit('daily_logs:updated', { userId });
 
-    return NextResponse.json({ success: true, message: 'Day logged successfully!' })
+    return jsonSuccess(null, 'Day logged successfully!')
   } catch (error) {
     logger.error('Error logging day:', error.message || error);
-    return NextResponse.json({ success: false, message: `Internal Server Error: ${error.message || error}` }, { status: 500 })
+    return jsonError(`Internal Server Error: ${error.message || error}`, 500)
   }
-}
+}

@@ -57,9 +57,11 @@ export default function ChatPage() {
       })
       const data = await res.json()
       setIsTyping(false)
-      if (data.success) {
-        setChatMessages(prev => [...prev, { role: 'ai', text: data.response }])
+      const aiResponseText = data.data?.response || data.response
+      if (data.success && aiResponseText) {
+        setChatMessages(prev => [...prev, { role: 'ai', text: aiResponseText }])
       }
+
     } catch {
       setIsTyping(false)
       setChatMessages(prev => [...prev, {

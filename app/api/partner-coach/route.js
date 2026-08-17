@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const COACH_FALLBACKS = {
@@ -42,7 +42,7 @@ export async function POST(req) {
   try {
     const { userId } = await auth()
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
 
     let parsedBody;
@@ -50,7 +50,7 @@ export async function POST(req) {
       parsedBody = await req.json();
     } catch (parseError) {
       console.warn(`Malformed JSON payload in partner-coach: ${parseError.message}`);
-      return NextResponse.json({ reply: "I'm here to help you support her! Try asking about cramp relief, food ideas, or mood support." }, { status: 400 });
+      return jsonError('Bad Request: Invalid JSON payload', 400);
     }
     const { phase = 'Follicular', cycleDay = 1, symptoms = [], query = '' } = parsedBody
 
@@ -58,7 +58,7 @@ export async function POST(req) {
     if (!query || !query.trim()) {
       const defaultBriefing = COACH_FALLBACKS[phase] || COACH_FALLBACKS.Follicular
       const extraSymptoms = symptoms.length > 0 ? ` Active symptoms logged today: ${symptoms.join(', ')}.` : ''
-      return NextResponse.json({
+      return jsonSuccess({
         reply: `${defaultBriefing}${extraSymptoms}`,
         phase,
         cycleDay
@@ -68,7 +68,7 @@ export async function POST(req) {
     // 2. Chatbot Question: Attempt Gemini AI
     const geminiReply = await callGeminiCoach(query, phase, cycleDay, symptoms)
     if (geminiReply) {
-      return NextResponse.json({ reply: geminiReply, phase, cycleDay })
+      return jsonSuccess({ reply: geminiReply, phase, cycleDay })
     }
 
     // 3. Robust Knowledge Fallback if Gemini API key not set or fails
@@ -89,12 +89,11 @@ export async function POST(req) {
       }
     }
 
-    return NextResponse.json({ reply, phase, cycleDay })
+    return jsonSuccess({ reply, phase, cycleDay })
 
   } catch (error) {
     console.error("Error in partner-coach API:", error)
-    return NextResponse.json({
-      reply: "I'm here to help you support her! Try asking about cramp relief, food ideas, or mood support."
-    })
+    return jsonError('Internal server error', 500)
   }
 }
+

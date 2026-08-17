@@ -77,11 +77,15 @@ export default function CommentSection({ postId, initialComments = [] }) {
       }
 
       setNewComment('');
-      setComments((current) => {
-        if (current.some(c => c.id === data.comment.id)) return current;
-        return [data.comment, ...current];
-      });
+      const commentObj = data.data?.comment || data.comment;
+      if (commentObj) {
+        setComments((current) => {
+          if (current.some(c => c.id === commentObj.id)) return current;
+          return [commentObj, ...current];
+        });
+      }
       toast.success(t('comment_posted') || 'Comment posted anonymously!');
+
     } catch (error) {
       toast.error(error.message);
     } finally {

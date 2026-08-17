@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { getAuthUserId, ensureUserExists } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { crudLimiter } from '@/lib/rateLimiter'
@@ -8,10 +8,6 @@ import { CHALLENGES, BADGES } from '@/lib/challenges-data'
 import { resolveRequestDay } from '@/lib/request-day'
 import { calculateCurrentStreak } from '@/lib/challenge-streaks'
 
-// const progressSchema = z.object({
-//   challenge_type: z.enum(['water', 'stretch', 'mood']),
-//   increment: z.number().int().positive().max(2000),
-// })
 const progressSchema = z.object({
   challenge_type: z.enum(['water', 'stretch', 'mood', 'iron', 'sleep']),
   increment: z.number().int().positive().max(2000),
@@ -22,14 +18,14 @@ export async function POST(request) {
     await crudLimiter.check(request)
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Challenges progress POST endpoint: ${rateLimitError.message}`)
-    return NextResponse.json({ success: false, message: 'Too many requests, please slow down.' }, { status: 429 })
+    return jsonError('Too many requests, please slow down.', 429)
   }
 
   try {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to POST /api/challenges/progress')
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
     await ensureUserExists(userId)
 
@@ -37,15 +33,11 @@ export async function POST(request) {
     const result = progressSchema.safeParse(json)
     if (!result.success) {
       logger.warn(`Malformed challenge progress payload from user ${userId}: ${result.error.message}`)
-      return NextResponse.json({ success: false, message: 'Bad Request', details: result.error.errors }, { status: 400 })
+      return jsonError('Bad Request', 400, null, result.error.errors)
     }
 
     const { challenge_type, increment } = result.data
     const target = CHALLENGES[challenge_type].target
-    // The caller's calendar day. Recording against the server's UTC day meant a
-    // user in UTC+5:30 logging at 02:00 wrote to yesterday's row — and if that
-    // day was already complete, `Math.min(existing + increment, target)`
-    // discarded the increment with no feedback at all.
     const today = resolveRequestDay(request)
     const supabaseAdmin = getSupabaseAdmin()
 
@@ -59,7 +51,7 @@ export async function POST(request) {
 
     if (fetchError) {
       logger.error(`Database error fetching existing progress for user ${userId}:`, fetchError.message)
-      return NextResponse.json({ success: false, message: fetchError.message }, { status: 500 })
+      return jsonError(fetchError.message, 500)
     }
 
     const newValue = Math.min((existing?.progress_value || 0) + increment, target)
@@ -82,7 +74,7 @@ export async function POST(request) {
 
     if (upsertError) {
       logger.error(`Database error upserting challenge progress for user ${userId}:`, upsertError.message)
-      return NextResponse.json({ success: false, message: upsertError.message }, { status: 500 })
+      return jsonError(upsertError.message, 500)
     }
 
     let newlyEarnedBadges = []
@@ -91,15 +83,13 @@ export async function POST(request) {
     }
 
     logger.info(`Successfully updated ${challenge_type} progress for user ${userId}`)
-    return NextResponse.json({
-      success: true,
-      data: { progress_value: newValue, completed: newValue >= target, newBadges: newlyEarnedBadges },
-    })
+    return jsonSuccess({ progress_value: newValue, completed: newValue >= target, newBadges: newlyEarnedBadges })
   } catch (error) {
     logger.error('Error updating challenge progress:', error.message || error)
-    return NextResponse.json({ success: false, message: `Internal Server Error: ${error.message || error}` }, { status: 500 })
+    return jsonError(`Internal Server Error: ${error.message || error}`, 500)
   }
 }
+
 
 async function checkAndAwardBadges(supabaseAdmin, userId, today) {
   const { data: allProgress } = await supabaseAdmin

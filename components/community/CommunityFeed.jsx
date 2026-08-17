@@ -92,12 +92,16 @@ export default function CommunityFeed({
         throw new Error(data.error || 'Failed to load discussions');
       }
 
-      setPosts((prev) => (append ? [...prev, ...data.posts] : data.posts));
-      setNextCursor(data.nextCursor);
-      setHasMore(Boolean(data.hasMore));
+      const feedObj = data.data || data;
+      const newPosts = feedObj.posts || [];
+
+      setPosts((prev) => (append ? [...prev, ...newPosts] : newPosts));
+      setNextCursor(feedObj.nextCursor || null);
+      setHasMore(Boolean(feedObj.hasMore));
     } catch (err) {
       if (requestIdRef.current !== requestId) return;
       setError(err.message || 'Failed to load discussions');
+
       // On a failed "load more" the already-visible posts are deliberately
       // kept: dropping them would punish the user for a transient network
       // error by throwing away everything they had scrolled through.

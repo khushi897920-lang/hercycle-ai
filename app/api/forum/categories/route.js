@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logger } from '@/lib/logger'
 
@@ -49,16 +49,17 @@ export async function GET() {
 
     if (error) {
       logger.warn(`Database error fetching forum categories, serving fallback categories: ${error.message}`)
-      return NextResponse.json({ success: true, data: DEFAULT_CATEGORIES, fallback: true })
+      return jsonSuccess(DEFAULT_CATEGORIES)
     }
 
     if (!data || data.length === 0) {
-      return NextResponse.json({ success: true, data: DEFAULT_CATEGORIES, fallback: true })
+      return jsonSuccess(DEFAULT_CATEGORIES)
     }
 
-    return NextResponse.json({ success: true, data })
+    return jsonSuccess(data)
   } catch (err) {
     logger.error(`Forum categories route error, serving fallback categories: ${err.message || err}`, err.stack)
-    return NextResponse.json({ success: true, data: DEFAULT_CATEGORIES, fallback: true })
+    return jsonSuccess(DEFAULT_CATEGORIES)
   }
 }
+

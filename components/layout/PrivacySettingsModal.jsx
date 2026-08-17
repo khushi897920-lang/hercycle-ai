@@ -17,12 +17,14 @@ export default function PrivacySettingsContent() {
     fetchWithTimeout('/api/profile')
       .then(res => res.json())
       .then(data => {
-        if (data.success && data.profile) {
-          setAllowAI(data.profile.allow_ai_analysis ?? true)
+        const profile = data.data?.profile || data.profile
+        if (data.success && profile) {
+          setAllowAI(profile.allow_ai_analysis ?? true)
         }
       })
       .catch(console.error)
   }, [])
+
 
   const handleToggleAI = async (checked) => {
     const message = checked 

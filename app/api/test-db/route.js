@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { devLimiter } from '@/lib/rateLimiter'
@@ -10,7 +10,7 @@ export async function GET(request) {
   // 1. Restrict to development only
   if (process.env.NODE_ENV === 'production') {
     logger.warn('Unauthorized production database test request blocked');
-    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+    return jsonError('Forbidden', 403)
   }
 
   // ============ RATE LIMITING ============
@@ -18,10 +18,7 @@ export async function GET(request) {
     await devLimiter.check(request); // dev-only route, very low limit
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Test-DB endpoint: ${rateLimitError.message}`);
-    return NextResponse.json(
-      { success: false, error: 'Too many requests. Test route is heavily rate limited.' },
-      { status: 429 }
-    );
+    return jsonError('Too many requests. Test route is heavily rate limited.', 429)
   }
   // =======================================
 
@@ -30,7 +27,7 @@ export async function GET(request) {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to test-db API');
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
 
     const diagnostics = {
@@ -55,33 +52,23 @@ export async function GET(request) {
 
     if (cyclesError) {
       logger.error('Test DB query failed:', cyclesError.message);
-      return NextResponse.json({
-        success: false,
-        step: 'query_cycles',
-        error: cyclesError.message,
-        details: cyclesError,
-        diagnostics
-      }, { status: 500 })
+      return jsonError(cyclesError.message, 500, 'query_cycles', { diagnostics })
     }
 
     logger.info('Test DB connection diagnostic successful');
-    return NextResponse.json({
-      success: true,
-      message: 'Supabase connection successful!',
+    return jsonSuccess({
       queryTimeMs: queryTime,
       rowCount: cycles?.length ?? 0,
       diagnostics
-    })
+    }, 'Supabase connection successful!')
 
   } catch (err) {
     logger.error('Test DB route initialization error:', err.message || err);
-    return NextResponse.json({
-      success: false,
-      step: 'initialization',
-      error: err.message || err.toString(),
+    return jsonError(err.message || err.toString(), 500, 'initialization', {
       diagnostics: {
         nodeEnv: process.env.NODE_ENV || 'undefined',
       }
-    }, { status: 500 })
+    })
   }
 }
+

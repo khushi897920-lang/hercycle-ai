@@ -1,5 +1,5 @@
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { validateEnv } from "@/lib/env";
-import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { aiLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
@@ -191,10 +191,7 @@ export async function POST(request) {
     await aiLimiter.check(request); // 10 requests per minute
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Chat endpoint: ${rateLimitError.message}`);
-    return NextResponse.json(
-      { success: false, error: 'Too many requests, please slow down. AI chat is rate limited.' },
-      { status: 429 }
-    );
+    return jsonError('Too many requests, please slow down. AI chat is rate limited.', 429)
   }
   // =======================================
 
@@ -203,7 +200,7 @@ export async function POST(request) {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to AI Chat API');
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
 
     // 2. Parse JSON body with error handling for malformed payloads
@@ -212,28 +209,21 @@ export async function POST(request) {
       json = await request.json();
     } catch (parseError) {
       logger.warn(`Malformed JSON payload in AI Chat API: ${parseError.message}`);
-      return NextResponse.json({ success: false, error: 'Bad Request: Invalid JSON payload' }, { status: 400 });
+      return jsonError('Bad Request: Invalid JSON payload', 400)
     }
 
     // 3. Input Validation (Zod)
     const result = chatPayloadSchema.safeParse(json)
     if (!result.success) {
       logger.warn(`Invalid request payload on AI Chat API: ${result.error.message}`);
-      return NextResponse.json({ success: false, error: 'Bad Request', details: result.error.errors }, { status: 400 })
+      return jsonError('Bad Request', 400, null, result.error.errors)
     }
 
     const { message, context, history = [] } = result.data
     language = result.data.language || 'en'
 
     if (!message || message.trim().length === 0) {
-      return NextResponse.json(
-        {
-          error: "Message content cannot be empty",
-        },
-        {
-          status: 400,
-        }
-      );
+      return jsonError('Message content cannot be empty', 400)
     }
 
     // 3. Fetch User Health Profile for Context Injection
@@ -251,7 +241,7 @@ export async function POST(request) {
     }
 
     if (userProfile && userProfile.allow_ai_analysis === false) {
-      return NextResponse.json({ success: true, response: 'Privacy mode enabled' });
+      return jsonSuccess({ response: 'Privacy mode enabled' })
     }
 
     let systemPrompt = `You are a helpful menstrual health assistant. Provide empathetic, accurate health guidance.`;
@@ -295,7 +285,7 @@ export async function POST(request) {
     const responseText = await getAIResponse(message, systemPrompt, history);
 
     logger.info(`Successful chat assistant response generated for user ${userId}`);
-    return NextResponse.json({ success: true, response: responseText });
+    return jsonSuccess({ response: responseText })
   } catch (error) {
     logger.error('AI Chat Route Error:', error);
 
@@ -304,9 +294,6 @@ export async function POST(request) {
       ? 'मुझे खेद है, मुझे अभी कुछ तकनीकी समस्या आ रही है। कृपया थोड़ी देर बाद पुनः प्रयास करें। 💕'
       : 'I apologize, but I am experiencing a technical hiccup right now. Please try again in a little while. 💕';
 
-    return NextResponse.json({
-      success: true,
-      response: politeFallback
-    });
+    return jsonSuccess({ response: politeFallback })
   }
-}
+}

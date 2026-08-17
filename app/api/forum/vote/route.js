@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { jsonSuccess, jsonError } from '@/lib/api-helpers';
 import { getAuthUserId } from '@/lib/clerk-server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import crypto from 'crypto';
@@ -8,7 +8,7 @@ export async function POST(req) {
     const userId = await getAuthUserId();
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return jsonError('Unauthorized', 401);
     }
 
     let body;
@@ -16,20 +16,20 @@ export async function POST(req) {
       body = await req.json();
     } catch (parseError) {
       console.warn(`Malformed JSON payload in forum vote: ${parseError.message}`);
-      return NextResponse.json({ error: 'Bad Request: Invalid JSON payload' }, { status: 400 });
+      return jsonError('Bad Request: Invalid JSON payload', 400);
     }
     const { itemType, itemId, voteValue } = body;
 
     if (!itemType || !itemId || !voteValue) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return jsonError('Missing required fields', 400);
     }
 
     if (!['post', 'comment'].includes(itemType)) {
-      return NextResponse.json({ error: 'Invalid item type' }, { status: 400 });
+      return jsonError('Invalid item type', 400);
     }
 
     if (![1, -1].includes(voteValue)) {
-      return NextResponse.json({ error: 'Invalid vote value' }, { status: 400 });
+      return jsonError('Invalid vote value', 400);
     }
 
     // Hash the user ID so we don't store raw clerk IDs directly, but we can uniquely identify them
@@ -47,18 +47,16 @@ export async function POST(req) {
 
     if (rpcError) {
       console.error('Vote RPC Error:', rpcError);
-      return NextResponse.json({ error: 'Failed to record vote' }, { status: 500 });
+      return jsonError('Failed to record vote', 500);
     }
 
     // Determine correct HTTP status based on the action taken
     const status = result.action === 'added' ? 201 : 200;
     
-    return NextResponse.json({ 
-      message: `Vote ${result.action}`, 
-      currentVote: result.current_vote 
-    }, { status });
+    return jsonSuccess({ currentVote: result.current_vote }, `Vote ${result.action}`, status);
   } catch (error) {
     console.error('Vote Error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return jsonError('Internal server error', 500);
   }
 }
+

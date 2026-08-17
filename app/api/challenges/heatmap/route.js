@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { getAuthUserId, ensureUserExists } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { crudLimiter } from '@/lib/rateLimiter'
@@ -11,19 +11,15 @@ export async function GET(request) {
   try {
     await crudLimiter.check(request)
   } catch (rateLimitError) {
-    return NextResponse.json({ success: false, message: 'Too many requests, please slow down.' }, { status: 429 })
+    return jsonError('Too many requests, please slow down.', 429)
   }
 
   try {
     const userId = await getAuthUserId()
-    if (!userId) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
+    if (!userId) return jsonError('Unauthorized', 401)
     await ensureUserExists(userId)
 
     const supabaseAdmin = getSupabaseAdmin()
-    // The window is anchored to the caller's calendar day so the 30 cells the
-    // client renders are exactly the 30 days the server queried. Deriving the
-    // bound in UTC left the most recent cell empty for users far from UTC,
-    // because the client was asking about a day the query had excluded.
     const today = resolveRequestDay(request)
     const startDate = addDaysISO(today, -29)
 
@@ -36,7 +32,7 @@ export async function GET(request) {
 
     if (error) {
       logger.error(`Database error fetching heatmap for user ${userId}:`, error.message)
-      return NextResponse.json({ success: false, message: error.message }, { status: 500 })
+      return jsonError(error.message, 500)
     }
 
     const counts = {}
@@ -45,12 +41,9 @@ export async function GET(request) {
     }
 
     logger.info(`Fetched heatmap data for user ${userId}`)
-    // `endDate` is returned alongside `startDate` so the client renders the
-    // exact window that was queried instead of re-deriving it from its own
-    // clock and drifting by a day.
-    return NextResponse.json({ success: true, data: { counts, startDate, endDate: today } })
+    return jsonSuccess({ counts, startDate, endDate: today })
   } catch (err) {
     logger.error('Error fetching heatmap:', err.message || err)
-    return NextResponse.json({ success: false, message: `Internal Server Error: ${err.message || err}` }, { status: 500 })
+    return jsonError(`Internal Server Error: ${err.message || err}`, 500)
   }
-}
+}

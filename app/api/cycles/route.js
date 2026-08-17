@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { getAuthUserId, ensureUserExists } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { crudLimiter } from '@/lib/rateLimiter'
@@ -67,10 +67,7 @@ export async function GET(request) {
     await crudLimiter.check(request); 
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Cycles GET endpoint: ${rateLimitError.message}`);
-    return NextResponse.json(
-      { success: false, error: 'Too many requests, please slow down.' },
-      { status: 429 }
-    );
+    return jsonError('Too many requests, please slow down.', 429)
   }
   // =======================================
 
@@ -78,7 +75,7 @@ export async function GET(request) {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to GET /api/cycles');
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
 
     await ensureUserExists(userId)
@@ -93,14 +90,14 @@ export async function GET(request) {
 
     if (error && error.code !== 'PGRST116') {
       logger.error(`Error querying cycles for user ${userId}:`, error.message);
-      return NextResponse.json({ success: true, data: { cycles: [], nextPeriodDate: null, confidence: null, averageCycleLength: 28 } })
+      return jsonSuccess({ cycles: [], nextPeriodDate: null, confidence: null, averageCycleLength: 28 })
     }
 
     logger.info(`Successfully fetched cycles for user ${userId}`);
-    return NextResponse.json({ success: true, data: { cycles: cycles || [] } })
+    return jsonSuccess({ cycles: cycles || [] })
   } catch (error) {
     logger.error('Error fetching cycles:', error.message || error);
-    return NextResponse.json({ success: false, error: `Failed to fetch cycles: ${error.message || error}` }, { status: 500 })
+    return jsonError(`Failed to fetch cycles: ${error.message || error}`, 500)
   }
 }
 
@@ -110,10 +107,7 @@ export async function POST(request) {
     await crudLimiter.check(request); 
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Cycles POST endpoint: ${rateLimitError.message}`);
-    return NextResponse.json(
-      { success: false, error: 'Too many requests, please slow down.' },
-      { status: 429 }
-    );
+    return jsonError('Too many requests, please slow down.', 429)
   }
   // =======================================
 
@@ -121,7 +115,7 @@ export async function POST(request) {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to POST /api/cycles');
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
 
     await ensureUserExists(userId)
@@ -132,12 +126,12 @@ export async function POST(request) {
       json = await request.json();
     } catch (parseError) {
       logger.warn(`Malformed JSON payload in cycles POST: ${parseError.message}`);
-      return NextResponse.json({ success: false, error: 'Bad Request: Invalid JSON payload' }, { status: 400 });
+      return jsonError('Bad Request: Invalid JSON payload', 400)
     }
     const result = cyclePostSchema.safeParse(json)
     if (!result.success) {
       logger.warn(`Malformed cycle insertion payload from user ${userId}: ${result.error.message}`);
-      return NextResponse.json({ success: false, error: 'Bad Request', details: result.error.errors }, { status: 400 })
+      return jsonError('Bad Request', 400, null, result.error.errors)
     }
 
     const { id, start_date, end_date, cycle_length, encrypted_data } = result.data
@@ -164,7 +158,7 @@ export async function POST(request) {
     if (error) {
       const clean = toCleanCycleError(error)
       logger.error(`Database error inserting cycle for user ${userId}:`, error.message);
-      return NextResponse.json({ success: false, error: clean.message }, { status: clean.status })
+      return jsonError(clean.message, clean.status)
     }
 
     logger.info(`Successfully added new period cycle for user ${userId}`);
@@ -176,10 +170,10 @@ export async function POST(request) {
     // Emit event for cycle update
     eventBus.emit('cycles:updated', { userId });
 
-    return NextResponse.json({ success: true })
+    return jsonSuccess(null, 'Period started successfully')
   } catch (error) {
     logger.error('Error starting period cycle:', error.message || error);
-    return NextResponse.json({ success: false, error: `Failed to start period: ${error.message || error}` }, { status: 500 })
+    return jsonError(`Failed to start period: ${error.message || error}`, 500)
   }
 }
 
@@ -189,10 +183,7 @@ export async function PATCH(request) {
     await crudLimiter.check(request); 
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Cycles PATCH endpoint: ${rateLimitError.message}`);
-    return NextResponse.json(
-      { success: false, error: 'Too many requests, please slow down.' },
-      { status: 429 }
-    );
+    return jsonError('Too many requests, please slow down.', 429)
   }
   // =======================================
 
@@ -200,7 +191,7 @@ export async function PATCH(request) {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to PATCH /api/cycles');
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
 
     await ensureUserExists(userId)
@@ -211,12 +202,12 @@ export async function PATCH(request) {
       json = await request.json();
     } catch (parseError) {
       logger.warn(`Malformed JSON payload in cycles PATCH: ${parseError.message}`);
-      return NextResponse.json({ success: false, error: 'Bad Request: Invalid JSON payload' }, { status: 400 });
+      return jsonError('Bad Request: Invalid JSON payload', 400)
     }
     const result = cyclePatchSchema.safeParse(json)
     if (!result.success) {
       logger.warn(`Malformed cycle update payload from user ${userId}: ${result.error.message}`);
-      return NextResponse.json({ success: false, error: 'Bad Request', details: result.error.errors }, { status: 400 })
+      return jsonError('Bad Request', 400, null, result.error.errors)
     }
 
     const { id, start_date, end_date, cycle_length, encrypted_data } = result.data
@@ -237,7 +228,7 @@ export async function PATCH(request) {
    if (error) {
       const clean = toCleanCycleError(error)
       logger.error(`Database error updating cycle ${id} for user ${userId}:`, error.message);
-      return NextResponse.json({ success: false, error: clean.message }, { status: clean.status })
+      return jsonError(clean.message, clean.status)
     }
     logger.info(`Successfully updated period cycle ${id} for user ${userId}`);
     
@@ -248,9 +239,10 @@ export async function PATCH(request) {
     // Emit event for cycle update
     eventBus.emit('cycles:updated', { userId });
 
-    return NextResponse.json({ success: true })
+    return jsonSuccess(null, 'Period updated successfully')
   } catch (error) {
     logger.error('Error ending period cycle:', error.message || error);
-    return NextResponse.json({ success: false, error: `Failed to end period: ${error.message || error}` }, { status: 500 })
+    return jsonError(`Failed to end period: ${error.message || error}`, 500)
   }
 }
+

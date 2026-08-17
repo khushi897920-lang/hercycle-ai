@@ -1,3 +1,4 @@
+import { jsonError } from '@/lib/api-helpers'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logger } from '@/lib/logger'
@@ -14,10 +15,7 @@ export async function GET(request) {
     await crudLimiter.check(request)
   } catch (rateLimitError) {
     logger.warn(`[Rate Limit] Data export endpoint: ${rateLimitError.message}`)
-    return new Response(JSON.stringify({ error: 'Too many requests, please slow down.' }), {
-      status: 429,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonError('Too many requests, please slow down.', 429)
   }
   // =======================================
 
@@ -25,10 +23,7 @@ export async function GET(request) {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to Data Export API')
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return jsonError('Unauthorized', 401)
     }
 
     const supabaseAdmin = getSupabaseAdmin()
@@ -132,9 +127,7 @@ export async function GET(request) {
     })
   } catch (err) {
     logger.error(`Data Export Route Error: ${err.message}`, err.stack)
-    return new Response(JSON.stringify({ error: 'Failed to export data' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonError('Failed to export data', 500)
   }
 }
+

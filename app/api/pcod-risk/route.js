@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { calculatePCODRisk } from '@/lib/api-helpers'
+import { calculatePCODRisk, jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { aiLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
@@ -19,13 +18,7 @@ export async function GET(request) {
     await aiLimiter.check(request, identifier);
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] PCOD risk endpoint: ${rateLimitError.message}`);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Too many requests, please slow down. PCOD risk calculation is rate limited.'
-      },
-      { status: 429 }
-    );
+    return jsonError('Too many requests, please slow down. PCOD risk calculation is rate limited.', 429)
   }
   // =======================================
 
@@ -33,14 +26,14 @@ export async function GET(request) {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to GET /api/pcod-risk');
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
 
     const cacheKey = `pcod-risk:${userId}`;
     const cachedRisk = pcodRiskCache.get(cacheKey);
     if (cachedRisk !== undefined) {
       logger.info(`Cache hit for PCOD risk assessment for user ${userId}`);
-      return NextResponse.json({ success: true, data: cachedRisk })
+      return jsonSuccess(cachedRisk)
     }
 
     const supabaseAdmin = getSupabaseAdmin()
@@ -57,10 +50,8 @@ export async function GET(request) {
     // genuine, reassuring assessment, and then cached for five minutes.
     if (cyclesError) {
       logger.error(`Database error fetching cycles for user ${userId} PCOD risk:`, cyclesError.message);
-      return NextResponse.json(
-        riskUnavailable(RISK_UNAVAILABLE_REASONS.BACKEND),
-        { status: 503 }
-      )
+      const unavail = riskUnavailable(RISK_UNAVAILABLE_REASONS.BACKEND)
+      return jsonError(unavail.error, 503, unavail.code, { available: false, reason: unavail.reason })
     }
 
     const { data: logs, error: logsError } = await supabaseAdmin
@@ -72,10 +63,8 @@ export async function GET(request) {
 
     if (logsError) {
       logger.error(`Database error fetching logs for user ${userId} PCOD risk:`, logsError.message);
-      return NextResponse.json(
-        riskUnavailable(RISK_UNAVAILABLE_REASONS.BACKEND),
-        { status: 503 }
-      )
+      const unavail = riskUnavailable(RISK_UNAVAILABLE_REASONS.BACKEND)
+      return jsonError(unavail.error, 503, unavail.code, { available: false, reason: unavail.reason })
     }
 
     const risk = normaliseRiskResult(await calculatePCODRisk(cycles || [], logs || []))
@@ -85,10 +74,8 @@ export async function GET(request) {
     // payload is a failure, not a low-risk reading.
     if (!risk) {
       logger.error(`PCOD risk calculation returned an unusable result for user ${userId}`);
-      return NextResponse.json(
-        riskUnavailable(RISK_UNAVAILABLE_REASONS.BACKEND),
-        { status: 503 }
-      )
+      const unavail = riskUnavailable(RISK_UNAVAILABLE_REASONS.BACKEND)
+      return jsonError(unavail.error, 503, unavail.code, { available: false, reason: unavail.reason })
     }
 
     // Only a real computation is cached. Caching a failure would serve it back
@@ -96,7 +83,7 @@ export async function GET(request) {
     pcodRiskCache.set(cacheKey, risk);
 
     logger.info(`Successfully calculated PCOD risk assessment for user ${userId}`);
-    return NextResponse.json({ success: true, data: risk })
+    return jsonSuccess(risk)
   } catch (error) {
     // No fabricated `data` here. The previous implementation returned a
     // hard-coded score of 25 and the tier "LOW RISK" with HTTP 200, which the
@@ -105,9 +92,8 @@ export async function GET(request) {
     // The exception text stays in the log rather than being echoed to the
     // client, where it leaked Postgres error strings and connection details.
     logger.error('Error calculating PCOD risk:', error.message || error)
-    return NextResponse.json(
-      riskUnavailable(RISK_UNAVAILABLE_REASONS.BACKEND),
-      { status: 503 }
-    )
+    const unavail = riskUnavailable(RISK_UNAVAILABLE_REASONS.BACKEND)
+    return jsonError(unavail.error, 503, unavail.code, { available: false, reason: unavail.reason })
   }
 }
+

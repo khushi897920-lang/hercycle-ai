@@ -1,3 +1,4 @@
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { clerkClient } from '@clerk/nextjs/server'
 import { logger } from '@/lib/logger'
@@ -11,10 +12,7 @@ export async function POST(request) {
     await crudLimiter.check(request)
   } catch (rateLimitError) {
     logger.warn(`[Rate Limit] Delete account endpoint: ${rateLimitError.message}`)
-    return new Response(JSON.stringify({ error: 'Too many requests, please slow down.' }), {
-      status: 429,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonError('Too many requests, please slow down.', 429)
   }
   // =======================================
 
@@ -22,10 +20,7 @@ export async function POST(request) {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to Delete Account API')
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return jsonError('Unauthorized', 401)
     }
 
     // Handle Clerk version differences (v4 vs v5/v6)
@@ -35,20 +30,15 @@ export async function POST(request) {
     await client.users.deleteUser(userId)
 
     logger.info(`User ${userId} account deleted successfully via backend API`)
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonSuccess(null, 'Account deleted successfully')
   } catch (error) {
-    logger.error(`Error deleting account for user ${userId}: ${error.message}`, error.stack)
-    return new Response(JSON.stringify({ error: 'Failed to delete account' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    logger.error(`Error deleting account for user ${userId}: ${error?.message || error}`, error?.stack)
+    return jsonError('Failed to delete account', 500)
   }
 }
 
 export async function DELETE(request) {
   return POST(request)
 }
+
 

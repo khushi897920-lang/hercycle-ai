@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { z } from 'zod'
 
 import { getAuthUserId } from '@/lib/clerk-server'
@@ -38,10 +38,7 @@ async function checkRateLimit(request, method) {
     return null
   } catch (error) {
     logger.warn(`[Rate Limit] Weight ${method}: ${error.message}`)
-    return NextResponse.json(
-      { success: false, error: 'Too many requests, please slow down.' },
-      { status: 429 }
-    )
+    return jsonError('Too many requests, please slow down.', 429)
   }
 }
 
@@ -52,10 +49,7 @@ export async function GET(request) {
   try {
     const userId = await getAuthUserId()
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return jsonError('Unauthorized', 401)
     }
 
     const supabaseAdmin = getSupabaseAdmin()
@@ -68,19 +62,13 @@ export async function GET(request) {
 
     if (error) {
       logger.error(`Unable to fetch weight entries for ${userId}:`, error.message)
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      )
+      return jsonError(error.message, 500)
     }
 
-    return NextResponse.json({ success: true, data: data || [] })
+    return jsonSuccess(data || [])
   } catch (error) {
     logger.error('Weight GET failed:', error.message || error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch weight history.' },
-      { status: 500 }
-    )
+    return jsonError('Failed to fetch weight history.', 500)
   }
 }
 
@@ -91,10 +79,7 @@ export async function POST(request) {
   try {
     const userId = await getAuthUserId()
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return jsonError('Unauthorized', 401)
     }
 
     let json;
@@ -102,25 +87,17 @@ export async function POST(request) {
       json = await request.json();
     } catch (parseError) {
       logger.warn(`Malformed JSON payload in weight POST: ${parseError.message}`);
-      return NextResponse.json(
-        { success: false, error: 'Bad Request: Invalid JSON payload' },
-        { status: 400 }
-      );
+      return jsonError('Bad Request: Invalid JSON payload', 400)
     }
     const parsed = weightEntrySchema.safeParse(json)
 
     if (!parsed.success) {
       const errorMessage = parsed.error.issues.map(i => i.message).join('; ')
       logger.warn(`Validation failed for weight POST from user ${userId}: ${errorMessage}`)
-      return NextResponse.json(
-        {
-          success: false,
-          error: errorMessage || 'Please check the entered values.',
-          details: parsed.error.flatten(),
-          issues: parsed.error.issues,
-        },
-        { status: 400 }
-      )
+      return jsonError(errorMessage || 'Please check the entered values.', 400, null, {
+        flatten: parsed.error.flatten(),
+        issues: parsed.error.issues
+      })
     }
 
     const { recorded_date, weight_kg, waist_cm = null, height_cm } = parsed.data
@@ -146,18 +123,13 @@ export async function POST(request) {
 
     if (error) {
       logger.error(`Unable to save weight entry for ${userId}:`, error.message)
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      )
+      return jsonError(error.message, 500)
     }
 
-    return NextResponse.json({ success: true, data })
+    return jsonSuccess(data)
   } catch (error) {
     logger.error('Weight POST failed:', error.message || error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to save the weight entry.' },
-      { status: 500 }
-    )
+    return jsonError('Failed to save the weight entry.', 500)
   }
 }
+

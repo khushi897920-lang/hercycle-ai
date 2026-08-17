@@ -31,13 +31,14 @@ export default function NewPostPage({ params }) {
       try {
         const res = await fetchWithTimeout('/api/forum/categories')
         const json = await res.json()
-        if (json.success && json.data) {
-          setCategories(json.data)
+        const categoriesList = json.data || []
+        if (json.success && categoriesList.length > 0) {
+          setCategories(categoriesList)
           if (defaultCategory) {
-            const cat = json.data.find(c => c.slug === defaultCategory)
+            const cat = categoriesList.find(c => c.slug === defaultCategory)
             if (cat) setCategoryId(cat.id)
-          } else if (json.data.length > 0) {
-            setCategoryId(json.data[0].id)
+          } else {
+            setCategoryId(categoriesList[0].id)
           }
         }
       } catch (e) {
@@ -66,8 +67,10 @@ export default function NewPostPage({ params }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create post');
 
+      const postObj = data.data?.post || data.post;
       toast.success(t('post_created') || 'Post published anonymously!');
-      router.push(`/${locale}/community/post/${data.post.id}`);
+      router.push(`/${locale}/community/post/${postObj.id}`);
+
     } catch (error) {
       toast.error(error.message);
     } finally {

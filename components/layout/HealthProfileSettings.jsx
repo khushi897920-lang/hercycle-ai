@@ -33,13 +33,14 @@ export default function HealthProfileSettings() {
       setLoading(true)
       const res = await fetchWithTimeout('/api/profile')
       const data = await res.json()
-      if (data.success && data.profile) {
+      const profile = data.data?.profile || data.profile
+      if (data.success && profile) {
         setFormData({
-          age: data.profile.age !== null && data.profile.age !== undefined ? data.profile.age : '',
-          weight_kg: data.profile.weight_kg !== null && data.profile.weight_kg !== undefined ? data.profile.weight_kg : '',
-          height_cm: data.profile.height_cm !== null && data.profile.height_cm !== undefined ? data.profile.height_cm : '',
-          known_conditions: data.profile.known_conditions || [],
-          cycle_goal: data.profile.cycle_goal || ''
+          age: profile.age !== null && profile.age !== undefined ? profile.age : '',
+          weight_kg: profile.weight_kg !== null && profile.weight_kg !== undefined ? profile.weight_kg : '',
+          height_cm: profile.height_cm !== null && profile.height_cm !== undefined ? profile.height_cm : '',
+          known_conditions: profile.known_conditions || [],
+          cycle_goal: profile.cycle_goal || ''
         })
       }
     } catch (err) {
@@ -93,11 +94,13 @@ export default function HealthProfileSettings() {
       const data = await res.json()
       if (data.success) {
         toast.success('Health profile saved successfully!')
-        if (data.profile) {
+        const profile = data.data?.profile || data.profile
+        if (profile) {
           setFormData({
-            age: data.profile.age !== null && data.profile.age !== undefined ? data.profile.age : '',
-            weight_kg: data.profile.weight_kg !== null && data.profile.weight_kg !== undefined ? data.profile.weight_kg : '',
-            height_cm: data.profile.height_cm !== null && data.profile.height_cm !== undefined ? data.profile.height_cm : '',
+            age: profile.age !== null && profile.age !== undefined ? profile.age : '',
+            weight_kg: profile.weight_kg !== null && profile.weight_kg !== undefined ? profile.weight_kg : '',
+            height_cm: profile.height_cm !== null && profile.height_cm !== undefined ? profile.height_cm : '',
+
             known_conditions: data.profile.known_conditions || [],
             cycle_goal: data.profile.cycle_goal || ''
           })

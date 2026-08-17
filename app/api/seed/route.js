@@ -1,5 +1,5 @@
 import { validateEnv } from "@/lib/env";
-import { NextResponse } from 'next/server'
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { devLimiter, getRateLimitIdentifier } from '@/lib/rateLimiter'
@@ -62,7 +62,7 @@ export async function GET(request) {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
     logger.error('Missing SUPABASE_SERVICE_ROLE_KEY env var');
-    return NextResponse.json({ error: 'Server config error: Missing Service Role Key' }, { status: 500 });
+    return jsonError('Server config error: Missing Service Role Key', 500);
   }
 
   const supabase = createClient(
@@ -79,7 +79,7 @@ export async function GET(request) {
   // 1. Restrict to development only
   if (process.env.NODE_ENV === 'production') {
     logger.warn('Seed route invocation attempt in production blocked');
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    return jsonError('Forbidden', 403)
   }
 
   // ============ RATE LIMITING ============
@@ -88,10 +88,7 @@ export async function GET(request) {
     await devLimiter.check(request); // 2 requests per minute
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Seed endpoint: ${rateLimitError.message}`);
-    return NextResponse.json(
-      { success: false, error: 'Too many requests. Seed route is heavily rate limited.' },
-      { status: 429 }
-    );
+    return jsonError('Too many requests. Seed route is heavily rate limited.', 429)
   }
   // =======================================
 
@@ -100,7 +97,7 @@ export async function GET(request) {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to seed API');
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
 
     const PERIOD_SYMPTOMS = ['Cramps', 'Bloating', 'Fatigue', 'Headache']
@@ -126,7 +123,7 @@ export async function GET(request) {
     const { error: cycleErr } = await supabase.from('cycles').insert(cycleRows)
     if (cycleErr) {
       logger.error('Seeding DB: Cycles insertion error:', cycleErr.message);
-      return NextResponse.json({ success: false, error: `Cycles: ${cycleErr.message}` }, { status: 500 })
+      return jsonError(`Cycles: ${cycleErr.message}`, 500)
     }
 
     // 3. Build daily logs
@@ -182,7 +179,7 @@ export async function GET(request) {
 
     if (logErr) {
       logger.error('Seeding DB: Logs insertion error:', logErr.message);
-      return NextResponse.json({ success: false, error: `Logs: ${logErr.message}` }, { status: 500 })
+      return jsonError(`Logs: ${logErr.message}`, 500)
     }
 
     const avgLen = Math.round(CYCLE_LENGTHS.reduce((a, b) => a + b) / CYCLE_LENGTHS.length)
@@ -190,9 +187,7 @@ export async function GET(request) {
     const nextPeriod = addDays(lastCycle.start, avgLen)
 
     logger.info(`Seeding DB: seeding complete successfully for user ${userId}`);
-    return NextResponse.json({
-      success: true,
-      message: `✅ Seeded ${cycles.length} cycles and ${logRows.length} daily logs for user ${userId}`,
+    return jsonSuccess({
       summary: {
         cycles: cycles.length,
         dailyLogs: logRows.length,
@@ -201,9 +196,9 @@ export async function GET(request) {
         nextPeriod: fmt(nextPeriod),
         avgCycleLen: avgLen,
       }
-    })
+    }, `✅ Seeded ${cycles.length} cycles and ${logRows.length} daily logs for user ${userId}`)
   } catch (err) {
     logger.error('Seeding DB: unexpected error:', err.message || err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 })
+    return jsonError(err.message, 500)
   }
-}
+}

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { jsonSuccess, jsonError } from '@/lib/api-helpers';
 import { currentUser } from '@clerk/nextjs/server';
 
 export async function POST(req) {
@@ -10,13 +10,13 @@ export async function POST(req) {
     const { message, type } = body;
 
     if (!message) {
-      return NextResponse.json({ success: false, error: 'Message is required' }, { status: 400 });
+      return jsonError('Message is required', 400);
     }
 
     const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
     if (!webhookUrl) {
       console.error("DISCORD_WEBHOOK_URL is not configured.");
-      return NextResponse.json({ success: false, error: 'Discord webhook not configured' }, { status: 500 });
+      return jsonError('Discord webhook not configured', 500);
     }
 
     const res = await fetch(webhookUrl, {
@@ -31,10 +31,11 @@ export async function POST(req) {
       throw new Error(`Discord API error: ${res.status}`);
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return jsonSuccess(null, 'Feedback sent successfully', 200);
 
   } catch (error) {
     console.error('Feedback API error:', error);
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+    return jsonError('Internal Server Error', 500);
   }
 }
+

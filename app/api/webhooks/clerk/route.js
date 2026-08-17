@@ -1,19 +1,8 @@
-import { NextResponse } from 'next/server'
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { Webhook } from 'svix'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logger } from '@/lib/logger'
 
-/**
- * Returns true when a webhook delivery for `eventId` was already processed.
- *
- * Clerk retries deliveries when a handler returns a non-2xx, and may resend
- * on a network hiccup — both would otherwise re-run the DB write. The audit
- * table makes every duplicate a cheap read + early 200.
- *
- * @param {ReturnType<getSupabaseAdmin>} supabaseAdmin
- * @param {string} eventId
- * @returns {Promise<boolean>}
- */
 async function isDuplicateEvent(supabaseAdmin, eventId) {
   const { data: existingEvent } = await supabaseAdmin
     .from('clerk_webhook_audit')
@@ -24,18 +13,6 @@ async function isDuplicateEvent(supabaseAdmin, eventId) {
   return Boolean(existingEvent)
 }
 
-/**
- * Records a processed webhook delivery so later duplicates are ignored.
- *
- * A write failure here must NOT fail the underlying user mutation — the
- * mutation already succeeded. Log it loudly instead so an operator can spot
- * the gap, and let the idempotent upsert/delete queries absorb a rare retry.
- *
- * @param {ReturnType<getSupabaseAdmin>} supabaseAdmin
- * @param {string} eventId
- * @param {string} eventType
- * @returns {Promise<void>}
- */
 async function recordAuditEvent(supabaseAdmin, eventId, eventType) {
   const { error: auditError } = await supabaseAdmin
     .from('clerk_webhook_audit')
@@ -51,7 +28,7 @@ export async function POST(request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET
   if (!WEBHOOK_SECRET) {
     logger.error('CLERK_WEBHOOK_SECRET is missing in environment variables.');
-    return NextResponse.json({ error: 'Webhook configuration error' }, { status: 500 })
+    return jsonError('Webhook configuration error', 500)
   }
 
   // 2. Fetch Svix headers for signature verification
@@ -62,7 +39,7 @@ export async function POST(request) {
 
   if (!svix_id || !svix_timestamp || !svix_signature) {
     logger.warn('Missing Svix signature headers in webhook request');
-    return new Response('Error: Missing svix headers', { status: 400 })
+    return jsonError('Missing svix headers', 400)
   }
 
   // 3. Retrieve raw request body text
@@ -79,28 +56,20 @@ export async function POST(request) {
     })
   } catch (err) {
     logger.error('Clerk Webhook signature verification failed:', err.message || err);
-    return new Response('Error: Invalid signature', { status: 400 })
+    return jsonError('Invalid signature', 400)
   }
 
   const eventType = evt.type
   const eventId = svix_id
   const supabaseAdmin = getSupabaseAdmin()
 
-  // 5. Deduplicate across ALL event types before any database write. A
-  // redundant upsert is wasted work at best and a correctness hazard at worst.
+  // 5. Deduplicate across ALL event types before any database write.
   try {
     if (await isDuplicateEvent(supabaseAdmin, eventId)) {
       logger.warn(`Duplicate Clerk webhook delivery ignored. Event ID: ${eventId}, type: ${eventType}`);
-      return NextResponse.json({
-        success: true,
-        duplicate: true,
-        message: 'Webhook already processed'
-      });
+      return jsonSuccess({ duplicate: true }, 'Webhook already processed');
     }
   } catch (err) {
-    // Fail-open on the dedup read: a transient audit-table error should not
-    // silently drop a real user creation. The idempotent queries below and the
-    // audit insert keep retries safe.
     logger.error(`Webhook: duplicate check failed for event ${eventId}:`, err.message || err);
   }
 
@@ -121,10 +90,10 @@ export async function POST(request) {
       await recordAuditEvent(supabaseAdmin, eventId, eventType);
 
       logger.info(`Webhook user.created: Upserted user ${clerkUserId}`);
-      return NextResponse.json({ success: true, message: 'User created successfully' })
+      return jsonSuccess(null, 'User created successfully')
     } catch (err) {
       logger.error(`Webhook: user creation failed for user ${clerkUserId}:`, err.message || err);
-      return NextResponse.json({ error: 'Database operation failed' }, { status: 500 })
+      return jsonError('Database operation failed', 500)
     }
   }
 
@@ -133,7 +102,7 @@ export async function POST(request) {
 
     if (!clerkUserId) {
       logger.warn('Webhook user.deleted event contains no user id');
-      return NextResponse.json({ error: 'Missing user id' }, { status: 400 })
+      return jsonError('Missing user id', 400)
     }
 
     try {
@@ -153,14 +122,15 @@ export async function POST(request) {
       await recordAuditEvent(supabaseAdmin, eventId, eventType);
 
       logger.info(`Webhook user.deleted: Successfully purged all database records for user ${clerkUserId}`);
-      return NextResponse.json({ success: true, message: 'User data purged successfully' })
+      return jsonSuccess(null, 'User data purged successfully')
 
     } catch (err) {
       logger.error(`Webhook: database delete execution failed for user ${clerkUserId}:`, err.message || err);
-      return NextResponse.json({ error: 'Database operation failed' }, { status: 500 })
+      return jsonError('Database operation failed', 500)
     }
   }
 
   // Acknowledge other event types to ensure Clerk doesn't retry
-  return NextResponse.json({ success: true, received: true })
+  return jsonSuccess({ received: true })
 }
+

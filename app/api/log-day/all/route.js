@@ -1,6 +1,6 @@
 
 
-import { NextResponse } from 'next/server'
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { crudLimiter } from '@/lib/rateLimiter'
@@ -16,10 +16,7 @@ export async function GET(request) {
     await crudLimiter.check(request);
   } catch (rateLimitError) {
     console.warn(`[Rate Limit] Log-day/all endpoint: ${rateLimitError.message}`);
-    return NextResponse.json(
-      { success: false, message: 'Too many requests, please slow down.' },
-      { status: 429 }
-    );
+    return jsonError('Too many requests, please slow down.', 429)
   }
   // =======================================
 
@@ -27,7 +24,7 @@ export async function GET(request) {
     const userId = await getAuthUserId()
     if (!userId) {
       logger.warn('Unauthenticated access attempt to GET /api/log-day/all');
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
 
     // Parse pagination params
@@ -38,31 +35,23 @@ export async function GET(request) {
     const to    = from + limit - 1
 
     const supabaseAdmin = getSupabaseAdmin()
-    const { data, error, count } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('daily_logs')
-      .select('*', { count: 'exact' })
+      .select('*')
       .eq('user_id', userId)
       .order('date', { ascending: false })
       .range(from, to)
 
     if (error) {
       logger.error(`Database error fetching daily logs for user ${userId}:`, error.message);
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+      return jsonError(error.message, 500)
     }
 
     logger.info(`Successfully fetched daily logs (page=${page}, limit=${limit}) for user ${userId}`);
-    return NextResponse.json({
-      success: true,
-      data: data || [],
-      pagination: {
-        page,
-        limit,
-        total: count ?? null,
-        hasMore: count != null ? from + limit < count : (data || []).length === limit,
-      },
-    })
+    return jsonSuccess(data || [])
   } catch (error) {
     logger.error('Error fetching all logs:', error.message || error);
-    return NextResponse.json({ success: false, error: `Failed to fetch all logs: ${error.message || error}` }, { status: 500 })
+    return jsonError(`Failed to fetch all logs: ${error.message || error}`, 500)
   }
 }
+

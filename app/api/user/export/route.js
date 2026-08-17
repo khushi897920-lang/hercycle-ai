@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { jsonSuccess, jsonError } from '@/lib/api-helpers'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logger } from '@/lib/logger'
@@ -7,7 +7,7 @@ export async function GET(request) {
   try {
     const userId = await getAuthUserId()
     if (!userId) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return jsonError('Unauthorized', 401)
     }
 
     const supabase = getSupabaseAdmin()
@@ -21,7 +21,7 @@ export async function GET(request) {
 
     if (profileError && profileError.code !== 'PGRST116') {
       logger.error('Error fetching user profile for export:', profileError)
-      return NextResponse.json({ success: false, error: 'Database error' }, { status: 500 })
+      return jsonError('Database error', 500)
     }
 
     // Fetch user cycles
@@ -32,7 +32,7 @@ export async function GET(request) {
 
     if (cyclesError) {
       logger.error('Error fetching user cycles for export:', cyclesError)
-      return NextResponse.json({ success: false, error: 'Database error' }, { status: 500 })
+      return jsonError('Database error', 500)
     }
 
     // Fetch user daily logs
@@ -43,16 +43,17 @@ export async function GET(request) {
 
     if (logsError) {
       logger.error('Error fetching user logs for export:', logsError)
-      return NextResponse.json({ success: false, error: 'Database error' }, { status: 500 })
+      return jsonError('Database error', 500)
     }
 
-    return NextResponse.json({
+    return jsonSuccess({
       profile: profile || {},
       cycles: cycles || [],
       logs: logs || []
-    }, { status: 200 })
+    })
   } catch (err) {
     logger.error('Data Export GET error:', err)
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 })
+    return jsonError('Internal Server Error', 500)
   }
 }
+

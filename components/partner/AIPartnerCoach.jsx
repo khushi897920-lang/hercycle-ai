@@ -68,12 +68,13 @@ export default function AIPartnerCoach({ phase = 'Follicular', cycleDay = 1, sym
         body: JSON.stringify({ phase, cycleDay, symptoms, query: '' })
       })
       const data = await res.json()
-      if (data.reply) {
+      const reply = data.data?.reply || data.reply
+      if (reply) {
         setMessages([
           {
             id: 'briefing-' + Date.now(),
             sender: 'ai',
-            text: data.reply,
+            text: reply,
             time: formatTime()
           }
         ])
@@ -107,13 +108,15 @@ export default function AIPartnerCoach({ phase = 'Follicular', cycleDay = 1, sym
         body: JSON.stringify({ phase, cycleDay, symptoms, query: queryText })
       })
       const data = await res.json()
+      const replyText = data.data?.reply || data.reply || "I'm here to support you in helping her!"
 
       const aiMsg = {
         id: 'ai-' + Date.now(),
         sender: 'ai',
-        text: data.reply || "I'm here to support you in helping her!",
+        text: replyText,
         time: formatTime()
       }
+
 
       setMessages((prev) => [...prev, aiMsg])
     } catch (err) {
