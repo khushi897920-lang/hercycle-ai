@@ -81,7 +81,7 @@ export default function DailyLogPanel({
           Common Symptoms
         </div>
 
-        <div className="symp-grid symp-grid-scroll-wrapper">
+        <div className="symp-grid symp-grid-scroll-wrapper" role="region" aria-label="Symptoms list">
           {allDisplaySymptoms.map(symptom => {
             const active = selectedSymptoms.includes(symptom)
             const isCustom = !baseSymptoms.includes(symptom)
@@ -91,10 +91,12 @@ export default function DailyLogPanel({
               <button
                 key={symptom}
                 type="button"
+                role="checkbox"
+                aria-checked={active}
                 className={`symp-chip ${active ? 'active' : ''}`}
                 onClick={() => toggleSymptom(symptom)}
               >
-                <span className="chip-icon">
+                <span className="chip-icon" aria-hidden="true">
                   {icon}
                 </span>
 
@@ -163,23 +165,29 @@ export default function DailyLogPanel({
           Mood
         </div>
 
-        <div className="mood-row">
-          {moods.map(mood => (
-            <button
-              key={mood.emoji}
-              type="button"
-              className={`mood-btn ${selectedMood === mood.emoji ? 'active' : ''}`}
-              onClick={() => setSelectedMood(mood.emoji)}
-            >
-              <span className="emoji">
-                {mood.emoji}
-              </span>
+        <div className="mood-row" role="radiogroup" aria-label="Mood selection">
+          {moods.map(mood => {
+            const isSelected = selectedMood === mood.emoji;
+            return (
+              <button
+                key={mood.emoji}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                aria-label={mood.label}
+                className={`mood-btn ${isSelected ? 'active' : ''}`}
+                onClick={() => setSelectedMood(mood.emoji)}
+              >
+                <span className="emoji" aria-hidden="true">
+                  {mood.emoji}
+                </span>
 
-              <span className="mood-name">
-                {mood.label}
-              </span>
-            </button>
-          ))}
+                <span className="mood-name">
+                  {mood.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="flow-lbl flow-label">
@@ -191,22 +199,27 @@ export default function DailyLogPanel({
           <span>{tFlow("Very Heavy")}</span>
         </div>
 
-        <div className="flow-row">
+        <div className="flow-row" role="radiogroup" aria-label="Flow intensity selection">
           {[
             { id: "f1", label: "Light" },
             { id: "f2", label: "Medium" },
             { id: "f3", label: "Heavy" },
             { id: "f4", label: "Very Heavy" }
-          ].map(flow => (
-            <button
-              key={flow.id}
-              type="button"
-              className={`flow-dot ${flow.id} ${selectedFlow === flow.id ? "active" : ""
-                }`}
-              onClick={() => setSelectedFlow(flow.id)}
-              title={tFlow(flow.label)}
-            />
-          ))}
+          ].map(flow => {
+            const isSelected = selectedFlow === flow.id;
+            return (
+              <button
+                key={flow.id}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                aria-label={tFlow(flow.label)}
+                className={`flow-dot ${flow.id} ${isSelected ? "active" : ""}`}
+                onClick={() => setSelectedFlow(flow.id)}
+                title={tFlow(flow.label)}
+              />
+            );
+          })}
         </div>
 
         <button className="save-btn" onClick={handleSaveLog}>

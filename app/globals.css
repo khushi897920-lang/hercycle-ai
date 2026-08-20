@@ -40,7 +40,11 @@ body,
   background: transparent !important;
   opacity: 0 !important;
 }
-
+/* Ensure strong, visible focus rings for accessibility across custom buttons */
+button:focus-visible {
+  outline: 2px solid #10b981 !important;
+  outline-offset: 2px !important;
+}
 /* Scrollbar none utility classes */
 .scrollbar-none,
 .scrollbar-thin {
