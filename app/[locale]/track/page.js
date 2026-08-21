@@ -225,6 +225,12 @@ export default function TrackPage() {
     else setViewMonth(m => m + 1)
   }
 
+  const goToToday = () => {
+    const now = new Date()
+    setViewYear(now.getFullYear())
+    setViewMonth(now.getMonth())
+  }
+
   const { periodDays, ovulationDays, predictedDays, today } = deriveDateSets(cycleData)
   const calendarDays = buildCalendarDays(viewYear, viewMonth, periodDays, ovulationDays, predictedDays, today, locale)
   const daysUntilNext = cycleData?.nextPeriodDate
@@ -301,6 +307,7 @@ export default function TrackPage() {
               currentMonth={`${new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-US', { month: 'long' }).format(new Date(viewYear, viewMonth))} ${viewYear}`}
               onPrevMonth={goToPrevMonth}
               onNextMonth={goToNextMonth}
+              onToday={goToToday}
               averageCycleLength={cycleData?.averageCycleLength || 28}
               daysUntilNext={daysUntilNext}
               activeLang="EN"
@@ -359,3 +366,5 @@ export default function TrackPage() {
     </>
   )
 }
+
+
