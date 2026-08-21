@@ -1,6 +1,9 @@
+'use client'
+
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
+import { usePathname } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { 
   Trophy, 
   Users, 
@@ -13,15 +16,21 @@ import {
 } from 'lucide-react';
 
 export function Navbar() {
-  const router = useRouter();
-  const { locale = 'en' } = router.asPath.split('/')[1] === 'hi' ? { locale: 'hi' } : { locale: 'en' };
+  const pathname = usePathname() || '';
+  let locale = 'en';
+  try {
+    const activeLocale = useLocale();
+    if (activeLocale) locale = activeLocale;
+  } catch (e) {
+    locale = pathname.split('/')[1] === 'hi' ? 'hi' : 'en';
+  }
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Helper to construct localized routes
   const getLocalizedPath = (path) => `/${locale}${path}`;
 
-  const isActive = (path) => router.asPath === getLocalizedPath(path);
+  const isActive = (path) => pathname === getLocalizedPath(path) || pathname === path;
 
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
@@ -54,6 +63,7 @@ export function Navbar() {
           {/* User Profile Dropdown Drawer Container */}
           <div className="relative">
             <button
+              type="button"
               onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
               className="flex items-center gap-2 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-gray-200 dark:border-gray-700"
             >
@@ -121,6 +131,7 @@ export function Navbar() {
 
                 <div className="border-t border-gray-100 dark:border-gray-800 pt-1">
                   <button
+                    type="button"
                     onClick={() => { setProfileDropdownOpen(false); }}
                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                   >
@@ -134,6 +145,7 @@ export function Navbar() {
 
           {/* Mobile Menu Button */}
           <button
+            type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2 text-gray-600 dark:text-gray-300"
           >
