@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { eventBus } from '@/lib/events'
 import { isoCalendarDate } from '@/lib/date-schemas'
 import { sanitizeSymptomList, sanitizeText, getPaginationParams, formatPaginatedResponse } from '@/lib/api-helpers'
+import { pcodRiskCache } from '@/lib/cache'
 
 const logPostSchema = z.object({
   // Shape alone is not enough: the old `/^\d{4}-\d{2}-\d{2}$/` accepted
@@ -210,6 +211,13 @@ export async function POST(request) {
     }
 
     logger.info(`Successfully upserted daily log for user ${userId}`);
+
+    // Invalidate cached PCOD risk calculation immediately when new daily logs are submitted
+    if (typeof pcodRiskCache.invalidatePattern === 'function') {
+      pcodRiskCache.invalidatePattern(`pcod-risk:${userId}`);
+    } else {
+      pcodRiskCache.invalidate(`pcod-risk:${userId}`);
+    }
 
     // Emit event for daily logs update
     eventBus.emit('daily_logs:updated', { userId });

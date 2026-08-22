@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { calculatePCODRisk } from '@/lib/api-helpers'
 import { getAuthUserId } from '@/lib/clerk-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
@@ -37,7 +38,18 @@ export async function GET(request) {
 
     const cacheKey = `pcod-risk:${userId}`;
     const cachedRisk = pcodRiskCache.get(cacheKey);
+    
+    // Generate ETag for conditional request validation
+    const clientEtag = request.headers.get('if-none-match');
+
     if (cachedRisk !== undefined) {
+      const payloadString = JSON.stringify({ success: true, data: cachedRisk });
+      const currentEtag = `"${crypto.createHash('md5').update(payloadString).digest('hex')}"`;
+
+      if (clientEtag === currentEtag) {
+        return new NextResponse(null, { status: 304 });
+      }
+
       logger.info(`Cache hit for PCOD risk assessment for user ${userId}`);
       return NextResponse.json(
         { success: true, data: cachedRisk },
@@ -45,6 +57,7 @@ export async function GET(request) {
           status: 200,
           headers: {
             'Cache-Control': 'private, max-age=120, stale-while-revalidate=300',
+            'ETag': currentEtag,
           },
         }
       )
@@ -94,13 +107,22 @@ export async function GET(request) {
     // Only a real computation is cached.
     pcodRiskCache.set(cacheKey, risk);
 
+    const responsePayload = { success: true, data: risk };
+    const payloadString = JSON.stringify(responsePayload);
+    const responseEtag = `"${crypto.createHash('md5').update(payloadString).digest('hex')}"`;
+
+    if (clientEtag === responseEtag) {
+      return new NextResponse(null, { status: 304 });
+    }
+
     logger.info(`Successfully calculated PCOD risk assessment for user ${userId}`);
     return NextResponse.json(
-      { success: true, data: risk },
+      responsePayload,
       {
         status: 200,
         headers: {
           'Cache-Control': 'private, max-age=120, stale-while-revalidate=300',
+          'ETag': responseEtag,
         },
       }
     )
