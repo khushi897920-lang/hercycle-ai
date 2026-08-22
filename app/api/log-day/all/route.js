@@ -51,14 +51,16 @@ export async function GET(request) {
     }
 
     logger.info(`Successfully fetched daily logs (page=${page}, limit=${limit}) for user ${userId}`);
-    return NextResponse.json({
+       return NextResponse.json({
       success: true,
       data: data || [],
       pagination: {
         page,
         limit,
         total: count ?? null,
+        totalCount: count ?? null,
         hasMore: count != null ? from + limit < count : (data || []).length === limit,
+        nextCursor: count != null && from + limit < count ? page + 1 : null,
       },
     })
   } catch (error) {

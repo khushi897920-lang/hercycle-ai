@@ -61,6 +61,9 @@ function toCleanCycleError(error) {
   return { message: error?.message || 'Unknown database error', status: 500 }
 }
 
+const CYCLES_DEFAULT_LIMIT = 50
+const CYCLES_MAX_LIMIT = 365
+
 export async function GET(request) {
   // ============ RATE LIMITING ============
   try {
@@ -80,21 +83,43 @@ export async function GET(request) {
 
     await ensureUserExists(userId)
 
+    // Pagination params — optional. A caller that never sends page/limit
+    // (every existing caller, today) gets page 0 at the new 50-record
+    // default, up from the old hardcoded 12, so nothing that worked before
+    // stops working.
+    const { searchParams } = new URL(request.url)
+    const page = Math.max(0, parseInt(searchParams.get('page') || '0', 10))
+    const limit = Math.min(
+      CYCLES_MAX_LIMIT,
+      Math.max(1, parseInt(searchParams.get('limit') || String(CYCLES_DEFAULT_LIMIT), 10))
+    )
+    const from = page * limit
+    const to = from + limit - 1
+
     const supabaseAdmin = getSupabaseAdmin()
-    const { data: cycles, error } = await supabaseAdmin
+    const { data: cycles, error, count } = await supabaseAdmin
       .from('cycles')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('user_id', userId)
       .order('start_date', { ascending: false })
-      .limit(12)
+      .range(from, to)
 
     if (error && error.code !== 'PGRST116') {
       logger.error(`Error querying cycles for user ${userId}:`, error.message);
       return jsonSuccess({ cycles: [], nextPeriodDate: null, confidence: null, averageCycleLength: 28 })
     }
 
-    logger.info(`Successfully fetched cycles for user ${userId}`);
-    return jsonSuccess({ cycles: cycles || [] })
+    logger.info(`Successfully fetched cycles (page=${page}, limit=${limit}) for user ${userId}`);
+    return jsonSuccess({
+      cycles: cycles || [],
+      pagination: {
+        page,
+        limit,
+        totalCount: count ?? null,
+        hasMore: count != null ? from + limit < count : (cycles || []).length === limit,
+        nextCursor: count != null && from + limit < count ? page + 1 : null,
+      },
+    })
   } catch (error) {
     logger.error('Error fetching cycles:', error.message || error);
     return jsonError(`Failed to fetch cycles: ${error.message || error}`, 500)
