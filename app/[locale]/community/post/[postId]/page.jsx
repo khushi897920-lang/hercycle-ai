@@ -11,6 +11,8 @@ import Footer from '@/components/layout/Footer';
 import { ArrowLeft, User } from 'lucide-react';
 import { renderStoredAlias } from '@/lib/alias-display';
 
+import MarkdownRenderer from '@/components/editor/MarkdownRenderer';
+
 export const revalidate = 60;
 
 export default async function PostPage({ params }) {
@@ -75,11 +77,7 @@ export default async function PostPage({ params }) {
             {post.title}
           </h1>
 
-          <div className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300">
-            {post.content.split('\n').map((paragraph, i) => (
-              <p key={i} className="mb-4 last:mb-0">{paragraph}</p>
-            ))}
-          </div>
+          <MarkdownRenderer content={post.content} />
         </div>
 
         <CommentSection postId={postId} initialComments={comments || []} />

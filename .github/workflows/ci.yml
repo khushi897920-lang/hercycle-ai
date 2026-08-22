@@ -30,8 +30,11 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --frozen-lockfile
 
       - name: Provide placeholder env for CI when secrets are missing
         shell: bash

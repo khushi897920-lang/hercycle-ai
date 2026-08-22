@@ -12,6 +12,8 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
+import MarkdownEditor from '@/components/editor/MarkdownEditor';
+
 export default function NewPostPage({ params }) {
   const { locale } = React.use(params);
   const t = useTranslations('Community');
@@ -66,6 +68,15 @@ export default function NewPostPage({ params }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create post');
 
+      // Clear stored draft upon successful publish
+      try {
+        localStorage.removeItem('hercycle_markdown_draft');
+        await fetchWithTimeout('/api/drafts', {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (clearErr) {}
+
       toast.success(t('post_created') || 'Post published anonymously!');
       router.push(`/${locale}/community/post/${data.post.id}`);
     } catch (error) {
@@ -78,7 +89,7 @@ export default function NewPostPage({ params }) {
   return (
     <div className="page">
       <Navbar />
-      <div className="max-w-2xl mx-auto px-4 py-8 w-full">
+      <div className="max-w-4xl mx-auto px-4 py-8 w-full">
       <Link 
         href={`/${locale}/community`}
         className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-6"
@@ -89,52 +100,59 @@ export default function NewPostPage({ params }) {
 
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-          {t('create_new_post') || 'Create New Post'}
+          {t('create_new_post') || 'Create New Post / Article'}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              {t('category_label') || 'Category'}
-            </label>
-            <select
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
-              required
-            >
-              <option value="" disabled>Select a category</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                {t('category_label') || 'Category'}
+              </label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                required
+              >
+                <option value="" disabled>Select a category</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                {t('title_label') || 'Title'}
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                placeholder={t('title_placeholder') || 'What do you want to discuss?'}
+                required
+                maxLength={150}
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              {t('title_label') || 'Title'}
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              {t('content_label') || 'Content (Markdown Supported)'}
             </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
-              placeholder={t('title_placeholder') || 'What do you want to discuss?'}
-              required
-              maxLength={150}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              {t('content_label') || 'Content'}
-            </label>
-            <textarea
+            <MarkdownEditor
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-pink-500/50 resize-y min-h-[150px]"
-              placeholder={t('content_placeholder') || 'Share your thoughts, experiences, or questions anonymously...'}
-              required
+              onChange={setContent}
+              title={title}
+              onTitleChange={setTitle}
+              categoryId={categoryId}
+              onCategoryChange={setCategoryId}
+              categories={categories}
+              placeholder={t('content_placeholder') || 'Share your thoughts, articles, or experiences in rich Markdown...'}
+              minHeight="350px"
+              draftType="forum_post"
             />
           </div>
 
