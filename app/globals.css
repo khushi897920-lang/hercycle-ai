@@ -3737,3 +3737,45 @@ nav ul li a:focus-visible,
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ──── RESPONSIVE MOBILE ALIGNMENT & PADDING GUARDS ──── */
+@media (max-width: 480px) {
+  .page {
+    padding: 16px 12px 44px !important;
+  }
+
+  .hero-btns {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-white,
+  .btn-outline,
+  .btn-pill {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    padding: 12px 18px !important;
+  }
+}
+
+@media (max-width: 375px) {
+  .page {
+    padding: 12px 8px 36px !important;
+  }
+
+  h1, .hero-title {
+    font-size: 1.75rem !important;
+  }
+
+  .sec-head {
+    font-size: 1.4rem !important;
+  }
+
+  .btn-white,
+  .btn-outline,
+  .btn-pill {
+    font-size: 0.85rem !important;
+    padding: 10px 14px !important;
+  }
+}

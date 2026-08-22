@@ -79,7 +79,7 @@ export default function ChallengesPage() {
     return (
       <div className="page">
         <Navbar />
-        <main className="pb-24 pt-6 px-4 max-w-3xl mx-auto w-full space-y-8" aria-busy="true">
+        <main className="pb-24 pt-6 px-3 sm:px-6 max-w-3xl mx-auto w-full space-y-8" aria-busy="true">
           <div className="space-y-1">
             <SkeletonBlock className="h-8 w-2/3" />
             <SkeletonBlock className="h-4 w-1/3" />
@@ -98,17 +98,12 @@ export default function ChallengesPage() {
   return (
     <div className="page">
       <Navbar />
-      <main className="challenge-content pb-24 pt-6 px-4 max-w-3xl mx-auto w-full space-y-8">
+      <main className="challenge-content pb-24 pt-6 px-3 sm:px-6 max-w-3xl mx-auto w-full space-y-8">
         <header className="space-y-1">
-          <h1 className="text-3xl sm:text-4xl font-bold drop-shadow-md" style={{ fontFamily: 'var(--serif)', color: 'var(--text-white)' }}>
+          <h1 className="text-2xl sm:text-4xl font-bold drop-shadow-md" style={{ fontFamily: 'var(--serif)', color: 'var(--text-white)' }}>
             🌸 {t('title')}
           </h1>
-          {/* <p style={{ color: 'var(--text-soft)' }}>
-            {allDone
-              ? "You've completed everything today — see you tomorrow! 🌷"
-              : `${completedToday} of 3 done · ${pointsToday} points earned today`}
-          </p> */}
-          <p style={{ color: 'var(--text-soft)' }}>
+          <p style={{ color: 'var(--text-soft)' }} className="text-sm sm:text-base">
             {allDone
               ? "You've completed everything today — see you tomorrow! 🌷"
               : `${completedToday} of 5 done · ${pointsToday} points earned today`}

@@ -245,32 +245,30 @@ export default function TrackPage() {
       <div className="page">
         <Navbar />
 
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '2rem 1.5rem' }}>
+        <div className="max-w-[900px] mx-auto px-3 sm:px-6 py-6 w-full">
 
           {/* Page header */}
-          <h1 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1">
             🗓️ <span className="gradient-text">{t('title')}</span>
           </h1>
-          <p style={{ color: TEXT_FAINT, marginBottom: '2rem' }}>
+          <p style={{ color: TEXT_FAINT }} className="text-sm sm:text-base mb-6">
             {t('subtitle')}
           </p>
 
           {/* Period action buttons — mutually exclusive: Start shown when no active period, End shown when one is active */}
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+          <div className="flex flex-wrap gap-3 mb-6 w-full">
             {!openCycle && (
               <button
-                className="btn-white"
+                className="btn-white w-full sm:w-auto text-center font-semibold"
                 onClick={handleStartPeriod}
-                style={{ padding: '0.75rem 1.75rem', fontSize: '0.95rem', fontWeight: 600 }}
               >
                 {t('startPeriod')}
               </button>
             )}
             {openCycle && (
               <button
-                className="btn-outline"
+                className="btn-outline w-full sm:w-auto text-center font-semibold"
                 onClick={handleEndPeriod}
-                style={{ padding: '0.75rem 1.75rem', fontSize: '0.95rem', fontWeight: 600 }}
               >
                 {t('endPeriod')}
               </button>

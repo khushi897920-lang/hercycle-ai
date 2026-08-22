@@ -173,9 +173,9 @@ export default function SelfCarePage() {
   return (
     <div className="page">
       <Navbar />
-      <main className="pb-24 pt-6 px-4 max-w-7xl mx-auto w-full space-y-10">
-        <header className="flex items-center justify-between mb-8 gap-4 flex-wrap">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white drop-shadow-md">
+      <main className="pb-24 pt-6 px-3 sm:px-6 max-w-7xl mx-auto w-full space-y-8 sm:space-y-10">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+          <h1 className="text-2xl sm:text-4xl font-bold text-white drop-shadow-md">
             {t('title')}
           </h1>
 
@@ -214,7 +214,7 @@ export default function SelfCarePage() {
         </header>
 
         {hasFavorites && (
-          <section className="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 space-y-6">
+          <section className="bg-white/5 border border-white/10 rounded-3xl p-4 sm:p-8 space-y-6">
             <div className="flex items-center gap-2">
               <span className="text-2xl">❤️</span>
               <h2 className="text-2xl font-bold text-white tracking-tight">
