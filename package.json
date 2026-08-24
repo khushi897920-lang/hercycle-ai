@@ -45,7 +45,7 @@
         "@supabase/ssr": "^0.12.4",
         "@supabase/supabase-js": "^2.46.1",
         "@swc/helpers": "^0.5.23",
-        "@tanstack/react-table": "^8.21.3",
+        "@tanstack/react-table": "^9.1.2",
         "add": "^2.0.9",
         "archiver": "^8.0.0",
         "axios": "^1.10.0",
