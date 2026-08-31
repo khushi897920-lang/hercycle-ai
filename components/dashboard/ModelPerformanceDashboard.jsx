@@ -15,6 +15,9 @@ import {
   Zap
 } from 'lucide-react'
 import '@/styles/dashboard.css'
+import DatasetLineageGraph from '@/components/dashboard/DatasetLineageGraph'
+import HyperparameterSweeps from '@/components/dashboard/HyperparameterSweeps'
+
 
 export default function ModelPerformanceDashboard() {
   const [filters, setFilters] = useState({
@@ -428,6 +431,15 @@ export default function ModelPerformanceDashboard() {
           </section>
         </main>
       )}
+
+      {/* Dataset Versioning & Lineage Graph Component */}
+      {!loading && !error && (
+        <>
+          <DatasetLineageGraph lineageData={data.lineageGraph} />
+          <HyperparameterSweeps />
+        </>
+      )}
     </div>
   )
 }
+
