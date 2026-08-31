@@ -12,38 +12,38 @@
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.29.7.tgz#12022450c45a4da6d8d8287b18a4ff2ddb23f768"
   integrity sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==
 
-"@clerk/backend@^3.16.11":
-  version "3.16.11"
-  resolved "https://registry.yarnpkg.com/@clerk/backend/-/backend-3.16.11.tgz#2ce7742d3433c219b529c13af7ff6e26dc95dbb4"
-  integrity sha512-fHfqNhqCywv1orN8Ug2VlYJQZcPMmzFmlTb5/kCMFhxJsV9yaDTf8BADiUO9WgTx3s+nKOx5an4t4h7aHM42MA==
+"@clerk/backend@^3.16.12":
+  version "3.16.13"
+  resolved "https://registry.yarnpkg.com/@clerk/backend/-/backend-3.16.13.tgz#4605019cb45ca6aa256302cd1ec48fb743c62f03"
+  integrity sha512-L6+48rB8WVoxoiFDKv49KWxc58aGwuYnbuHBxNdqgTZO6PTyEH3KLpnqI/WaCqIxQW56MJE24EJREsU8WlWrWw==
   dependencies:
-    "@clerk/shared" "^4.30.0"
+    "@clerk/shared" "^4.30.2"
     standardwebhooks "^1.0.0"
     tslib "2.8.1"
 
-"@clerk/nextjs@^7.5.7":
-  version "7.8.1"
-  resolved "https://registry.yarnpkg.com/@clerk/nextjs/-/nextjs-7.8.1.tgz#703dce1b5407e56be9640e043f615c00835a6e7f"
-  integrity sha512-t69lrlyy3LXjIhS4L3o6FJF6iJD2RprpUbfBdmsFMQPIzENZHbp7hfyUVENB9x4ogaMXtnQw86TpLJJu/9OKyA==
+"@clerk/nextjs@^7.8.2":
+  version "7.8.2"
+  resolved "https://registry.yarnpkg.com/@clerk/nextjs/-/nextjs-7.8.2.tgz#dd5718994ebaed02308acdf65cda95776f49f404"
+  integrity sha512-EmUq8lkJLpaqI/D5XEK0pNYKxSoNdD7TZWvXfKxyeM86fQrJFr6I9cVEFTPksbx6Y+cRiHW/6Q4KrhgpqBGnjg==
   dependencies:
-    "@clerk/backend" "^3.16.11"
-    "@clerk/react" "^6.14.6"
-    "@clerk/shared" "^4.30.0"
+    "@clerk/backend" "^3.16.12"
+    "@clerk/react" "^6.14.7"
+    "@clerk/shared" "^4.30.1"
     server-only "0.0.1"
     tslib "2.8.1"
 
-"@clerk/react@^6.14.6":
-  version "6.14.6"
-  resolved "https://registry.yarnpkg.com/@clerk/react/-/react-6.14.6.tgz#4c531f0e086cf4739ceb79fd23e3ead0af19ce5b"
-  integrity sha512-zNyVycYfLIl/MrDEPWXu5vkPyXubgcKLt/eHiXU5EbO9jHFo1H3NxyWojOHhvZ4lRFsbTpW9HM3AzNeuKs7byQ==
+"@clerk/react@^6.14.7":
+  version "6.14.8"
+  resolved "https://registry.yarnpkg.com/@clerk/react/-/react-6.14.8.tgz#9b7e4c06f45f06f2d17b3bb7e0080b542d3eb9f4"
+  integrity sha512-N7Ca3zze0PsVZ+TiMq6foYUMJMuCSzc8eqQombnqZVOhMxTB3KAn3jSHKBrN6fBZq4jGcqT1IcSsH/4xAMjjVQ==
   dependencies:
-    "@clerk/shared" "^4.30.0"
+    "@clerk/shared" "^4.30.2"
     tslib "2.8.1"
 
-"@clerk/shared@^4.30.0":
-  version "4.30.0"
-  resolved "https://registry.yarnpkg.com/@clerk/shared/-/shared-4.30.0.tgz#012a978882e6091229c145b6fed827c9bc0490d0"
-  integrity sha512-T+b/LES4qRuMom0xZKqOEnfZc67ZYjLIL8cTvEyf5F5u82zTnG7UL22rc3tVNyfh7/p2Mg4+LarT7IoZqyhjkw==
+"@clerk/shared@^4.30.1", "@clerk/shared@^4.30.2":
+  version "4.30.2"
+  resolved "https://registry.yarnpkg.com/@clerk/shared/-/shared-4.30.2.tgz#f711992d4b8e1d1ca7a66029313ba525e64e8570"
+  integrity sha512-2U8jE2Gno2uRxg5b2fv5uY3zxzxAvmBzjiaOPAfoAVUgJ2Ys9kPu+6k2TaBNTkeF0ncQ/5erECIx6dPt0d8XyQ==
   dependencies:
     "@tanstack/query-core" "^5.100.6"
     dequal "2.0.3"
