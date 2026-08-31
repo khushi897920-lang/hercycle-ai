@@ -774,7 +774,9 @@
     "login_to_save": "Please sign in to save posts",
     "bookmark_error": "Could not update bookmark",
     "view_saved": "Saved Posts",
-    "back_to_discussions": "Back to discussions"
+    "back_to_discussions": "Back to discussions",
+    "forum_reply_notification_title": "Forum Reply Notifications 💬",
+    "forum_reply_notification_desc": "Get notified when someone replies to your community post or comment"
   },
   "InstallPrompt": {
     "title": "Install HerCycle AI",

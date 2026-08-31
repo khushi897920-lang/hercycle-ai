@@ -774,7 +774,9 @@
     "login_to_save": "पोस्ट सहेजने के लिए कृपया साइन इन करें",
     "bookmark_error": "बुकमार्क अपडेट नहीं किया जा सका",
     "view_saved": "सहेजी गई पोस्ट",
-    "back_to_discussions": "चर्चाओं पर वापस जाएं"
+    "back_to_discussions": "चर्चाओं पर वापस जाएं",
+    "forum_reply_notification_title": "फ़ोरम उत्तर सूचनाएं 💬",
+    "forum_reply_notification_desc": "जब कोई आपकी समुदाय पोस्ट या टिप्पणी का उत्तर दे तो सूचना प्राप्त करें"
   },
   "InstallPrompt": {
     "title": "HerCycle AI इंस्टॉल करें",

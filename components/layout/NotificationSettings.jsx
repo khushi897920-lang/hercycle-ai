@@ -9,11 +9,18 @@ import { requestNotificationPermission, getNotificationPermissionStatus, sendDev
 import NotificationPreferences from '@/components/settings/NotificationPreferences'
 import ConfirmationModal from '@/components/modals/ConfirmationModal'
 
+import { updatePushPreferences } from '@/lib/actions/push'
+
 const PREFERENCE_ITEMS = [
   {
     key: 'partnerNotes',
     title: 'Partner Love Notes & Care Alerts 💌',
     description: 'Get notified when a love note or reply is sent',
+  },
+  {
+    key: 'forumReplies',
+    title: 'Forum Reply Notifications 💬',
+    description: 'Get notified when someone replies to your community post or comment',
   },
   {
     key: 'prePeriodAlerts',
@@ -51,6 +58,7 @@ export default function NotificationSettings() {
   // Notification Preferences State (persisted in localStorage)
   const [preferences, setPreferences] = useState({
     partnerNotes: true,
+    forumReplies: true,
     prePeriodAlerts: true,
     vibeCheckins: true,
     careQuests: true,
@@ -176,6 +184,7 @@ export default function NotificationSettings() {
     const updated = { ...preferences, [key]: !preferences[key] }
     setPreferences(updated)
     localStorage.setItem('hercycle_notification_prefs', JSON.stringify(updated))
+    updatePushPreferences(updated).catch(() => {})
     toast.success('Notification settings updated!')
   }
 
