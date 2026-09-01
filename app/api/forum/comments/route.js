@@ -8,6 +8,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { crudLimiter } from '@/lib/rateLimiter';
 import { logger } from '@/lib/logger';
 import { validateCommentLength } from '@/lib/forum-limits';
+import { notifyOnReply } from '@/lib/actions/push';
 import {
   buildCommentCursorFilter,
   buildCommentPage,
@@ -173,7 +174,8 @@ export async function POST(req) {
       console.warn(`Malformed JSON payload in forum comments: ${parseError.message}`);
       return NextResponse.json({ error: 'Bad Request: Invalid JSON payload' }, { status: 400 });
     }
-    const { postId, content } = body;
+    const { postId, content, parentCommentId, parent_id } = body;
+    const parentCommentTargetId = parentCommentId || parent_id;
 
     if (!postId || !content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -235,6 +237,51 @@ export async function POST(req) {
     if (error) {
       console.error('Supabase Error:', error);
       return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
+    }
+
+    // 4. Trigger reply push notification asynchronously (isolated from comment creation status)
+    try {
+      let targetUserId = null;
+      let postTitle = null;
+
+      if (parentCommentTargetId && isForumId(parentCommentTargetId)) {
+        // Reply to another comment
+        const { data: parentComment } = await supabase
+          .from('forum_comments')
+          .select('user_id')
+          .eq('id', parentCommentTargetId)
+          .single();
+        if (parentComment?.user_id) {
+          targetUserId = parentComment.user_id;
+        }
+      }
+
+      // Default / fallback: reply to post author
+      const { data: post } = await supabase
+        .from('forum_posts')
+        .select('user_id, title')
+        .eq('id', postId)
+        .single();
+      if (post) {
+        if (!targetUserId) {
+          targetUserId = post.user_id;
+        }
+        postTitle = post.title;
+      }
+
+      // Prevent self-reply notification (Requirement C)
+      if (targetUserId && targetUserId !== userId) {
+        notifyOnReply({
+          targetUserId,
+          authorAlias,
+          postTitle,
+          postId,
+        }).catch((err) => {
+          logger.warn(`Failed to dispatch reply push notification: ${err.message || err}`);
+        });
+      }
+    } catch (notifError) {
+      logger.warn(`Error resolving reply notification target: ${notifError.message || notifError}`);
     }
 
     return NextResponse.json({ comment: data }, { status: 201 });

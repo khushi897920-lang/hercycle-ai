@@ -774,12 +774,32 @@
     "login_to_save": "Please sign in to save posts",
     "bookmark_error": "Could not update bookmark",
     "view_saved": "Saved Posts",
-    "back_to_discussions": "Back to discussions"
+    "back_to_discussions": "Back to discussions",
+    "forum_reply_notification_title": "Forum Reply Notifications 💬",
+    "forum_reply_notification_desc": "Get notified when someone replies to your community post or comment"
   },
   "InstallPrompt": {
     "title": "Install HerCycle AI",
     "subtitle": "Get instant offline access and a full-screen app experience.",
     "install": "Install App",
     "dismiss": "Dismiss install prompt"
+  },
+  "HydrationReminder": {
+    "title": "Hydration Reminder Schedule",
+    "subtitle": "Receive periodic nudges to drink water throughout the day.",
+    "statusLabel": "Enable Hydration Reminders",
+    "statusDesc": "Get smart push notifications to log your water intake",
+    "scheduleLabel": "Active Window & Frequency",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "repeatEvery": "Repeat Every",
+    "estimatedLabel": "Estimated Daily Reminders",
+    "remindersUnit": "reminders",
+    "skipIfGoalReached": "Pause reminders once daily hydration goal is reached",
+    "saveBtn": "Save Hydration Schedule",
+    "savedSuccess": "Hydration reminder schedule saved!",
+    "savedError": "Failed to save hydration schedule.",
+    "notificationTitle": "💧 Hydration Reminder",
+    "notificationBody": "Time to drink water! Stay hydrated and feel your best. 🌸"
   }
 }
