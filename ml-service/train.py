@@ -3,6 +3,14 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 import pickle
 import os
+import hashlib
+import json
+from datetime import datetime
+
+def compute_content_hash(df: pd.DataFrame) -> str:
+    """Computes a deterministic SHA-256 hash for a pandas DataFrame."""
+    csv_bytes = df.to_csv(index=False).encode('utf-8')
+    return hashlib.sha256(csv_bytes).hexdigest()
 
 def main():
     # Create data directory relative to this script
@@ -45,6 +53,23 @@ def main():
         'pcod_tier': pcod_tier
     })
 
+    pcod_version_hash = compute_content_hash(df_pcod)
+    pcod_csv_path = os.path.join(data_dir, 'pcod_v2.csv')
+    df_pcod.to_csv(pcod_csv_path, index=False)
+
+    pcod_metadata = {
+        'dataset_name': 'pcod_v2',
+        'version_hash': pcod_version_hash,
+        'sample_count': len(df_pcod),
+        'created_at': datetime.utcnow().isoformat() + 'Z',
+        'preprocessing_metadata': {
+            'steps': ['Deduplication', 'IQR Outlier Clipping', 'Binary Symptom Encoding', 'Risk Score Tiering'],
+            'parameters': {'random_seed': 42, 'min_gap_days': 20}
+        }
+    }
+    with open(os.path.join(data_dir, 'pcod_v2_metadata.json'), 'w') as f:
+        json.dump(pcod_metadata, f, indent=2)
+
     X_pcod = df_pcod.drop('pcod_tier', axis=1)
     y_pcod = df_pcod['pcod_tier']
 
@@ -71,6 +96,23 @@ def main():
         'next_cycle_length': next_cycle_len
     })
 
+    cycle_version_hash = compute_content_hash(df_cycle)
+    cycle_csv_path = os.path.join(data_dir, 'cycle_v2.csv')
+    df_cycle.to_csv(cycle_csv_path, index=False)
+
+    cycle_metadata = {
+        'dataset_name': 'cycle_v2',
+        'version_hash': cycle_version_hash,
+        'sample_count': len(df_cycle),
+        'created_at': datetime.utcnow().isoformat() + 'Z',
+        'preprocessing_metadata': {
+            'steps': ['Chronological Sorting', 'Deduplication (20-day threshold)', 'IQR Outlier Filtering (2.5 std)'],
+            'parameters': {'random_seed': 42, 'min_gap_days': 20, 'std_threshold': 2.5}
+        }
+    }
+    with open(os.path.join(data_dir, 'cycle_v2_metadata.json'), 'w') as f:
+        json.dump(cycle_metadata, f, indent=2)
+
     X_cycle = df_cycle.drop('next_cycle_length', axis=1)
     y_cycle = df_cycle['next_cycle_length']
 
@@ -82,7 +124,9 @@ def main():
     with open(cycle_model_path, 'wb') as f:
         pickle.dump(cycle_model, f)
 
-    print("Models trained and saved successfully in data/ directory!")
+    print("Models trained and dataset versioning metadata saved successfully!")
+    print(f"PCOD Dataset Hash: {pcod_version_hash}")
+    print(f"Cycle Dataset Hash: {cycle_version_hash}")
 
 if __name__ == '__main__':
     main()

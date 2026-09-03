@@ -22,6 +22,7 @@ const REPEAT_OPTIONS = [
   { label: '1 hour', minutes: 60 },
   { label: '2 hours', minutes: 120 },
   { label: '3 hours', minutes: 180 },
+  { label: '4 hours', minutes: 240 },
 ]
 
 const DEFAULT_SCHEDULE = {
@@ -72,13 +73,6 @@ function calcEstimatedReminders(startTime, endTime, repeatMinutes) {
 
 /** Read today's water count from localStorage */
 function getTodayWaterCount() {
-  // The user's calendar day, not the UTC one — reading the UTC day here reset
-  // the water counter at 05:30 in the morning for the app's primary market
-  // and mid-afternoon for users in the Pacific.
-  //
-  // `readDailyRecord` also coerces the stored count, which the hand-rolled
-  // version returned verbatim: a corrupted `count` propagated straight into
-  // `remaining` and the nudge arithmetic below.
   const { value } = readDailyRecord(WATER_KEY, {
     sanitize: (stored) => clampNumber(stored.count, { min: 0, max: 99, fallback: 0, integer: true }),
     fallback: () => 0,
@@ -87,6 +81,20 @@ function getTodayWaterCount() {
   })
 
   return value
+}
+
+/** Read today's target cup count dynamically from hydration settings */
+function getTodayWaterTarget() {
+  try {
+    const raw = localStorage.getItem('hercycle_hydration_settings')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      const goal = Number(parsed.dailyGoal) || 2000
+      const capacity = Number(parsed.cupCapacity) || 250
+      return Math.max(1, Math.round(goal / capacity))
+    }
+  } catch (_) {}
+  return DAILY_TARGET
 }
 
 // ─── DarkSelect — custom dropdown (native <select> ignores option colors on ──
@@ -240,16 +248,16 @@ export default function NotificationPreferences() {
     }
 
     // Skip if goal already reached
-    if (saved.skipIfGoalReached && getTodayWaterCount() >= DAILY_TARGET) return
+    if (saved.skipIfGoalReached && getTodayWaterCount() >= getTodayWaterTarget()) return
 
     // Fire notification
     lastFiredRef.current = nowMs
     sendDeviceNotification(
-      '💧 Hydration Reminder',
-      `Time to drink water! Stay hydrated and feel your best. 🌸`,
+      t('notificationTitle') || '💧 Hydration Reminder',
+      t('notificationBody') || 'Time to drink water! Stay hydrated and feel your best. 🌸',
       '/self-care'
     )
-  }, [saved])
+  }, [saved, t])
 
   useEffect(() => {
     const interval = setInterval(checkAndNotify, 60 * 1000) // check every minute
