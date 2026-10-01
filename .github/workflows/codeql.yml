@@ -29,13 +29,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: github/codeql-action/init@v4.37.9
+      - uses: github/codeql-action/init@v4.38.2
         with:
           languages: ${{ matrix.language }}
           queries: security-extended,security-and-quality
 
-      - uses: github/codeql-action/autobuild@v4.37.9
+      - uses: github/codeql-action/autobuild@v4.38.2
 
-      - uses: github/codeql-action/analyze@v4.37.9
+      - uses: github/codeql-action/analyze@v4.38.2
         with:
           category: "/language:${{ matrix.language }}"
